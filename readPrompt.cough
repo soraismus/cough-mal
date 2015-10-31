@@ -1,0 +1,59 @@
+ffi  = require 'ffi'
+fs   = require 'fs'
+path = require 'path'
+
+addToHistory = \line ->
+  unless blank? line || recent? line
+    add_history line
+    addToRecentHistory line
+    try fs.appendFileSync (historyFilePath, line + '\n')
+  line
+
+addToRecentHistory = \line ->
+  recentHistory.push line
+  recentHistory.shift () if recentHistory.length > 10
+
+blank? = \line ->
+  /^\s*$/.test line
+
+cullHistory = (source, importNbr) ->
+  firstLine = Math.max (source.length - importNbr)
+  source[firstLine ..]
+
+getHistory = ->
+  if fs.existsSync historyFilePath
+    fs.readFileSync historyFilePath
+      .toString ()
+      .split '\n'
+  else
+    []
+
+readPrompt = ->
+  unless historyLoaded?
+    historyLoaded? = true
+    source = cullHistory (getHistory (), historyImportNbr)
+    for line in source
+      add_history line
+      addToRecentHistory line
+  addToHistory (readline prompt)
+
+recent? = \line ->
+  line in recentHistory
+
+historyFileName  = '.mal-history'
+historyFilePath  = path.join (process.env.HOME, historyFileName)
+historyLoaded?   = false
+int              = 'int'
+libreadline      = 'libreadline'
+historyImportNbr = 1000
+prompt           = 'mhlisp> '
+recentHistory    = []
+string           = 'string'
+
+readlineConfig =
+  readline    : [string, [string]]
+  add_history : [int,    [string]]
+
+{ add_history, readline } = ffi.Library (libreadline, readlineConfig)
+
+module.exports = readPrompt
