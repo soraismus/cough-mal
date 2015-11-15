@@ -36,7 +36,7 @@ extractJsValue               = require './extractJsValue'
 { setMainEnv }               = require './env-utilities'
 { toArray }                  = require './linked-list'
 
-createFn = (malList, envs) ->
+createFn = (head, malList, envs) ->
   createMalUserFunction
     malExpression : (next malList)
     parameterList : (car malList)
@@ -48,20 +48,20 @@ createLocalEnv = (jsParams, malArgs) ->
     env
   reduce ({}, _reduce, jsParams)
 
-createMacro = (malList, envs) ->
+createMacro = (head, malList, envs) ->
   createMalMacro
     malExpression : (cdr malList)
     parameterList : (car malList)
 
-defineNewValue = (malList, envs) ->
+defineNewValue = (head, malList, envs) ->
   jsKey = extractJsValue (car malList)
   malValue = _evaluate ((next malList), envs)
   setMainEnv (envs, jsKey, malValue)
 
-evalAllSideEffects = (malList, envs) ->
+evalAllSideEffects = (head, malList, envs) ->
   forEach ((evaluate envs), malList)
 
-evalCondition = (malList, envs) ->
+evalCondition = (head, malList, envs) ->
   jsBool = extractJsValue (_evaluate ((car malList), envs))
   malExpr = if jsBool then next malList else next (cdr malList)
   _evaluate (malExpr, envs)
@@ -83,22 +83,23 @@ evalList = (malList, envs) ->
   head = car malList
   tail = cdr malList
 
-  # WET.
-  switch (extractJsValue head)
-    when cond          then evalMultiCondition (tail, envs)
-    when def!          then defineNewValue (tail, envs)
-    when _do           then evalAllSideEffects (tail, envs)
-    when fn*           then createFn (tail, envs)
-    when macro*        then createMacro (tail, envs)
-    when _if           then evalCondition (tail, envs)
-    when let*          then evalWithLocalValue (tail, envs)
-    when quote         then evalQuote (tail, envs)
-    when quasiquote    then evalQuasiquote (tail, envs)
-    when spliceUnquote then ((x, y) -> x)(tail, envs)
-    when unquote       then ((x, y) -> x)(tail, envs)
-    else                    evalFnInvocation (head, tail, envs)
+  _eval = switch (extractJsValue head)
+    when cond          then evalMultiCondition
+    when def!          then defineNewValue
+    when _do           then evalAllSideEffects
+    when fn*           then createFn
+    when macro*        then createMacro
+    when _if           then evalCondition
+    when let*          then evalWithLocalValue
+    when quote         then evalQuote
+    when quasiquote    then evalQuasiquote
+    when spliceUnquote then ((z, x, y) -> x)
+    when unquote       then ((z, x, y) -> x)
+    else                    evalFnInvocation
 
-evalMultiCondition = (malList, envs) ->
+  _eval (head, tail, envs)
+
+evalMultiCondition = (head, malList, envs) ->
   until empty? malList
     condition = car malList
     jsBool = extractJsValue (_evaluate ((car condition), envs))
@@ -119,7 +120,7 @@ doQuote = \malExpr ->
 
 ###
 # TODO: Refactor.
-evalQuasiquote = (wrappedMalExpr, envs) ->
+evalQuasiquote = (head, wrappedMalExpr, envs) ->
   malExpr = _car wrappedMalExpr
 
   if (not malList? malExpr) || _empty? malExpr
@@ -145,7 +146,7 @@ parseQuoteGlyph = \tokens ->
       (createJsLinkedList (parse tokens))))
 ###
 
-evalQuote = (malExpr, envs) ->
+evalQuote = (head, malExpr, envs) ->
   car malExpr
 
 evalSymbol = (malSymbol, envs) ->
@@ -162,7 +163,7 @@ evaluate = \envs \malExpr ->
   return commentSignal if malExpr == commentSignal
   _evaluate (malExpr, envs)
 
-evalWithLocalValue = (malList, envs) ->
+evalWithLocalValue = (head, malList, envs) ->
   _reduce = (env, malKey, malExpr) ->
     envValue = _evaluate (malExpr, envs)
     jsKey = extractJsValue malKey
