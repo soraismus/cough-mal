@@ -1,0 +1,119 @@
+log = console.log
+comment                = require './commentSignal'
+{ createJsLinkedList } = require './linked-list'
+{ _false }             = require './keyTokens'
+{ glyphTokens }        = require './keyTokens'
+{ keyTokens }          = require './keyTokens'
+{ listEnd }            = require './keyTokens'
+{ listStart }          = require './keyTokens'
+{ nil }                = require './keyTokens'
+{ quasiquote }         = require './keyTokens'
+{ quote }              = require './keyTokens'
+{ spliceUnquote }      = require './keyTokens'
+{ unquote }            = require './keyTokens'
+{ quasiquoteGlyph }    = require './keyTokens'
+{ quoteGlyph }         = require './keyTokens'
+{ spliceUnquoteGlyph } = require './keyTokens'
+{ unquoteGlyph }       = require './keyTokens'
+{ reverse }            = require './linked-list'
+{ _true }              = require './keyTokens'
+
+{
+  createMalBoolean
+  createMalKeyword
+  createMalList
+  createMalNil
+  createMalNumber
+  createMalString
+  createMalSymbol
+} = require './mal-type-utilities'
+
+atomize = \token ->
+  createMalValue = switch
+    when nil? token      then createMalNil
+    when boolean? token  then ; createMalBoolean parseBoolean ;
+    when keyword? token  then createMalKeyword
+    when string? token   then createMalString
+    when integer? token  then ; createMalNumber parseInt10 ;
+    when float? token    then ; createMalNumber parseFloat10 ;
+    else                      createMalSymbol
+  createMalValue token
+
+boolean? = \token ->
+  token in [_false, _true]
+
+float? = \token ->
+  /^(-|\+)?[1-9]\d*\.\d+$/.test token
+
+glyph? = \token ->
+  token in glyphTokens
+
+integer? = \token ->
+  /^(?:0|(?:(-|\+)?[1-9]\d*$))/.test token
+
+listStart? = \token ->
+  token == listStart
+
+nil? = \token ->
+  token == nil
+
+_parse = (token, tokens) ->
+  switch
+    when listStart? token
+      parseList tokens
+    when glyph? token
+      parseGlyph (glyphIndex[token], tokens) 
+    #when quoteGlyph then parseQuoteGlyph tokens
+    else
+      atomize token
+
+parse = \tokens ->
+  return comment if tokens == comment
+  _parse (tokens.shift(), tokens)
+
+# TODO: Compose `createMalList` and `createJsLinkedList`
+parseQuoteGlyph = \tokens ->
+  createMalList (
+    createJsLinkedList (
+      (createMalSymbol quote),
+      (createJsLinkedList (parse tokens))))
+
+# TODO: Compose `createMalList` and `createJsLinkedList`
+parseGlyph = (keyword, tokens) ->
+  createMalList (
+    createJsLinkedList (
+      (createMalSymbol keyword),
+      (createJsLinkedList (parse tokens))))
+
+parseList = \tokens ->
+  jsList = createJsLinkedList ()
+  until (token = tokens.shift()) == listEnd
+    jsList = createJsLinkedList (
+      (_parse (token, tokens)),
+      jsList)
+  createMalList (reverse jsList)
+
+parseBoolean = \token ->
+  token == _true
+
+parseFloat10 = \token ->
+  parseFloat (token, 10)
+
+parseInt10 = \token ->
+  parseInt (token, 10)
+
+reserved? = \token ->
+  token in keyTokens
+
+startsWith? = \char \token ->
+  token[0] == char
+
+glyphIndex = {}
+glyphIndex[quasiquoteGlyph]    = quasiquote
+glyphIndex[quoteGlyph]         = quote
+glyphIndex[spliceUnquoteGlyph] = spliceUnquote
+glyphIndex[unquoteGlyph]       = unquote
+
+[keyword?, string?] = [':', '"'].map startsWith?
+
+module.exports = parse

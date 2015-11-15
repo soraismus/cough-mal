@@ -1,0 +1,28 @@
+log = console.log
+{ empty?, recurse } = require './linked-list'
+
+addEnv = (envStack, newEnv) ->
+  copy = envStack.slice 0
+  copy.unshift newEnv
+  copy
+
+getLast = \array ->
+  array[array.length - 1]
+
+lookup = (envStack, key) ->
+  copy = envStack.slice 0
+  until copy.length == 0
+    env = copy[0]
+    value = env[key]
+    return value if ? value
+    copy.shift()
+  throw "CORRESPONDING VALUE DOES NOT EXIST IN ENV-STACK"
+
+set = (env, key, value) ->
+  env[key] = value
+  value
+
+setMainEnv = (envStack, key, value) ->
+  set ((getLast envStack), key, value)
+
+module.exports = { addEnv, lookup, setMainEnv }

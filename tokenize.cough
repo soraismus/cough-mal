@@ -1,0 +1,30 @@
+log = console.log
+commentSignal = require './commentSignal'
+
+comment? = \match ->
+  match[0] == ';'
+
+createTokenRegex = ->
+  ///
+    [\s,]*                   # Spaces and commas should be ignored.
+    (
+      ~@                   | # '~@' should be taken as one token.
+      [\[\](){}'`~@^]      | # The preceding are syntactic characters.
+      "(?:\\.|[^\\"])*"    | # Characters between double quotes are strings.
+      ;.*                  | # All characters following a semicolon constitute a comment.
+      [^\s\[\](){}'"`,;]*    # Names may comprise any remaining character combinations.
+    )
+  ///g
+
+meaningful? = \match ->
+  match != ''
+
+tokenize = \sourceCode ->
+  tokenRegex = createTokenRegex ()
+  result = []
+  while meaningful? (match = tokenRegex.exec(sourceCode)[1])
+    continue if comment? match
+    result.push match
+  if result.length == 0 then commentSignal else result
+
+module.exports = tokenize 

@@ -1,0 +1,30 @@
+malTypes = [
+  malBooleanType      = 'malBooleanType'
+  malCoreFunctionType = 'malCoreFunctionType'
+  malIndexType        = 'malIndexType'
+  malKeywordType      = 'malKeywordType'
+  malListType         = 'malListType'
+  malMacroType        = 'malMacroType'
+  malNumberType       = 'malNumberType'
+  malSpecialFormType  = 'malSpecialFormType'
+  malStringType       = 'malStringType'
+  malSymbolType       = 'malSymbolType'
+  malUnitType         = 'malUnitType'
+  malUserFunctionType = 'malUserFunctionType'
+]
+
+module.exports = {
+  malBooleanType
+  malCoreFunctionType
+  malIndexType
+  malKeywordType
+  malListType
+  malMacroType
+  malNumberType
+  malSpecialFormType
+  malStringType
+  malSymbolType
+  malTypes
+  malUnitType
+  malUserFunctionType
+}

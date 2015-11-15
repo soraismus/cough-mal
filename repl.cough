@@ -1,0 +1,12 @@
+display         = require './display'
+mainEnvironment = require './environment'
+process         = require './process'
+readPrompt      = require './readPrompt'
+serialize       = require './serialize'
+
+environments = [mainEnvironment]
+
+loop
+  try display (serialize (process environments (readPrompt ())))
+  catch e
+    display ("repl error: (" + e + ")")

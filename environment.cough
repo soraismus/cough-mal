@@ -1,0 +1,228 @@
+log = console.log
+{ createJsLinkedList }    = require './linked-list'
+{ createMalBoolean }      = require './mal-type-utilities'
+{ createMalCoreFunction } = require './mal-type-utilities'
+{ createMalList }         = require './mal-type-utilities'
+{ createMalNumber }       = require './mal-type-utilities'
+{ createMalString }       = require './mal-type-utilities'
+{ empty? }                = require './linked-list'
+evaluate                  = require './evaluate'
+_process_                 = require './process'
+{ malCoreFunction? }      = require './mal-type-utilities'
+{ malBoolean? }           = require './mal-type-utilities'
+{ malList? }              = require './mal-type-utilities'
+{ malNil? }               = require './mal-type-utilities'
+{ malNumber? }            = require './mal-type-utilities'
+{ malString? }            = require './mal-type-utilities'
+{ malSymbol? }            = require './mal-type-utilities'
+{ malUserFunction? }      = require './mal-type-utilities'
+{ recurse }               = require './linked-list'
+{ reduce }                = require './linked-list'
+serialize                 = require './serialize'
+{ toArray }               = require './linked-list'
+
+add = (nbrs...) ->
+  createMalNumber (nbrs.reduce ((x, nbr) ->  x += nbr))
+subtract = (nbrs...) ->
+  createMalNumber (nbrs.reduce ((x, nbr) -> x -= nbr))
+multiply = (nbrs...) ->
+  createMalNumber (nbrs.reduce ((x, nbr) -> x *= nbr))
+divide = (nbrs...) ->
+  createMalNumber (nbrs.reduce ((x, nbr) -> x /= nbr))
+greaterThan = (nbrs...) ->
+  createMalBoolean (nbrs[0] > nbrs[1])
+lessThan = (nbrs...) ->
+  createMalBoolean (nbrs[0] < nbrs[1])
+lessThanOrEqual = (nbrs...) ->
+  createMalBoolean (nbrs[0] <= nbrs[1])
+greaterThanOrEqual = (nbrs...) ->
+  createMalBoolean (nbrs[0] >= nbrs[1])
+
+lift = \fnOnJsValues \jsListOfMalValues ->
+  malValues = toArray jsListOfMalValues
+  jsValues = malValues.map \malValue -> malValue.jsValue
+  fnOnJsValues jsValues...
+
+setCoreFnsOnJsValues! = (env, fns) ->
+  for own fnName, fn of fns
+    env[fnName] = createMalCoreFunction (lift fn)
+
+functionsOnJsValues = {
+  '+'  : add
+  '-'  : subtract
+  '*'  : multiply
+  '/'  : divide
+  '<'  : lessThan
+  '<=' : lessThanOrEqual
+  '>'  : greaterThan
+  '>=' : greaterThanOrEqual
+}
+
+# TODO: Refactor
+# ---------------------------------------------------------
+_areEqual = (malValue0, malValue1) ->
+  malValue0 == malValue1 ||
+    malValue0.jsValue == malValue1.jsValue
+
+__areEqual = (malValue0, malValue1) ->
+  if _areEqual (malValue0, malValue1)
+    return true
+
+  areBothLists? = malList? malValue0 && malList? malValue1
+
+  if areBothLists?
+      l0 = malValue0.jsValue
+      l1 = malValue1.jsValue
+      result = true
+      # TODO: Make more efficient.
+      until empty? l0 || empty? l1
+        result = result &&
+          __areEqual (l0.value, l1.value)
+        l0 = recurse l0
+        l1 = recurse l1
+      result && empty? l0 && empty? l1
+    else
+      false
+
+# TODO: Refactor.
+areEqual = \jsList ->
+  malValue0 = jsList.value
+  cdr = recurse jsList
+  malValue1 = cdr.value
+  createMalBoolean (__areEqual (malValue0, malValue1))
+# ---------------------------------------------------------
+
+# TODO
+apply = \jsList ->
+
+car = \jsList ->
+  jsList.value.jsValue.value
+
+cdr = \jsList ->
+  createMalList (
+    jsList.value.jsValue.next)
+
+# TODO
+concat = \jsList ->
+
+cons = \jsList ->
+  malValue = jsList.value
+  cdr = recurse jsList
+  malList = cdr.value
+  innerJsList = malList.jsValue
+  createMalList (
+    createJsLinkedList (
+      malValue,
+      innerJsList))
+
+count = \jsList ->
+  malList = jsList.value
+  jsList = malList.jsValue
+  _reduce = (sum, value) ->
+    sum + 1
+  createMalNumber (
+    reduce (0, _reduce, jsList))
+
+createPredicate = \pred \jsList ->
+  malValue = jsList.value
+  createMalBoolean (pred malValue)
+
+_evaluate = \jsString ->
+  _process_ [environment] jsString
+
+evaluate = \jsList ->
+  malString = jsList.value
+  jsString = malString.jsValue
+  _evaluate (stripQuotes jsString)
+
+list = \jsList ->
+  createMalList jsList
+
+load = \jsList ->
+  _evaluate (_read jsList)
+
+nth = \jsList ->
+  malNumber = jsList.value
+  jsNumber = malNumber.jsValue
+  cdr = recurse jsList
+
+  for i in [0 ... jsNumber]
+    cdr = recurse cdr 
+
+  cdr.value
+
+_quit_ = ->
+  process.exit 0
+
+_read = \jsList ->
+  malFileName = jsList.value
+  jsFileName-w/-quotes = malFileName.jsValue
+  jsFileName = stripQuotes jsFileName-w/-quotes
+  buffer = require('fs').readFileSync jsFileName
+  buffer.toString ()
+
+read = \jsList ->
+  createMalString (_read jsList)
+
+setCoreFnsOnMalValues! = (env, fns) ->
+  for own fnName, fn of fns
+    env[fnName] = createMalCoreFunction fn
+
+stripQuotes = \jsString ->
+  jsString[1 .. -2]
+
+typeOf = \jsList ->
+  malValue = jsList.value
+  createMalString malValue.type 
+
+_throw = \jsList ->
+  malValue = jsList.value
+  throw (serialize malValue)
+
+time-ms = () ->
+  createMalNumber (new Date().getTime ())
+
+write = \jsList ->
+  malValue = jsList.value
+  createMalString (serialize malValue)
+
+[boolean?, list?, nil?, number?, symbol?, string?] =
+  [ malBoolean?
+    malList?
+    malNil?
+    malNumber?
+    malString?
+    malSymbol?
+  ].map createPredicate
+
+functionsOnMalValues = {
+  '='        : areEqual
+  'apply'    : apply
+  'boolean?' : boolean?
+  'car'      : car
+  'cdr'      : cdr
+  'cons'     : cons
+  'count'    : count
+  'eval'     : evaluate
+  'list'     : list
+  'list?'    : list?
+  'load'     : load
+  'nil?'     : nil?
+  'nth'      : nth
+  'number?'  : number?
+  '-quit-'   : _quit_
+  'read'     : read
+  'string?'  : string?
+  'symbol?'  : symbol?
+  'write'    : write
+  'throw'    : _throw
+  'time-ms'  : time-ms
+  'typeof'   : typeOf
+}
+
+environment = {}
+
+setCoreFnsOnJsValues! (environment, functionsOnJsValues)
+setCoreFnsOnMalValues! (environment, functionsOnMalValues)
+
+module.exports = environment

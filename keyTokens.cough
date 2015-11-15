@@ -1,0 +1,72 @@
+keyTokens = [
+  catch*             = 'catch*'
+  def!               = 'def!'
+  _do                = 'do'
+  expandMacro        = 'expandMacro'
+  _false             = 'false'
+  fn*                = 'fn*'
+  _if                = 'if'
+  indexEnd           = '}'
+  indexStart         = '{'
+  let*               = 'let*'
+  listEnd            = ')'
+  listStart          = '('
+  macro*             = 'macro*'
+  nil                = 'nil'
+  _process           = '-process-'
+  quasiquote         = 'quasiquote'
+  quasiquoteGlyph    = '`'
+  quote              = 'quote'
+  quoteGlyph         = '\''
+  splicUnquote       = 'splice-unquote'
+  spliceUnquoteGlyph = '~@'
+  _true              = 'true'
+  try*               = 'try*'
+  unquote            = 'unquote'
+  unquoteGlyph       = '~'
+]
+
+macroTokens = [
+  quasiquote
+  quote
+  splicUnquote
+  unquote
+]
+
+glyphTokens = [
+  quasiquoteGlyph
+  quoteGlyph
+  spliceUnquoteGlyph
+  unquoteGlyph
+]
+
+module.exports = {
+  catch*
+  def!
+  _do
+  expandMacro
+  _false
+  fn*
+  glyphTokens
+  _if
+  indexEnd
+  indexStart
+  keyTokens
+  let*
+  listEnd
+  listStart
+  macro*
+  macroTokens
+  nil
+  _process
+  quasiquote
+  quasiquoteGlyph
+  quote
+  quoteGlyph
+  splicUnquote
+  spliceUnquoteGlyph
+  _true
+  try*
+  unquote
+  unquoteGlyph
+}

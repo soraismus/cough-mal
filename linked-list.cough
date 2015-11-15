@@ -1,0 +1,81 @@
+log = console.log
+
+createNode = (value, nextNode) ->
+  { type: linkedListType, value, next : nextNode }
+
+createJsLinkedList = (value, nextNode) ->
+  # Assert: jsLinkedList? nextNode
+  return EOL unless ? value
+  createNode (value, nextNode ?? EOL)
+
+forEach = (fn, list) ->
+  result = list
+  until empty? list
+    result = fn list.value
+    list = recurse list
+  result
+
+empty? = \value ->
+  value == EOL
+
+jsLinkedList? = \value ->
+  # Assert: ? value && ? (value.type)
+  value.type == linkedListType
+
+map = (fn, list) ->
+  _reduce = (list, value) ->
+    createJsLinkedList ((fn value), list)
+  reverse (reduce (EOL, _reduce, list))
+
+recurse = \list ->
+  # Assert: jsLinkedList? list
+  # Assert: jsLinkedList? list
+  if empty? list then list else list.next
+
+reduce = (seed, fn, list) ->
+  until empty? list
+    seed = fn (seed, list.value)
+    list = recurse list
+  seed
+
+reduceBy2 = (seed, fn, list) ->
+  until empty? list
+    value0 = list.value
+    list = recurse list
+    value1 = list.value
+    seed = fn (seed, value0, value1)
+    list = recurse list
+  seed
+
+reverse = \list ->
+  # Assert: jsLinkedList? list
+  result = EOL
+  until empty? list
+    result = createJsLinkedList (list.value, result)
+    list = list.next
+  result
+
+toArray = \list ->
+  _reduce = (jsArray, value) ->
+    jsArray.push value
+    jsArray
+  reduce ([], _reduce, list)
+
+linkedListType = 'jsLinkedList'
+
+_EOL = {}
+
+EOL = createNode (_EOL, _EOL)
+
+module.exports = {
+  createJsLinkedList
+  empty?
+  forEach
+  jsLinkedList?
+  map
+  recurse
+  reduce
+  reduceBy2
+  reverse
+  toArray
+}

@@ -1,0 +1,74 @@
+{ malTypes } = require './mal-types'
+
+create-factory-&-predicate = \malType ->
+  factory = \jsValue ->
+    createMalValue (jsValue, malType)
+  predicate = \malValue ->
+    malValue.type == malType
+  [factory, predicate]
+
+createMalBoolean = \jsBoolean ->
+  if jsBoolean then malTrue else malFalse
+
+createMalNil = ->
+  malNil
+
+createMalValue = (jsValue, malType) ->
+  { jsValue, type: malType }
+
+createPredicate = \constant \value ->
+  value == constant
+
+[
+  [_createMalBoolean,      malBoolean?     ]
+  [createMalCoreFunction,  malCoreFunction?]
+  [createMalIndex,         malIndex?       ]
+  [createMalKeyword,       malKeyword?     ]
+  [createMalList,          malList?        ]
+  [createMalMacro,         malMacro?       ]
+  [createMalNumber,        malNumber?      ]
+  [createMalSpecialForm,   malSpecialForm? ]
+  [createMalString,        malString?      ]
+  [createMalSymbol,        malSymbol?      ]
+  [_createMalUnit,         _malUnit?       ]
+  [createMalUserFunction,  malUserFunction?]
+] = malTypes.map create-factory-&-predicate
+
+malNil = _createMalUnit null
+
+[malFalse, malTrue] = [false, true].map _createMalBoolean
+
+[malFalse?, malNil?, malTrue?] =
+  [malFalse, malNil, malTrue].map createPredicate
+
+module.exports = {
+  createMalBoolean
+  createMalCoreFunction
+  createMalIndex
+  createMalKeyword
+  createMalList
+  createMalMacro
+  createMalNil
+  createMalNumber
+  createMalSpecialForm
+  createMalString
+  createMalSymbol
+  createMalUserFunction
+  malBoolean?
+  malCoreFunction?
+  malFalse
+  malFalse?
+  malIndex?
+  malKeyword?
+  malList?
+  malMacro?
+  malNil
+  malNil?
+  malNumber?
+  malSpecialForm?
+  malString?
+  malSymbol?
+  malTrue
+  malTrue?
+  malUserFunction?
+}

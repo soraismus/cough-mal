@@ -1,0 +1,68 @@
+log = console.log
+commentSignal   = require './commentSignal'
+extractJsValue  = require './extractJsValue'
+{ listEnd }     = require './keyTokens'
+{ listStart }   = require './keyTokens'
+{ reduce }      = require './linked-list'
+
+{
+  malCoreFunction?
+  malIndex?
+  malList?
+  malMacro?
+  malUserFunction?
+} = require './mal-type-utilities'
+
+adjoinMalValue = (memo, malValue) ->
+  serialized = serialize malValue
+  if memo.length == 0
+    serialized
+  else
+    "#{memo} #{serialized}"
+
+serialize = \malExpr ->
+  return commentSignal if malExpr == commentSignal
+  _serialize =
+    #if malList? malExpr then serializeList else extractJsValue
+    if malList? malExpr
+      serializeList
+    else if ? (malExpr.jsValue)
+      extractJsValue
+    else
+      \x -> x
+  _serialize malExpr
+
+serializeFunction = \label \malFunction ->
+  "[#{label}: #{malFunction.name}]"
+
+serializeIndex = \malIndex ->
+  jsIndex = malIndex.jsValue
+
+  memo = ''
+
+  for own key, malValue of jsIndex
+    memo = if memo == ''
+      "#{key} #{serialize malValue}"
+    else
+      "#{memo}, #{key} #{serialize malValue}"
+
+  indexStart + memo + indexEnd
+
+serializeList = \malList ->
+  jsList = malList.jsValue
+  serializedList = reduce ("", adjoinMalValue, jsList)
+  listStart + serializedList + listEnd
+
+indexDemarcatorPair = [
+  indexStart = '{ '
+  indexEnd   = ' }'
+]
+
+coreFunctionLabel = 'core function'
+macroLabel        = 'macro'
+userFunctionLabel = 'user function'
+
+[serializeCoreFunction, serializeMacro, serializeUserFunction] =
+  [coreFunctionLabel, macroLabel, userFunctionLabel].map serializeFunction
+
+module.exports = serialize
