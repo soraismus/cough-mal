@@ -81,7 +81,6 @@ evalFnInvocation = (malSymbol, malList, envs) ->
 
 evalList = (malList, envs) ->
   head = car malList
-  tail = cdr malList
 
   _eval = switch (extractJsValue head)
     when cond          then evalMultiCondition
@@ -97,7 +96,7 @@ evalList = (malList, envs) ->
     when unquote       then ((z, x, y) -> x)
     else                    evalFnInvocation
 
-  _eval (head, tail, envs)
+  _eval (head, (cdr malList), envs)
 
 evalMultiCondition = (head, malList, envs) ->
   until empty? malList
