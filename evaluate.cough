@@ -1,13 +1,9 @@
 log = console.log
 { addEnv }                   = require './env-utilities'
+{ car }                      = require './linked-list'
+{ cdr }                      = require './linked-list'
 commentSignal                = require './commentSignal'
-{ car }                      = require './mal-list-utilities'
-_car = car
-{ cdr }                      = require './mal-list-utilities'
-_cdr = cdr
-{ createJsLinkedList }       = require './linked-list'
-{ createMalList }            = require './mal-list-utilities'
-_createMalList = createMalList
+{ cond }                     = require './keyTokens'
 { createMalList }            = require './mal-type-utilities'
 { createMalMacro }           = require './mal-type-utilities'
 { createMalString }          = require './mal-type-utilities'
@@ -15,8 +11,6 @@ _createMalList = createMalList
 { createMalUserFunction }    = require './mal-type-utilities'
 { def! }                     = require './keyTokens'
 { _do }                      = require './keyTokens'
-{ empty? }                   = require './mal-list-utilities'
-_empty? = empty?
 { empty? }                   = require './linked-list' 
 extractJsValue               = require './extractJsValue'
 { fn* }                      = require './keyTokens'
@@ -27,10 +21,11 @@ extractJsValue               = require './extractJsValue'
 { macro* }                   = require './keyTokens'
 { malCoreFunction? }         = require './mal-type-utilities'
 { malList? }                 = require './mal-type-utilities'
+{ malNil }                   = require './mal-type-utilities'
 { malSymbol? }               = require './mal-type-utilities'
 { malUserFunction? }         = require './mal-type-utilities'
 { map }                      = require './linked-list'
-{ next }                     = require './mal-list-utilities'
+{ next }                     = require './linked-list'
 { quasiquote }               = require './keyTokens'
 { quote }                    = require './keyTokens'
 { spliceUnquote }            = require './keyTokens'
@@ -42,104 +37,90 @@ extractJsValue               = require './extractJsValue'
 { toArray }                  = require './linked-list'
 
 createFn = (malList, envs) ->
-  jsList = malList.jsValue
-  malParameterList = jsList.value
-  jsCdr = recurse jsList
-  malExpr = jsCdr.value
   createMalUserFunction
-    malExpression : malExpr
-    parameterList : malParameterList
+    malExpression : (next malList)
+    parameterList : (car malList)
 
 createLocalEnv = (jsParams, malArgs) ->
   _reduce = (env, jsParam) ->
-    env[jsParam] = malArgs.value
-    malArgs = recurse malArgs
+    env[jsParam] = car malArgs
+    malArgs = cdr malArgs
     env
   reduce ({}, _reduce, jsParams)
 
 createMacro = (malList, envs) ->
-  jsList = malList.jsValue
-  malParameterList = jsList.value
-  jsCdr = recurse jsList
-  malExpr = jsCdr.value
   createMalMacro
-    malExpression : malExpr
-    parameterList : malParameterList
+    malExpression : (cdr malList)
+    parameterList : (car malList)
 
 defineNewValue = (malList, envs) ->
-  jsList = malList.jsValue
-  malKey = jsList.value
-  jsKey = malKey.jsValue
-  jsCdr = recurse jsList
-  malExpr = jsCdr.value
-  value = _evaluate (malExpr, envs)
-  setMainEnv (envs, jsKey, value)
+  jsKey = extractJsValue (car malList)
+  malValue = _evaluate ((next malList), envs)
+  setMainEnv (envs, jsKey, malValue)
 
 evalAllSideEffects = (malList, envs) ->
-  jsList = malList.jsValue
-  forEach ((evaluate envs), jsList)
+  forEach ((evaluate envs), malList)
 
 evalCondition = (malList, envs) ->
-  jsList = malList.jsValue
-  malBoolExpr = jsList.value
-  jsCdr0 = recurse jsList
-  malExpr0 = jsCdr0.value
-  jsCdr1 = recurse jsCdr0
-  malExpr1 = jsCdr1.value
-  _eval = evaluate envs
-  jsBool = extractJsValue malBoolExpr
-  _eval (if jsBool then malExpr0 else malExpr1)
+  jsBool = extractJsValue (_evaluate ((car malList), envs))
+  malExpr = if jsBool then next malList else next (cdr malList)
+  _evaluate (malExpr, envs)
 
 evalDefault = (malExpr, envs) ->
   malExpr
 
 evalFnInvocation = (malSymbol, malList, envs) ->
   malFn = _evaluate (malSymbol, envs)
-  jsValueList = malList.jsValue
-  malArgs = map ((evaluate envs), jsValueList)
   invoke = if malCoreFunction? malFn
       invokeCoreFn
     else if malUserFunction? malFn
       invokeUserFn
     else
-      throw 'Value is not a function: ' + malFn.toString()
-  invoke (malFn, malArgs, envs)
+      throw 'Value is not a function: ' + malSymbol.toString()
+  invoke (malFn, map ((evaluate envs), malList), envs)
 
 evalList = (malList, envs) ->
-  jsList = malList.jsValue
-  car = jsList.value
-  cdr = createMalList (recurse jsList)
-  switch car.jsValue
-    when def!   then defineNewValue (cdr, envs)
-    when _do    then evalAllSideEffects (cdr, envs)
-    when fn*    then createFn (cdr, envs)
-    when macro* then createMacro (cdr, envs)
-    when _if    then evalCondition (cdr, envs)
-    when let*   then evalWithLocalValue (cdr, envs)
-    when quote  then evalQuote (cdr, envs)
+  head = car malList
+  tail = cdr malList
 
-    when quasiquote    then evalQuasiquote (cdr, envs)
-    when spliceUnquote then ((x, y) -> x)(cdr, envs)
-    when unquote       then ((x, y) -> x)(cdr, envs)
+  # WET.
+  switch (extractJsValue head)
+    when cond          then evalMultiCondition (tail, envs)
+    when def!          then defineNewValue (tail, envs)
+    when _do           then evalAllSideEffects (tail, envs)
+    when fn*           then createFn (tail, envs)
+    when macro*        then createMacro (tail, envs)
+    when _if           then evalCondition (tail, envs)
+    when let*          then evalWithLocalValue (tail, envs)
+    when quote         then evalQuote (tail, envs)
+    when quasiquote    then evalQuasiquote (tail, envs)
+    when spliceUnquote then ((x, y) -> x)(tail, envs)
+    when unquote       then ((x, y) -> x)(tail, envs)
+    else                    evalFnInvocation (head, tail, envs)
 
-    else             evalFnInvocation (car, cdr, envs)
+evalMultiCondition = (malList, envs) ->
+  until empty? malList
+    condition = car malList
+    jsBool = extractJsValue (_evaluate ((car condition), envs))
+    return _evaluate ((next condition), envs) if jsBool
+    malList = cdr malList
+  malNil
 
 MALQUOTE = createMalSymbol quote
 MALCONS = createMalSymbol 'cons'
+
 unquote? = \malValue ->
-  malValue.jsValue == unquote
+  unquote == (extractJsValue malValue)
 
 doQuote = \malExpr ->
-  _createMalList (
+  createMalList (
     MALQUOTE,
-    createJsLinkedList malExpr)
+    (createMalList malExpr))
 
+###
 # TODO: Refactor.
 evalQuasiquote = (wrappedMalExpr, envs) ->
-  log 'evalQuasiquote'
-  log 'wrappedMalExpr: ', wrappedMalExpr
   malExpr = _car wrappedMalExpr
-  log 'malExpr: ', malExpr
 
   if (not malList? malExpr) || _empty? malExpr
     return doQuote malExpr
@@ -148,17 +129,12 @@ evalQuasiquote = (wrappedMalExpr, envs) ->
 
   if unquote? (_car carMalExpr)
     x0 = carMalExpr
-    log 'x0: ', x0
-    log (_cdr x0)
-    log (_car (_cdr x0))
     x1 = next carMalExpr
-    log 'x1: ', x1
     x2 = _evaluate ((next carMalExpr), envs)
-    log 'x2: ', x2
-    log 'envs: ', envs
     return createMalList (_evaluate (next carMalExpr), envs)
 
   createMalString "hi"
+###
 
 ###
 # TODO: Compose `createMalList` and `createJsLinkedList`
@@ -170,11 +146,10 @@ parseQuoteGlyph = \tokens ->
 ###
 
 evalQuote = (malExpr, envs) ->
-  jsList = malExpr.jsValue
-  jsList.value
+  car malExpr
 
 evalSymbol = (malSymbol, envs) ->
-  lookup (envs, malSymbol.jsValue)
+  lookup (envs, (extractJsValue malSymbol))
 
 _evaluate = (malExpr, envs) ->
   _eval = switch
@@ -188,26 +163,21 @@ evaluate = \envs \malExpr ->
   _evaluate (malExpr, envs)
 
 evalWithLocalValue = (malList, envs) ->
-  jsList = malList.jsValue
-  localBindings = jsList.value
-  cdr = recurse jsList
-  malExpr = cdr.value
-  jsListOfLocalBindings = localBindings.jsValue
   _reduce = (env, malKey, malExpr) ->
     envValue = _evaluate (malExpr, envs)
-    #env[malKey.jsValue] = _evaluate (malExpr, envs)
-    env[malKey.jsValue] = envValue
+    jsKey = extractJsValue malKey
+    env[jsKey] = envValue
     env
-  newEnv = reduceBy2 ({}, _reduce, jsListOfLocalBindings)
-  _evaluate (malExpr, addEnv (envs, newEnv))
+  newEnv = reduceBy2 ({}, _reduce, (car malList))
+  _evaluate ((next malList), addEnv (envs, newEnv))
 
-invokeCoreFn = (malCoreFunction, jsListOfMalArgs, envs) ->
-  malCoreFunction.jsValue jsListOfMalArgs
+invokeCoreFn = (malCoreFunction, malArgs, envs) ->
+  extractJsValue malCoreFunction malArgs
 
 invokeUserFn = (malUserFunction, malArgs, envs) ->
-  { malExpression, parameterList } = malUserFunction.jsValue
-  jsListOfMalValues = parameterList.jsValue
-  jsParameters = map (extractJsValue, jsListOfMalValues)
+  { malExpression, parameterList } =
+    extractJsValue malUserFunction
+  jsParameters = map (extractJsValue, parameterList)
   newEnv = createLocalEnv (jsParameters, malArgs)
   newEnvStack = addEnv (envs, newEnv)
   _evaluate (malExpression, newEnvStack)

@@ -1,5 +1,6 @@
 keyTokens = [
   catch*             = 'catch*'
+  cond               = 'cond'
   def!               = 'def!'
   _do                = 'do'
   expandMacro        = 'expandMacro'
@@ -42,6 +43,7 @@ glyphTokens = [
 
 module.exports = {
   catch*
+  cond
   def!
   _do
   expandMacro

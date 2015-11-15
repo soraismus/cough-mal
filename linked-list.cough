@@ -1,12 +1,19 @@
 log = console.log
+{ malTypes } = require './mal-types'
+malListType = malTypes[4]
 
-createNode = (value, nextNode) ->
-  { type: linkedListType, value, next : nextNode }
+car = \malList ->
+  malList.value
 
-createJsLinkedList = (value, nextNode) ->
-  # Assert: jsLinkedList? nextNode
+cdr = \malList ->
+  malList.next
+
+createMalList = (value, nextNode) ->
   return EOL unless ? value
   createNode (value, nextNode ?? EOL)
+
+createNode = (value, nextNode) ->
+  { type: malListType, value, next : nextNode }
 
 forEach = (fn, list) ->
   result = list
@@ -18,18 +25,15 @@ forEach = (fn, list) ->
 empty? = \value ->
   value == EOL
 
-jsLinkedList? = \value ->
-  # Assert: ? value && ? (value.type)
-  value.type == linkedListType
-
 map = (fn, list) ->
   _reduce = (list, value) ->
-    createJsLinkedList ((fn value), list)
+    createMalList ((fn value), list)
   reverse (reduce (EOL, _reduce, list))
 
+next = \malList ->
+  car (cdr malList)
+
 recurse = \list ->
-  # Assert: jsLinkedList? list
-  # Assert: jsLinkedList? list
   if empty? list then list else list.next
 
 reduce = (seed, fn, list) ->
@@ -48,12 +52,17 @@ reduceBy2 = (seed, fn, list) ->
   seed
 
 reverse = \list ->
-  # Assert: jsLinkedList? list
   result = EOL
   until empty? list
-    result = createJsLinkedList (list.value, result)
+    result = createMalList (list.value, result)
     list = list.next
   result
+
+safeHead = \malList ->
+  if empty? list then list else list.value
+
+safeNext = \malList ->
+  safeHead (recurse malList)
 
 toArray = \list ->
   _reduce = (jsArray, value) ->
@@ -61,21 +70,23 @@ toArray = \list ->
     jsArray
   reduce ([], _reduce, list)
 
-linkedListType = 'jsLinkedList'
-
 _EOL = {}
 
 EOL = createNode (_EOL, _EOL)
 
 module.exports = {
-  createJsLinkedList
+  car
+  cdr
+  createMalList
   empty?
   forEach
-  jsLinkedList?
   map
+  next
   recurse
   reduce
   reduceBy2
   reverse
+  safeHead
+  safeNext
   toArray
 }

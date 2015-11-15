@@ -1,17 +1,15 @@
 log = console.log
-commentSignal   = require './commentSignal'
-extractJsValue  = require './extractJsValue'
-{ listEnd }     = require './keyTokens'
-{ listStart }   = require './keyTokens'
-{ reduce }      = require './linked-list'
-
-{
-  malCoreFunction?
-  malIndex?
-  malList?
-  malMacro?
-  malUserFunction?
-} = require './mal-type-utilities'
+commentSignal        = require './commentSignal'
+extractJsValue       = require './extractJsValue'
+{ listEnd }          = require './keyTokens'
+{ listStart }        = require './keyTokens'
+{ malCoreFunction? } = require './mal-type-utilities'
+{ malIndex? }        = require './mal-type-utilities'
+{ malList? }         = require './mal-type-utilities'
+{ malMacro? }        = require './mal-type-utilities'
+{ malNil? }          = require './mal-type-utilities'
+{ malUserFunction? } = require './mal-type-utilities'
+{ reduce }           = require './linked-list'
 
 adjoinMalValue = (memo, malValue) ->
   serialized = serialize malValue
@@ -23,9 +21,10 @@ adjoinMalValue = (memo, malValue) ->
 serialize = \malExpr ->
   return commentSignal if malExpr == commentSignal
   _serialize =
-    #if malList? malExpr then serializeList else extractJsValue
     if malList? malExpr
       serializeList
+    else if malNil? malExpr
+      \x -> 'nil'
     else if ? (malExpr.jsValue)
       extractJsValue
     else
@@ -49,8 +48,7 @@ serializeIndex = \malIndex ->
   indexStart + memo + indexEnd
 
 serializeList = \malList ->
-  jsList = malList.jsValue
-  serializedList = reduce ("", adjoinMalValue, jsList)
+  serializedList = reduce ("", adjoinMalValue, malList)
   listStart + serializedList + listEnd
 
 indexDemarcatorPair = [

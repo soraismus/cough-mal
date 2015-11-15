@@ -1,4 +1,5 @@
-{ malTypes } = require './mal-types'
+{ createMalList } = require './linked-list'
+{ malTypes }      = require './mal-types'
 
 create-factory-&-predicate = \malType ->
   factory = \jsValue ->
@@ -24,7 +25,7 @@ createPredicate = \constant \value ->
   [createMalCoreFunction,  malCoreFunction?]
   [createMalIndex,         malIndex?       ]
   [createMalKeyword,       malKeyword?     ]
-  [createMalList,          malList?        ]
+  [_createMalList,         malList?        ]
   [createMalMacro,         malMacro?       ]
   [createMalNumber,        malNumber?      ]
   [createMalSpecialForm,   malSpecialForm? ]

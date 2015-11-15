@@ -1,6 +1,11 @@
 log = console.log
 comment                = require './commentSignal'
-{ createJsLinkedList } = require './linked-list'
+{ createMalBoolean }   = require './mal-type-utilities'
+{ createMalList }      = require './mal-type-utilities'
+{ createMalNil }       = require './mal-type-utilities'
+{ createMalNumber }    = require './mal-type-utilities'
+{ createMalString }    = require './mal-type-utilities'
+{ createMalSymbol }    = require './mal-type-utilities'
 { _false }             = require './keyTokens'
 { glyphTokens }        = require './keyTokens'
 { keyTokens }          = require './keyTokens'
@@ -18,21 +23,10 @@ comment                = require './commentSignal'
 { reverse }            = require './linked-list'
 { _true }              = require './keyTokens'
 
-{
-  createMalBoolean
-  createMalKeyword
-  createMalList
-  createMalNil
-  createMalNumber
-  createMalString
-  createMalSymbol
-} = require './mal-type-utilities'
-
 atomize = \token ->
   createMalValue = switch
     when nil? token      then createMalNil
     when boolean? token  then ; createMalBoolean parseBoolean ;
-    when keyword? token  then createMalKeyword
     when string? token   then createMalString
     when integer? token  then ; createMalNumber parseInt10 ;
     when float? token    then ; createMalNumber parseFloat10 ;
@@ -63,7 +57,6 @@ _parse = (token, tokens) ->
       parseList tokens
     when glyph? token
       parseGlyph (glyphIndex[token], tokens) 
-    #when quoteGlyph then parseQuoteGlyph tokens
     else
       atomize token
 
@@ -71,27 +64,18 @@ parse = \tokens ->
   return comment if tokens == comment
   _parse (tokens.shift(), tokens)
 
-# TODO: Compose `createMalList` and `createJsLinkedList`
-parseQuoteGlyph = \tokens ->
-  createMalList (
-    createJsLinkedList (
-      (createMalSymbol quote),
-      (createJsLinkedList (parse tokens))))
-
-# TODO: Compose `createMalList` and `createJsLinkedList`
 parseGlyph = (keyword, tokens) ->
   createMalList (
-    createJsLinkedList (
-      (createMalSymbol keyword),
-      (createJsLinkedList (parse tokens))))
+    (createMalSymbol keyword),
+    (createMalList (parse tokens)))
 
 parseList = \tokens ->
-  jsList = createJsLinkedList ()
+  malList = createMalList ()
   until (token = tokens.shift()) == listEnd
-    jsList = createJsLinkedList (
+    malList = createMalList (
       (_parse (token, tokens)),
-      jsList)
-  createMalList (reverse jsList)
+      malList)
+  reverse malList
 
 parseBoolean = \token ->
   token == _true
@@ -114,6 +98,6 @@ glyphIndex[quoteGlyph]         = quote
 glyphIndex[spliceUnquoteGlyph] = spliceUnquote
 glyphIndex[unquoteGlyph]       = unquote
 
-[keyword?, string?] = [':', '"'].map startsWith?
+string? = startsWith? '"'
 
 module.exports = parse
