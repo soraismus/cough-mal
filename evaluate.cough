@@ -21,6 +21,7 @@ extractJsValue               = require './extractJsValue'
 { macro* }                   = require './keyTokens'
 { malCoreFunction? }         = require './mal-type-utilities'
 { malList? }                 = require './mal-type-utilities'
+{ malMacro? }                = require './mal-type-utilities'
 { malNil }                   = require './mal-type-utilities'
 { malSymbol? }               = require './mal-type-utilities'
 { malUserFunction? }         = require './mal-type-utilities'
@@ -33,6 +34,7 @@ extractJsValue               = require './extractJsValue'
 { recurse }                  = require './linked-list'
 { reduce }                   = require './linked-list'
 { reduceBy2 }                = require './linked-list'
+{ reverse }                  = require './linked-list'
 { setMainEnv }               = require './env-utilities'
 { toArray }                  = require './linked-list'
 
@@ -58,6 +60,16 @@ defineNewValue = (head, malList, envs) ->
   malValue = _evaluate ((next malList), envs)
   setMainEnv (envs, jsKey, malValue)
 
+doCons = (malExpr, malList) ->
+  createMalList (
+    MALCONS,
+    (createMalList (malExpr, malList)))
+
+doQuote = \malExpr ->
+  createMalList (
+    MALQUOTE,
+    (createMalList malExpr))
+
 evalAllSideEffects = (head, malList, envs) ->
   forEach ((evaluate envs), malList)
 
@@ -81,7 +93,6 @@ evalFnInvocation = (malSymbol, malList, envs) ->
 
 evalList = (malList, envs) ->
   head = car malList
-
   _eval = switch (extractJsValue head)
     when cond          then evalMultiCondition
     when def!          then defineNewValue
@@ -95,7 +106,6 @@ evalList = (malList, envs) ->
     when spliceUnquote then ((z, x, y) -> x)
     when unquote       then ((z, x, y) -> x)
     else                    evalFnInvocation
-
   _eval (head, (cdr malList), envs)
 
 evalMultiCondition = (head, malList, envs) ->
@@ -111,47 +121,32 @@ MALCONS = createMalSymbol 'cons'
 
 unquote? = \malValue ->
   unquote == (extractJsValue malValue)
+unquotedExpr? = \malValue ->
+  malList? malValue && (unquote? (car malValue))
 
-doQuote = \malExpr ->
-  createMalList (
-    MALQUOTE,
-    (createMalList malExpr))
+evalQuasiquote = (head, malList, envs) ->
+  malExpr = car malList
 
-###
-# TODO: Refactor.
-evalQuasiquote = (head, wrappedMalExpr, envs) ->
-  malExpr = _car wrappedMalExpr
-
-  if (not malList? malExpr) || _empty? malExpr
+  if (not malList? malExpr) || empty? malExpr
     return doQuote malExpr
 
-  carMalExpr = _car malExpr
+  _reduce = (malList, malExpr) ->
+    head = if unquotedExpr? malExpr
+        _evaluate ((next malExpr), envs)
+      else
+        malExpr
+    createMalList (head, malList)
 
-  if unquote? (_car carMalExpr)
-    x0 = carMalExpr
-    x1 = next carMalExpr
-    x2 = _evaluate ((next carMalExpr), envs)
-    return createMalList (_evaluate (next carMalExpr), envs)
+  reverse (reduce ((createMalList ()), _reduce, malExpr))
 
-  createMalString "hi"
-###
-
-###
-# TODO: Compose `createMalList` and `createJsLinkedList`
-parseQuoteGlyph = \tokens ->
-  createMalList (
-    createJsLinkedList (
-      (createMalSymbol quote),
-      (createJsLinkedList (parse tokens))))
-###
-
-evalQuote = (head, malExpr, envs) ->
-  car malExpr
+evalQuote = (head, malList, envs) ->
+  car malList
 
 evalSymbol = (malSymbol, envs) ->
   lookup (envs, (extractJsValue malSymbol))
 
 _evaluate = (malExpr, envs) ->
+  malExpr = expandMacro (malExpr, envs)
   _eval = switch
     when malList? malExpr   then evalList
     when malSymbol? malExpr then evalSymbol
@@ -170,6 +165,19 @@ evalWithLocalValue = (head, malList, envs) ->
     env
   newEnv = reduceBy2 ({}, _reduce, (car malList))
   _evaluate ((next malList), addEnv (envs, newEnv))
+
+evalInvocation = (malSymbol, malList, envs) ->
+  malInvokable = _evaluate (malSymbol, envs)
+  invoke = switch
+    when malMacro? malInvokable        then invokeMacro
+    when malCoreFunction? malInvokable then invokeCoreFn
+    when malUserFunction? malInvokable then invokeUserFn
+    else throw 'Value is not a function'
+  invoke (malInvokable, map ((evaluate envs), malList), envs)
+expandMacro = (malExpr, envs) ->
+  #evalFnInvocation = (malSymbol, malList, envs) ->
+  # malFn = _evaluate (malSymbol, envs)
+  # invoke = if malCoreFunction? malFn
 
 invokeCoreFn = (malCoreFunction, malArgs, envs) ->
   extractJsValue malCoreFunction malArgs
