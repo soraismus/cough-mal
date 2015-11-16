@@ -52,7 +52,7 @@ createLocalEnv = (jsParams, malArgs) ->
 
 createMacro = (head, malList, envs) ->
   createMalMacro
-    malExpression : (cdr malList)
+    malExpression : (car (cdr malList))
     parameterList : (car malList)
 
 defineNewValue = (head, malList, envs) ->
@@ -105,7 +105,7 @@ evalList = (malList, envs) ->
     when quasiquote    then evalQuasiquote
     when spliceUnquote then ((z, x, y) -> x)
     when unquote       then ((z, x, y) -> x)
-    else                    evalFnInvocation
+    else                    evalInvocation
   _eval (head, (cdr malList), envs)
 
 evalMultiCondition = (head, malList, envs) ->
@@ -146,7 +146,6 @@ evalSymbol = (malSymbol, envs) ->
   lookup (envs, (extractJsValue malSymbol))
 
 _evaluate = (malExpr, envs) ->
-  malExpr = expandMacro (malExpr, envs)
   _eval = switch
     when malList? malExpr   then evalList
     when malSymbol? malExpr then evalSymbol
@@ -174,14 +173,16 @@ evalInvocation = (malSymbol, malList, envs) ->
     when malUserFunction? malInvokable then invokeUserFn
     else throw 'Value is not a function'
   invoke (malInvokable, map ((evaluate envs), malList), envs)
-expandMacro = (malExpr, envs) ->
-  #evalFnInvocation = (malSymbol, malList, envs) ->
-  # malFn = _evaluate (malSymbol, envs)
-  # invoke = if malCoreFunction? malFn
+
+invokeMacro = (malMacro, malArgs, envs) ->
+  #_evaluate (invokeUserFn (malMacro, malArgs, envs), envs)
+  x0 = invokeUserFn (malMacro, malArgs, envs)
+  _evaluate (x0, envs)
 
 invokeCoreFn = (malCoreFunction, malArgs, envs) ->
   extractJsValue malCoreFunction malArgs
 
+# TODO: Change `parameterList` to `malParameters`.
 invokeUserFn = (malUserFunction, malArgs, envs) ->
   { malExpression, parameterList } =
     extractJsValue malUserFunction
