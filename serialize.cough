@@ -23,12 +23,30 @@ serialize = \malExpr ->
   _serialize =
     if malList? malExpr
       serializeList
+    else if malCoreFunction? malExpr
+      \x -> 'core function'
+    else if malUserFunction? malExpr
+      \x -> 'user function'
+    else if malMacro? malExpr
+      \x -> 'macro'
     else if malNil? malExpr
       \x -> 'nil'
     else if ? (malExpr.jsValue)
       extractJsValue
     else
       \x -> x
+  _serialize malExpr
+
+serialize = \malExpr ->
+  return commentSignal if malExpr == commentSignal
+  _serialize = switch
+    when malList? malExpr         then serializeList
+    when malCoreFunction? malExpr then \x -> 'core function'
+    when malUserFunction? malExpr then \x -> 'user function'
+    when malMacro? malExpr        then \x -> 'macro'
+    when malNil? malExpr          then \x -> 'nil'
+    when ? (malExpr.jsValue)      then extractJsValue
+    else                               \x -> x
   _serialize malExpr
 
 serializeFunction = \label \malFunction ->

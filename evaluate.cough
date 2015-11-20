@@ -3,6 +3,7 @@ log = console.log
 { car }                      = require './linked-list'
 { cdr }                      = require './linked-list'
 commentSignal                = require './commentSignal'
+{ concat }                   = require './linked-list'
 { cond }                     = require './keyTokens'
 { createMalList }            = require './mal-type-utilities'
 { createMalMacro }           = require './mal-type-utilities'
@@ -41,30 +42,33 @@ extractJsValue               = require './extractJsValue'
 createFn = (head, malList, envs) ->
   createMalUserFunction
     malExpression : (next malList)
-    parameterList : (car malList)
+    malParameters : (car malList)
 
+SPLAT-TOKEN = '&'
 createLocalEnv = (jsParams, malArgs) ->
-  _reduce = (env, jsParam) ->
-    env[jsParam] = car malArgs
-    malArgs = cdr malArgs
-    env
-  reduce ({}, _reduce, jsParams)
+  env = {}
+  until empty? jsParams
+    jsParam = car jsParams
+    if jsParam == SPLAT-TOKEN
+      env[next jsParams] = malArgs
+      return env
+    else
+      env[jsParam] = car malArgs
+      jsParams = cdr jsParams
+      malArgs = cdr malArgs
+  env
 
 createMacro = (head, malList, envs) ->
   createMalMacro
     malExpression : (car (cdr malList))
-    parameterList : (car malList)
+    malParameters : (car malList)
 
 defineNewValue = (head, malList, envs) ->
   jsKey = extractJsValue (car malList)
   malValue = _evaluate ((next malList), envs)
   setMainEnv (envs, jsKey, malValue)
 
-doCons = (malExpr, malList) ->
-  createMalList (
-    MALCONS,
-    (createMalList (malExpr, malList)))
-
+MALQUOTE = createMalSymbol quote
 doQuote = \malExpr ->
   createMalList (
     MALQUOTE,
@@ -81,15 +85,14 @@ evalCondition = (head, malList, envs) ->
 evalDefault = (malExpr, envs) ->
   malExpr
 
-evalFnInvocation = (malSymbol, malList, envs) ->
-  malFn = _evaluate (malSymbol, envs)
-  invoke = if malCoreFunction? malFn
-      invokeCoreFn
-    else if malUserFunction? malFn
-      invokeUserFn
-    else
-      throw 'Value is not a function: ' + malSymbol.toString()
-  invoke (malFn, map ((evaluate envs), malList), envs)
+evalInvocation = (malSymbol, malList, envs) ->
+  malInvokable = _evaluate (malSymbol, envs)
+  invoke = switch
+    when malMacro? malInvokable        then invokeMacro
+    when malCoreFunction? malInvokable then invokeCoreFn
+    when malUserFunction? malInvokable then invokeUserFn
+    else throw 'Value is not a function'
+  invoke (malInvokable, map ((evaluate envs), malList), envs)
 
 evalList = (malList, envs) ->
   head = car malList
@@ -116,28 +119,72 @@ evalMultiCondition = (head, malList, envs) ->
     malList = cdr malList
   malNil
 
-MALQUOTE = createMalSymbol quote
-MALCONS = createMalSymbol 'cons'
-
-unquote? = \malValue ->
-  unquote == (extractJsValue malValue)
-unquotedExpr? = \malValue ->
-  malList? malValue && (unquote? (car malValue))
-
+cons = createMalList
 evalQuasiquote = (head, malList, envs) ->
   malExpr = car malList
-
   if (not malList? malExpr) || empty? malExpr
     return doQuote malExpr
 
+  ###
   _reduce = (malList, malExpr) ->
-    head = if unquotedExpr? malExpr
-        _evaluate ((next malExpr), envs)
-      else
-        malExpr
+    head = switch
+      when unquotedExpr? malExpr       then _evaluate ((next malExpr), envs)
+      when spliceUnquotedExpr? malExpr then () -> "x"
+      else                                  malExpr
     createMalList (head, malList)
-
   reverse (reduce ((createMalList ()), _reduce, malExpr))
+  ###
+
+  ###
+  result = malExpr
+
+  result = if unquotedExpr? result
+      _evaluate ((next result), envs)
+    else if spliceUnquotedExpr? result
+      _evaluate ((next result), envs)
+    else
+      result
+      
+  prior = result
+  current = cdr malExpr
+
+  until empty? current
+    result = createMalList (
+      if unquotedExpr? current
+        _evaluate ((next result), envs)
+      else if spliceUnquotedExpr? current
+        concat (
+          _evaluate ((next current), envs),
+  ###
+
+  _malList = reverse (car malList)
+  result = createMalList ()
+
+  until empty? _malList
+    node = car _malList
+    log 'node: ', node
+    if unquotedExpr? node
+      log 'unquote'
+      _node = _evaluate ((next node), envs)
+      log '_node: ', _node
+      result = createMalList (_node, result)
+      log 'result: ', result
+    #else if spliceUnquotedExpr? node
+    #  log 'spliceUnqoute'
+    #  tempMalList = reverse (_evaluate ((next node), envs))
+    #  until empty? tempMalList
+    #    result = createMalList ((car tempMalList), result)
+    #    tempMalList = cdr tempMalList
+    else
+      log 'else'
+      _node = node
+      #result = createMalList (_node, result)
+      result = _node
+    _malList = cdr _malList
+
+  result
+    
+        
 
 evalQuote = (head, malList, envs) ->
   car malList
@@ -165,30 +212,36 @@ evalWithLocalValue = (head, malList, envs) ->
   newEnv = reduceBy2 ({}, _reduce, (car malList))
   _evaluate ((next malList), addEnv (envs, newEnv))
 
-evalInvocation = (malSymbol, malList, envs) ->
-  malInvokable = _evaluate (malSymbol, envs)
-  invoke = switch
-    when malMacro? malInvokable        then invokeMacro
-    when malCoreFunction? malInvokable then invokeCoreFn
-    when malUserFunction? malInvokable then invokeUserFn
-    else throw 'Value is not a function'
-  invoke (malInvokable, map ((evaluate envs), malList), envs)
-
 invokeMacro = (malMacro, malArgs, envs) ->
-  #_evaluate (invokeUserFn (malMacro, malArgs, envs), envs)
-  x0 = invokeUserFn (malMacro, malArgs, envs)
-  _evaluate (x0, envs)
+  _evaluate (invokeUserFn (malMacro, malArgs, envs), envs)
 
 invokeCoreFn = (malCoreFunction, malArgs, envs) ->
   extractJsValue malCoreFunction malArgs
 
-# TODO: Change `parameterList` to `malParameters`.
 invokeUserFn = (malUserFunction, malArgs, envs) ->
-  { malExpression, parameterList } =
+  { malExpression, malParameters } =
     extractJsValue malUserFunction
-  jsParameters = map (extractJsValue, parameterList)
+  jsParameters = map (extractJsValue, malParameters)
   newEnv = createLocalEnv (jsParameters, malArgs)
   newEnvStack = addEnv (envs, newEnv)
   _evaluate (malExpression, newEnvStack)
+
+spliceUnquote? = \malValue ->
+  log 'spliceUnquote?'
+  log 'malValue: ', malValue
+  spliceUnquote == (extractJsValue malValue)
+
+spliceUnquotedExpr? = \malValue ->
+  log 'spliceUnquoteExpr?'
+  log 'malList: ', malList
+  malList? malValue && (spliceUnquote? (car malValue))
+
+unquote? = \malValue ->
+  unquote == (extractJsValue malValue)
+
+unquotedExpr? = \malValue ->
+  log 'unquotedExpr?'
+  log 'malValue: ', malValue
+  malList? malValue && (unquote? (car malValue))
 
 module.exports = evaluate

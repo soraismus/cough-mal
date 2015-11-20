@@ -8,6 +8,17 @@ car = \malList ->
 cdr = \malList ->
   malList.next
 
+concat = (malList0, malList1) ->
+  return malList1 if empty? malList0
+  result = malList0
+  prior = malList0
+  current = cdr malList0
+  until empty? current
+    prior = cdr prior
+    current = cdr current
+  prior.next = malList1
+  result
+
 createMalList = (value, nextNode) ->
   return EOL unless ? value
   createNode (value, nextNode ?? EOL)
@@ -24,6 +35,14 @@ forEach = (fn, list) ->
 
 empty? = \value ->
   value == EOL
+
+last = \malList ->
+  prior = malList
+  current = cdr malList
+  until empty? current
+    prior = cdr prior
+    current = cdr current
+  car prior
 
 map = (fn, list) ->
   _reduce = (list, value) ->
@@ -70,6 +89,15 @@ toArray = \list ->
     jsArray
   reduce ([], _reduce, list)
 
+zip = (seed, fn, list0, list1) ->
+  until empty? list0 || empty? list1
+    value0 = car list0
+    list0 = cdr list0
+    value1 = car list1
+    list1 = cdr list1
+    seed = fn (seed, value0, value1)
+  seed
+
 _EOL = {}
 
 EOL = createNode (_EOL, _EOL)
@@ -77,9 +105,11 @@ EOL = createNode (_EOL, _EOL)
 module.exports = {
   car
   cdr
+  concat
   createMalList
   empty?
   forEach
+  last
   map
   next
   recurse

@@ -1,4 +1,7 @@
 log = console.log
+{ car }                   = require './linked-list'
+{ cdr }                   = require './linked-list'
+{ concat }                = require './linked-list'
 { createJsLinkedList }    = require './linked-list'
 { createMalBoolean }      = require './mal-type-utilities'
 { createMalCoreFunction } = require './mal-type-utilities'
@@ -7,7 +10,8 @@ log = console.log
 { createMalString }       = require './mal-type-utilities'
 { empty? }                = require './linked-list'
 evaluate                  = require './evaluate'
-_process_                 = require './process'
+extractJsValue            = require './extractJsValue'
+{ last }                  = require './linked-list'
 { malCoreFunction? }      = require './mal-type-utilities'
 { malBoolean? }           = require './mal-type-utilities'
 { malList? }              = require './mal-type-utilities'
@@ -16,6 +20,8 @@ _process_                 = require './process'
 { malString? }            = require './mal-type-utilities'
 { malSymbol? }            = require './mal-type-utilities'
 { malUserFunction? }      = require './mal-type-utilities'
+{ next }                  = require './linked-list'
+_process_                 = require './process'
 { recurse }               = require './linked-list'
 { reduce }                = require './linked-list'
 serialize                 = require './serialize'
@@ -38,8 +44,8 @@ lessThanOrEqual = (nbrs...) ->
 greaterThanOrEqual = (nbrs...) ->
   createMalBoolean (nbrs[0] >= nbrs[1])
 
-lift = \fnOnJsValues \jsListOfMalValues ->
-  malValues = toArray jsListOfMalValues
+lift = \fnOnJsValues \malValueList ->
+  malValues = toArray malValueList
   jsValues = malValues.map \malValue -> malValue.jsValue
   fnOnJsValues jsValues...
 
@@ -95,71 +101,55 @@ areEqual = \jsList ->
 # TODO
 apply = \jsList ->
 
-car = \jsList ->
-  jsList.value.jsValue.value
-
-cdr = \jsList ->
+cons = \malArgs ->
   createMalList (
-    jsList.value.jsValue.next)
+    car malArgs
+    next malArgs)
 
-# TODO
-concat = \jsList ->
+stem = \fn \malArgs ->
+  fn (car malArgs)
 
-cons = \jsList ->
-  malValue = jsList.value
-  cdr = recurse jsList
-  malList = cdr.value
-  innerJsList = malList.jsValue
-  createMalList (
-    createJsLinkedList (
-      malValue,
-      innerJsList))
+_concat = \malArgs ->
+  malList0 = car malArgs
+  malList1 = next malArgs
+  concat (malList0, malList1)
 
-count = \jsList ->
-  malList = jsList.value
-  jsList = malList.jsValue
+count = \malArgs ->
+  malList = car malArgs
   _reduce = (sum, value) ->
     sum + 1
   createMalNumber (
-    reduce (0, _reduce, jsList))
+    reduce (0, _reduce, malList))
 
 createPredicate = \pred \jsList ->
   malValue = jsList.value
   createMalBoolean (pred malValue)
 
-_evaluate = \jsString ->
+_evaluate_ = \jsString ->
   _process_ [environment] jsString
 
-evaluate = \jsList ->
-  malString = jsList.value
-  jsString = malString.jsValue
-  _evaluate (stripQuotes jsString)
+_evaluate = \malArgs ->
+  _evaluate_ (stripQuotes (extractJsValue (car malArgs)))
 
-list = \jsList ->
-  createMalList jsList
+list = \malArgs ->
+  malArgs
 
-load = \jsList ->
-  _evaluate (_read jsList)
+load = \malArgs ->
+  _evaluate_ (_read malArgs)
 
-nth = \jsList ->
-  malNumber = jsList.value
-  jsNumber = malNumber.jsValue
-  cdr = recurse jsList
-
+nth = \malArgs ->
+  jsNumber = extractJsValue (car malArgs)
+  malList  = car (cdr malArgs)
   for i in [0 ... jsNumber]
-    cdr = recurse cdr 
-
-  cdr.value
+    malList = cdr malList
+  car malList
 
 _quit_ = ->
   process.exit 0
 
-_read = \jsList ->
-  malFileName = jsList.value
-  jsFileName-w/-quotes = malFileName.jsValue
-  jsFileName = stripQuotes jsFileName-w/-quotes
-  buffer = require('fs').readFileSync jsFileName
-  buffer.toString ()
+_read = \malArgs ->
+  jsFileName = stripQuotes (extractJsValue (car malArgs))
+  require('fs').readFileSync(jsFileName).toString()
 
 read = \jsList ->
   createMalString (_read jsList)
@@ -171,20 +161,18 @@ setCoreFnsOnMalValues! = (env, fns) ->
 stripQuotes = \jsString ->
   jsString[1 .. -2]
 
-typeOf = \jsList ->
-  malValue = jsList.value
+typeOf = \malArgs ->
+  malValue = car malArgs
   createMalString malValue.type 
 
-_throw = \jsList ->
-  malValue = jsList.value
-  throw (serialize malValue)
+_throw = \malArgs ->
+  throw (serialize (car malArgs))
 
 time-ms = () ->
   createMalNumber (new Date().getTime ())
 
-write = \jsList ->
-  malValue = jsList.value
-  createMalString (serialize malValue)
+write = \malArgs ->
+  createMalString (serialize (car malArgs))
 
 [boolean?, list?, nil?, number?, symbol?, string?] =
   [ malBoolean?
@@ -195,15 +183,21 @@ write = \jsList ->
     malSymbol?
   ].map createPredicate
 
+[_car, _cdr, _empty?, _last] =
+  [car, cdr, empty?, last].map stem
+
 functionsOnMalValues = {
   '='        : areEqual
   'apply'    : apply
   'boolean?' : boolean?
-  'car'      : car
-  'cdr'      : cdr
+  'car'      : _car
+  'cdr'      : _cdr
   'cons'     : cons
+  'concat'   : _concat
   'count'    : count
-  'eval'     : evaluate
+  'empty?'   : _empty?
+  'eval'     : _evaluate
+  'last'     : _last
   'list'     : list
   'list?'    : list?
   'load'     : load
