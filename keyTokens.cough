@@ -19,7 +19,7 @@ keyTokens = [
   quasiquoteGlyph    = '`'
   quote              = 'quote'
   quoteGlyph         = '\''
-  splicUnquote       = 'splice-unquote'
+  spliceUnquote      = 'splice-unquote'
   spliceUnquoteGlyph = '~@'
   _true              = 'true'
   try*               = 'try*'
@@ -30,7 +30,7 @@ keyTokens = [
 macroTokens = [
   quasiquote
   quote
-  splicUnquote
+  spliceUnquote
   unquote
 ]
 
@@ -65,7 +65,7 @@ module.exports = {
   quasiquoteGlyph
   quote
   quoteGlyph
-  splicUnquote
+  spliceUnquote
   spliceUnquoteGlyph
   _true
   try*

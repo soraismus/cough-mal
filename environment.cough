@@ -1,6 +1,7 @@
 log = console.log
 { car }                   = require './linked-list'
 { cdr }                   = require './linked-list'
+{ copy }                  = require './linked-list'
 { concat }                = require './linked-list'
 { createJsLinkedList }    = require './linked-list'
 { createMalBoolean }      = require './mal-type-utilities'
@@ -110,7 +111,7 @@ stem = \fn \malArgs ->
   fn (car malArgs)
 
 _concat = \malArgs ->
-  malList0 = car malArgs
+  malList0 = copy (car malArgs)
   malList1 = next malArgs
   concat (malList0, malList1)
 

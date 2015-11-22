@@ -19,6 +19,9 @@ concat = (malList0, malList1) ->
   prior.next = malList1
   result
 
+copy = \malList ->
+  map (identity, malList)
+
 createMalList = (value, nextNode) ->
   return EOL unless ? value
   createNode (value, nextNode ?? EOL)
@@ -35,6 +38,8 @@ forEach = (fn, list) ->
 
 empty? = \value ->
   value == EOL
+
+identity = \x -> x
 
 last = \malList ->
   prior = malList
@@ -106,6 +111,7 @@ module.exports = {
   car
   cdr
   concat
+  copy
   createMalList
   empty?
   forEach

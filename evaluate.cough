@@ -1,4 +1,5 @@
 log = console.log
+serialize = require './serialize'
 { addEnv }                   = require './env-utilities'
 { car }                      = require './linked-list'
 { cdr }                      = require './linked-list'
@@ -7,6 +8,9 @@ commentSignal                = require './commentSignal'
 { cond }                     = require './keyTokens'
 { createMalList }            = require './mal-type-utilities'
 { createMalMacro }           = require './mal-type-utilities'
+
+{ createMalNumber }           = require './mal-type-utilities'
+
 { createMalString }          = require './mal-type-utilities'
 { createMalSymbol }          = require './mal-type-utilities'
 { createMalUserFunction }    = require './mal-type-utilities'
@@ -68,11 +72,28 @@ defineNewValue = (head, malList, envs) ->
   malValue = _evaluate ((next malList), envs)
   setMainEnv (envs, jsKey, malValue)
 
-MALQUOTE = createMalSymbol quote
+MALQUOTE  = createMalSymbol quote
+MALCONS   = createMalSymbol 'cons'
+MALCONCAT = createMalSymbol 'concat'
+
 doQuote = \malExpr ->
   createMalList (
     MALQUOTE,
     (createMalList malExpr))
+
+doCons = (malExpr, malList) ->
+  createMalList (
+    MALCONS,
+    createMalList (malExpr, (createMalList malList)))
+
+doConcat = (malList0, malList1) ->
+  log 'doConcat'
+  log 'malList0: ', (serialize malList0)
+  log 'malList1: ', (serialize malList1)
+  log 'createMalList (malList0, malList1): ', (serialize (createMalList (malList0, malList1)))
+  createMalList (
+    MALCONCAT,
+    createMalList (malList0, malList1))
 
 evalAllSideEffects = (head, malList, envs) ->
   forEach ((evaluate envs), malList)
@@ -120,71 +141,63 @@ evalMultiCondition = (head, malList, envs) ->
   malNil
 
 cons = createMalList
-evalQuasiquote = (head, malList, envs) ->
-  malExpr = car malList
-  if (not malList? malExpr) || empty? malExpr
+
+_normalizeQuasiquote = (malList, malExpr) ->
+  log ()
+  log 'NEW CALL'
+  log 'malExpr: ', (serialize malExpr)
+  log 'malList: ', (serialize malList)
+
+  if unquotedExpr? malExpr
+    log 'unquotedExpr'
+    result = doCons ((next malExpr), malList)
+    log 'result: ', (serialize result)
+    log ()
+    result
+  else if spliceUnquotedExpr? malExpr
+    log 'spliceUnquotedExpr'
+    log 'the malList at the end: ', (serialize malList)
+    result = doConcat ((normalizeQuasiquote (next malExpr)), malList)
+    log 'result: ', (serialize result)
+    log ()
+    result
+  else if malList? malExpr
+    log 'is list'
+    result = doCons ((normalizeQuasiquote malExpr), malList)
+    log 'result: ', (serialize result)
+    log ()
+    result
+  else
+    log 'not list nor unquoted'
+    result = doCons ((doQuote malExpr), malList)
+    log 'result: ', (serialize result)
+    log ()
+    result
+
+normalizeQuasiquote = \malExpr ->
+  log ()
+  log 'normalizeQuasiquote'
+  log 'malExpr: ', (serialize malExpr)
+  if not malList? malExpr
     return doQuote malExpr
-
-  ###
-  _reduce = (malList, malExpr) ->
-    head = switch
-      when unquotedExpr? malExpr       then _evaluate ((next malExpr), envs)
-      when spliceUnquotedExpr? malExpr then () -> "x"
-      else                                  malExpr
-    createMalList (head, malList)
-  reverse (reduce ((createMalList ()), _reduce, malExpr))
-  ###
-
-  ###
-  result = malExpr
-
-  result = if unquotedExpr? result
-      _evaluate ((next result), envs)
-    else if spliceUnquotedExpr? result
-      _evaluate ((next result), envs)
-    else
-      result
-      
-  prior = result
-  current = cdr malExpr
-
-  until empty? current
-    result = createMalList (
-      if unquotedExpr? current
-        _evaluate ((next result), envs)
-      else if spliceUnquotedExpr? current
-        concat (
-          _evaluate ((next current), envs),
-  ###
-
-  _malList = reverse (car malList)
-  result = createMalList ()
-
-  until empty? _malList
-    node = car _malList
-    log 'node: ', node
-    if unquotedExpr? node
-      log 'unquote'
-      _node = _evaluate ((next node), envs)
-      log '_node: ', _node
-      result = createMalList (_node, result)
-      log 'result: ', result
-    #else if spliceUnquotedExpr? node
-    #  log 'spliceUnqoute'
-    #  tempMalList = reverse (_evaluate ((next node), envs))
-    #  until empty? tempMalList
-    #    result = createMalList ((car tempMalList), result)
-    #    tempMalList = cdr tempMalList
-    else
-      log 'else'
-      _node = node
-      #result = createMalList (_node, result)
-      result = _node
-    _malList = cdr _malList
-
+  if empty? malExpr
+    return doQuote malExpr
+  #result = reduce ((doQuote (createMalList ())), _normalizeQuasiquote, (reverse malExpr))
+  result = reduce (
+    (createMalList (doQuote (createMalList ()))),
+    _normalizeQuasiquote,
+    (reverse malExpr))
+  log 'n result: ', (serialize result)
+  log ()
   result
-    
-        
+
+evalQuasiquote = (head, malList, envs) ->
+  log 'evalQuasiquote'
+  log 'malList: ', (serialize malList)
+  result = _evaluate ((normalizeQuasiquote (car malList)), envs)
+  log 'e result: ', (serialize result)
+  log ()
+  result
 
 evalQuote = (head, malList, envs) ->
   car malList
@@ -227,21 +240,15 @@ invokeUserFn = (malUserFunction, malArgs, envs) ->
   _evaluate (malExpression, newEnvStack)
 
 spliceUnquote? = \malValue ->
-  log 'spliceUnquote?'
-  log 'malValue: ', malValue
   spliceUnquote == (extractJsValue malValue)
 
 spliceUnquotedExpr? = \malValue ->
-  log 'spliceUnquoteExpr?'
-  log 'malList: ', malList
   malList? malValue && (spliceUnquote? (car malValue))
 
 unquote? = \malValue ->
   unquote == (extractJsValue malValue)
 
 unquotedExpr? = \malValue ->
-  log 'unquotedExpr?'
-  log 'malValue: ', malValue
   malList? malValue && (unquote? (car malValue))
 
 module.exports = evaluate
