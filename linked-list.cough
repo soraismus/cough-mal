@@ -10,7 +10,7 @@ cdr = \malList ->
 
 concat = (malList0, malList1) ->
   return malList1 if empty? malList0
-  result = malList0
+  result = copy malList0
   prior = malList0
   current = cdr malList0
   until empty? current
@@ -18,6 +18,15 @@ concat = (malList0, malList1) ->
     current = cdr current
   prior.next = malList1
   result
+
+###
+splice = (malList0, malList1, malList2) ->
+  if empty? malList0
+    if empty? malList1
+      return malList2
+    else
+      return concat (malList1, malList2)
+###
 
 copy = \malList ->
   map (identity, malList)
@@ -29,15 +38,21 @@ createMalList = (value, nextNode) ->
 createNode = (value, nextNode) ->
   { type: malListType, value, next : nextNode }
 
+drop = (nbr, malList) ->
+  until nbr == 0
+    malList = cdr malList
+    nbr = nbr - 1
+  malList
+
+empty? = \value ->
+  value == EOL
+
 forEach = (fn, list) ->
   result = list
   until empty? list
     result = fn list.value
     list = recurse list
   result
-
-empty? = \value ->
-  value == EOL
 
 identity = \x -> x
 
@@ -88,11 +103,29 @@ safeHead = \malList ->
 safeNext = \malList ->
   safeHead (recurse malList)
 
+take = (nbr, malList) ->
+  result = createMalList ()
+  until nbr == 0
+    node = car malList
+    malList = cdr malList
+    result = createMalList (node, result)
+    nbr = nbr - 1
+  return reverse result
+
 toArray = \list ->
   _reduce = (jsArray, value) ->
     jsArray.push value
     jsArray
   reduce ([], _reduce, list)
+
+toPartialArray = (nbr, list) ->
+  result = []
+  until nbr == 0
+    node = car list
+    list = cdr list
+    result.push node
+    nbr = nbr - 1
+  result
 
 zip = (seed, fn, list0, list1) ->
   until empty? list0 || empty? list1
@@ -113,6 +146,7 @@ module.exports = {
   concat
   copy
   createMalList
+  drop
   empty?
   forEach
   last
@@ -124,5 +158,7 @@ module.exports = {
   reverse
   safeHead
   safeNext
+  take
   toArray
+  toPartialArray
 }

@@ -1,2 +1,2 @@
 (do
-  (def! a 100))
+  (def! not (fn* (bool) (if bool false true)))

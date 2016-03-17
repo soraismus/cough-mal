@@ -9,6 +9,7 @@ log = console.log
 { createMalList }         = require './mal-type-utilities'
 { createMalNumber }       = require './mal-type-utilities'
 { createMalString }       = require './mal-type-utilities'
+{ drop }                  = require './linked-list'
 { empty? }                = require './linked-list'
 evaluate                  = require './evaluate'
 extractJsValue            = require './extractJsValue'
@@ -26,7 +27,9 @@ _process_                 = require './process'
 { recurse }               = require './linked-list'
 { reduce }                = require './linked-list'
 serialize                 = require './serialize'
+{ take }                  = require './linked-list'
 { toArray }               = require './linked-list'
+{ toPartialArray }        = require './linked-list'
 
 add = (nbrs...) ->
   createMalNumber (nbrs.reduce ((x, nbr) ->  x += nbr))
@@ -45,6 +48,9 @@ lessThanOrEqual = (nbrs...) ->
 greaterThanOrEqual = (nbrs...) ->
   createMalBoolean (nbrs[0] >= nbrs[1])
 
+_not = \bool ->
+  createMalBoolean (!bool)
+
 lift = \fnOnJsValues \malValueList ->
   malValues = toArray malValueList
   jsValues = malValues.map \malValue -> malValue.jsValue
@@ -55,14 +61,15 @@ setCoreFnsOnJsValues! = (env, fns) ->
     env[fnName] = createMalCoreFunction (lift fn)
 
 functionsOnJsValues = {
-  '+'  : add
-  '-'  : subtract
-  '*'  : multiply
-  '/'  : divide
-  '<'  : lessThan
-  '<=' : lessThanOrEqual
-  '>'  : greaterThan
-  '>=' : greaterThanOrEqual
+  '+'   : add
+  '/'   : divide
+  '>'   : greaterThan
+  '>='  : greaterThanOrEqual
+  '<'   : lessThan
+  '<='  : lessThanOrEqual
+  '*'   : multiply
+  'not' : _not
+  '-'   : subtract
 }
 
 # TODO: Refactor
@@ -111,20 +118,21 @@ stem = \fn \malArgs ->
   fn (car malArgs)
 
 _concat = \malArgs ->
-  malList0 = copy (car malArgs)
-  malList1 = next malArgs
+  [malList0, malList1] = toPartialArray (2, malArgs)
   concat (malList0, malList1)
 
 count = \malArgs ->
-  malList = car malArgs
-  _reduce = (sum, value) ->
-    sum + 1
-  createMalNumber (
-    reduce (0, _reduce, malList))
+  _reduce = (sum, value) -> sum + 1
+  createMalNumber (reduce (0, _reduce, (car malArgs)))
 
 createPredicate = \pred \jsList ->
   malValue = jsList.value
   createMalBoolean (pred malValue)
+
+# WET; cf. `_take`.
+_drop = \malArgs ->
+  [malNumber, malList] = toPartialArray (2, malArgs)
+  drop ((extractJsValue malNumber), malList)
 
 _evaluate_ = \jsString ->
   _process_ [environment] jsString
@@ -139,9 +147,8 @@ load = \malArgs ->
   _evaluate_ (_read malArgs)
 
 nth = \malArgs ->
-  jsNumber = extractJsValue (car malArgs)
-  malList  = car (cdr malArgs)
-  for i in [0 ... jsNumber]
+  [malNumber, malList] = toPartialArray (2, malArgs)
+  for i in [0 ... (extractJsValue malNumber)]
     malList = cdr malList
   car malList
 
@@ -161,6 +168,10 @@ setCoreFnsOnMalValues! = (env, fns) ->
 
 stripQuotes = \jsString ->
   jsString[1 .. -2]
+
+_take = \malArgs ->
+  [malNumber, malList] = toPartialArray (2, malArgs)
+  take ((extractJsValue malNumber), malList)
 
 typeOf = \malArgs ->
   malValue = car malArgs
@@ -196,6 +207,7 @@ functionsOnMalValues = {
   'cons'     : cons
   'concat'   : _concat
   'count'    : count
+  'drop'     : _drop
   'empty?'   : _empty?
   'eval'     : _evaluate
   'last'     : _last
@@ -210,6 +222,7 @@ functionsOnMalValues = {
   'string?'  : string?
   'symbol?'  : symbol?
   'write'    : write
+  'take'     : _take
   'throw'    : _throw
   'time-ms'  : time-ms
   'typeof'   : typeOf
