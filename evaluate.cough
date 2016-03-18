@@ -86,11 +86,9 @@ MALCONS   = createMalSymbol 'cons'
 MALCONCAT = createMalSymbol 'concat'
 
 doQuote = \malExpr ->
-  log 'doQuote'
-  result = createMalList (
+  createMalList (
     MALQUOTE,
     (createMalList malExpr))
-  logResult result
 
 doCons = (malExpr, malList) ->
   createMalList (
@@ -98,10 +96,6 @@ doCons = (malExpr, malList) ->
     createMalList (malExpr, (createMalList malList)))
 
 doConcat = (malList0, malList1) ->
-  log 'doConcat'
-  log 'malList0: ', (serialize malList0)
-  log 'malList1: ', (serialize malList1)
-  log 'createMalList (malList0, malList1): ', (serialize (createMalList (malList0, malList1)))
   createMalList (
     MALCONCAT,
     createMalList (malList0, malList1))
@@ -127,7 +121,6 @@ evalInvocation = (malSymbol, malList, envs) ->
   invoke (malInvokable, map ((evaluate envs), malList), envs)
 
 evalList = (malList, envs) ->
-  log 'evalList'
   head = car malList
   _eval = switch (extractJsValue head)
     when cond          then evalMultiCondition
@@ -137,21 +130,12 @@ evalList = (malList, envs) ->
     when macro*        then createMacro
     when _if           then evalCondition
     when let*          then evalWithLocalValue
-    when quote
-      log 'quote branch'
-      evalQuote
-    when quasiquote
-      log 'quasiquote branch'
-      evalQuasiquotedExpr 
-    when spliceUnquote
-      log 'spliceUnquote branch'
-      ((z, x, y) -> x)
-    when unquote
-      log 'unquote branch'
-      ((z, x, y) -> x)
+    when quote         then evalQuote
+    when quasiquote    then evalQuasiquotedExpr 
+    when spliceUnquote then ((z, x, y) -> x)
+    when unquote       then ((z, x, y) -> x)
     else                    evalInvocation
-  result = _eval (head, (cdr malList), envs)
-  logResult result
+  _eval (head, (cdr malList), envs)
 
 evalMultiCondition = (head, malList, envs) ->
   until empty? malList
@@ -164,86 +148,50 @@ evalMultiCondition = (head, malList, envs) ->
 cons = createMalList
 
 _normalizeQuasiquote = \malExpr ->
-  log '_normalizeQuasiquote'
-  logValue 'malExpr', malExpr
-  result = if unquotedExpr? malExpr
-    log 'unquotedExpr'
-    #car malExpr
+  if unquotedExpr? malExpr
     car (cdr malExpr)
   else if spliceUnquotedExpr? malExpr
-    log 'spliceUnquotedExpr'
     concat ((car malExpr), (normalizeQuasiquote (cdr malExpr)))
   else if malList? malExpr
-    log 'quasiquoted malExpr is a malList'
     map (normalizeQuasiquote, malExpr)
   else
-    log 'default'
     malExpr
-  logResult result
 
 normalizeQuasiquote = \malExpr ->
-  log 'normalizeQuasiquote'
   if not malList? malExpr
-    log 'not malList'
-    return logResult (doQuote malExpr)
+    return doQuote malExpr
   if empty? malExpr
-    log 'empty'
-    return logResult (doQuote malExpr)
-  log 'must be malList then'
-  logResult (_normalizeQuasiquote malExpr)
+    return doQuote malExpr
+  _normalizeQuasiquote malExpr
 
 evalQuasiquotedExpr = (head, expr, envs) ->
-  log 'evalQuasiquotedExpr'
-  logValue 'expr', expr
   _expr = car expr
-  logValue '_expr', _expr
-  logResult (_evalQuasiquotedExpr (_expr, envs))
+  _evalQuasiquotedExpr (_expr, envs)
 
 _evalQuasiquotedExpr = (expr, envs) ->
-  blank ()
-  log '_evalQuasiquotedExpr'
-  logValue 'expr', expr
   manageItem = (memo, item) ->
-    blank ()
-    log 'manageItem'
-    logValue 'memo', memo
-    logValue 'item', item
     switch
       when unquotedExpr? item
-        log 'is unquotedExpr'
         cons(_evaluate(next(item), envs), memo)
       when spliceUnquotedExpr? item
-        log 'is spliceUnquotedExpr'
         _manageItem = (_memo, _item) ->
-          log '_manageItem'
-          logValue '_memo', _memo
-          logValue '_item', _item
-          logResult (cons (_evaluate (_item, envs), _memo))
-        logResult (reduce (memo, _manageItem, (_evaluate ((next item), envs))))
+          cons (_evaluate (_item, envs), _memo)
+        reduce (memo, _manageItem, (_evaluate ((next item), envs)))
       when malList? item
-        log 'is list'
         cons (_evalQuasiquotedExpr (item, envs), memo)
       else
-        log 'is default'
         cons (item, memo)
-  blank ()
-  logResult (
-    reverse(
-      reduce (
-        createMalList ()
-        manageItem
-        expr)))
+  reverse(
+    reduce (
+      createMalList ()
+      manageItem
+      expr))
 
 evalQuote = (head, malList, envs) ->
-  log 'evalQuote'
-  logValue 'head', head
-  logValue 'malList', malList
   car malList
 
 evalSymbol = (malSymbol, envs) ->
-  log 'evalSymbol'
-  logValue 'malSymbol', malSymbol
-  logResult (lookup (envs, (extractJsValue malSymbol)))
+  lookup (envs, (extractJsValue malSymbol))
 
 _evaluate = (malExpr, envs) ->
   _eval = switch
@@ -279,19 +227,15 @@ invokeUserFn = (malUserFunction, malArgs, envs) ->
   _evaluate (malExpression, newEnvStack)
 
 spliceUnquote? = \malValue ->
-  log 'check spliceUnquote?'
   spliceUnquote == (extractJsValue malValue)
 
 spliceUnquotedExpr? = \malValue ->
-  log 'check spliceUnquotedExpr?'
   malList? malValue && (spliceUnquote? (car malValue))
 
 unquote? = \malValue ->
-  log 'check unquote?'
   unquote == (extractJsValue malValue)
 
 unquotedExpr? = \malValue ->
-  log 'check unquotedExpr?'
   malList? malValue && (unquote? (car malValue))
 
 module.exports = evaluate
