@@ -1,4 +1,3 @@
-log = console.log
 { malTypes } = require './mal-types'
 malListType = malTypes[4]
 
@@ -27,6 +26,11 @@ splice = (malList0, malList1, malList2) ->
     else
       return concat (malList1, malList2)
 ###
+
+cons = \malArgs ->
+  createMalList (
+    car malArgs
+    next malArgs)
 
 copy = \malList ->
   map (identity, malList)
@@ -144,6 +148,7 @@ module.exports = {
   car
   cdr
   concat
+  cons
   copy
   createMalList
   drop

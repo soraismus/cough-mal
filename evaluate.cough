@@ -4,7 +4,7 @@ log = (arg1, args...) ->
 logValue = (name, value) ->
   console.log ("--- #{name} =", serialize(value), value)
 logResult = (result, args...) ->
-  console.log ("------ result =", serialize(result), result, args...)
+  console.log ("--- result =", serialize(result), result, args...)
   result
 
 { addEnv }                   = require './env-utilities'
@@ -13,6 +13,7 @@ logResult = (result, args...) ->
 commentSignal                = require './commentSignal'
 { concat }                   = require './linked-list'
 { cond }                     = require './keyTokens'
+{ cons }                     = require './linked-list'
 { createMalList }            = require './mal-type-utilities'
 { createMalMacro }           = require './mal-type-utilities'
 
@@ -141,7 +142,8 @@ evalList = (malList, envs) ->
       evalQuote
     when quasiquote
       log 'quasiquote'
-      evalQuasiquote
+      #evalQuasiquote
+      evalQuasiquotedExpr 
     when spliceUnquote
       log 'spliceUnquote'
       ((z, x, y) -> x)
@@ -197,6 +199,35 @@ evalQuasiquote = (head, malList, envs) ->
   result = normalizeQuasiquote (car malList)
   logResult result
 
+evalQuasiquotedExpr = (head, expr, envs) ->
+  log 'evalQuasiquotedExpr'
+  logValue 'head', head
+  _expr = car expr
+  logValue '_expr', _expr
+  result = createMalList ()
+  manageItem = \item ->
+    result = switch
+      when unquotedExpr? item
+        log 'is unquotedExpr'
+        cons(_evaluate(next(item), envs), result)
+      when spliceUnquotedExpr? item
+        log 'is spliceUnquotedExpr'
+        _manageItem = (memo, _item) ->
+          log '_manageItem'
+          logValue 'memo', memo
+          #logValue '_item', _item
+          log '_item =', _item
+          logResult (cons (_evaluate (_item, envs), memo))
+        logResult (reduce (result, _manageItem, (_evaluate ((next item), envs))))
+      when malList? item
+        log 'is list'
+        evalQuasiquotedExpr (null, item, envs)
+      else
+        log 'is default'
+        cons (item, result)
+  forEach (manageItem, _expr)
+  logResult (reverse result)
+
 evalQuote = (head, malList, envs) ->
   log 'evalQuote'
   logValue 'head', head
@@ -206,7 +237,7 @@ evalQuote = (head, malList, envs) ->
 evalSymbol = (malSymbol, envs) ->
   log 'evalSymbol'
   logValue 'malSymbol', malSymbol
-  lookup (envs, (extractJsValue malSymbol))
+  logResult (lookup (envs, (extractJsValue malSymbol)))
 
 _evaluate = (malExpr, envs) ->
   _eval = switch
