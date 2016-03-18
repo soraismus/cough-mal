@@ -16,7 +16,7 @@ lookup = (envStack, key) ->
     value = env[key]
     return value if ? value
     copy.shift()
-  throw "CORRESPONDING VALUE DOES NOT EXIST IN ENV-STACK"
+  throw "VALUE CORRESPONDING TO \"#{key}\" DOES NOT EXIST IN ENV-STACK"
 
 set = (env, key, value) ->
   env[key] = value

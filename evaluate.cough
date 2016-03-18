@@ -166,7 +166,13 @@ normalizeQuasiquote = \malExpr ->
 
 evalQuasiquotedExpr = (head, expr, envs) ->
   _expr = car expr
-  _evalQuasiquotedExpr (_expr, envs)
+  switch
+    when unquotedExpr? _expr
+      _evaluate ((next _expr), envs)
+    when malList? _expr
+      _evalQuasiquotedExpr (_expr, envs)
+    else
+      _expr
 
 _evalQuasiquotedExpr = (expr, envs) ->
   manageItem = (memo, item) ->
