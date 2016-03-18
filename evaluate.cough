@@ -6,6 +6,7 @@ logValue = (name, value) ->
 logResult = (result, args...) ->
   console.log ("--- result =", serialize(result), result, args...)
   result
+blank = -> console.log ()
 
 { addEnv }                   = require './env-utilities'
 { car }                      = require './linked-list'
@@ -128,7 +129,6 @@ evalInvocation = (malSymbol, malList, envs) ->
 evalList = (malList, envs) ->
   log 'evalList'
   head = car malList
-  logValue 'head', head
   _eval = switch (extractJsValue head)
     when cond          then evalMultiCondition
     when def!          then defineNewValue
@@ -138,17 +138,16 @@ evalList = (malList, envs) ->
     when _if           then evalCondition
     when let*          then evalWithLocalValue
     when quote
-      log 'quote'
+      log 'quote branch'
       evalQuote
     when quasiquote
-      log 'quasiquote'
-      #evalQuasiquote
+      log 'quasiquote branch'
       evalQuasiquotedExpr 
     when spliceUnquote
-      log 'spliceUnquote'
+      log 'spliceUnquote branch'
       ((z, x, y) -> x)
     when unquote
-      log 'unquote'
+      log 'unquote branch'
       ((z, x, y) -> x)
     else                    evalInvocation
   result = _eval (head, (cdr malList), envs)
@@ -193,40 +192,47 @@ normalizeQuasiquote = \malExpr ->
   log 'must be malList then'
   logResult (_normalizeQuasiquote malExpr)
 
-evalQuasiquote = (head, malList, envs) ->
-  log 'evalQuasiquote'
-  #result = _evaluate ((normalizeQuasiquote (car malList)), envs)
-  result = normalizeQuasiquote (car malList)
-  logResult result
-
 evalQuasiquotedExpr = (head, expr, envs) ->
   log 'evalQuasiquotedExpr'
-  logValue 'head', head
+  logValue 'expr', expr
   _expr = car expr
   logValue '_expr', _expr
-  result = createMalList ()
-  manageItem = \item ->
-    result = switch
+  logResult (_evalQuasiquotedExpr (_expr, envs))
+
+_evalQuasiquotedExpr = (expr, envs) ->
+  blank ()
+  log '_evalQuasiquotedExpr'
+  logValue 'expr', expr
+  manageItem = (memo, item) ->
+    blank ()
+    log 'manageItem'
+    logValue 'memo', memo
+    logValue 'item', item
+    switch
       when unquotedExpr? item
         log 'is unquotedExpr'
-        cons(_evaluate(next(item), envs), result)
+        cons(_evaluate(next(item), envs), memo)
       when spliceUnquotedExpr? item
         log 'is spliceUnquotedExpr'
-        _manageItem = (memo, _item) ->
+        _manageItem = (_memo, _item) ->
           log '_manageItem'
-          logValue 'memo', memo
-          #logValue '_item', _item
-          log '_item =', _item
-          logResult (cons (_evaluate (_item, envs), memo))
-        logResult (reduce (result, _manageItem, (_evaluate ((next item), envs))))
+          logValue '_memo', _memo
+          logValue '_item', _item
+          logResult (cons (_evaluate (_item, envs), _memo))
+        logResult (reduce (memo, _manageItem, (_evaluate ((next item), envs))))
       when malList? item
         log 'is list'
-        evalQuasiquotedExpr (null, item, envs)
+        cons (_evalQuasiquotedExpr (item, envs), memo)
       else
         log 'is default'
-        cons (item, result)
-  forEach (manageItem, _expr)
-  logResult (reverse result)
+        cons (item, memo)
+  blank ()
+  logResult (
+    reverse(
+      reduce (
+        createMalList ()
+        manageItem
+        expr)))
 
 evalQuote = (head, malList, envs) ->
   log 'evalQuote'
