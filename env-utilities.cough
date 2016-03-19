@@ -1,4 +1,3 @@
-log = console.log
 { empty?, recurse } = require './linked-list'
 
 addEnv = (envStack, newEnv) ->

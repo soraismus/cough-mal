@@ -1,4 +1,3 @@
-log = console.log
 comment                = require './commentSignal'
 { createMalBoolean }   = require './mal-type-utilities'
 { createMalList }      = require './mal-type-utilities'

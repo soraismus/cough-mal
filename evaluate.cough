@@ -1,13 +1,3 @@
-serialize = require './serialize'
-log = (arg1, args...) ->
-  console.log ('---', arg1, args...)
-logValue = (name, value) ->
-  console.log ("--- #{name} =", serialize(value), value)
-logResult = (result, args...) ->
-  console.log ("--- result =", serialize(result), result, args...)
-  result
-blank = -> console.log ()
-
 { addEnv }                   = require './env-utilities'
 { car }                      = require './linked-list'
 { cdr }                      = require './linked-list'
@@ -17,9 +7,7 @@ commentSignal                = require './commentSignal'
 { cons }                     = require './linked-list'
 { createMalList }            = require './mal-type-utilities'
 { createMalMacro }           = require './mal-type-utilities'
-
 { createMalNumber }           = require './mal-type-utilities'
-
 { createMalString }          = require './mal-type-utilities'
 { createMalSymbol }          = require './mal-type-utilities'
 { createMalUserFunction }    = require './mal-type-utilities'

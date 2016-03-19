@@ -1,4 +1,3 @@
-log = console.log
 { car }                   = require './linked-list'
 { cdr }                   = require './linked-list'
 { copy }                  = require './linked-list'
