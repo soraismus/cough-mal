@@ -108,23 +108,6 @@ evalInvocation = (malSymbol, malList, envs) ->
     else throw 'Value is not a function'
   invoke (malInvokable, map ((evaluate envs), malList), envs)
 
-evalList = (malList, envs) ->
-  head = car malList
-  _eval = switch (extractJsValue head)
-    when cond          then evalMultiCondition
-    when def!          then defineNewValue
-    when _do           then evalAllSideEffects
-    when fn*           then createFn
-    when macro*        then createMacro
-    when _if           then evalCondition
-    when let*          then evalWithLocalValue
-    when quote         then evalQuote
-    when quasiquote    then evalQuasiquotedExpr 
-    when spliceUnquote then ((z, x, y) -> x)
-    when unquote       then ((z, x, y) -> x)
-    else                    evalInvocation
-  _eval (head, (cdr malList), envs)
-
 evalMultiCondition = (head, malList, envs) ->
   until empty? malList
     condition = car malList
@@ -188,11 +171,92 @@ evalSymbol = (malSymbol, envs) ->
   lookup (envs, (extractJsValue malSymbol))
 
 _evaluate = (malExpr, envs) ->
-  _eval = switch
-    when malList? malExpr   then evalList
-    when malSymbol? malExpr then evalSymbol
-    else                         evalDefault
-  _eval (malExpr, envs)
+  loop
+    switch
+      when malList? malExpr
+
+        malList = malExpr
+        head = car malList
+        t1 = cdr malList
+        a1 = car t1
+        t2 = cdr t1
+        a2 = car t2
+        t3 = cdr t2
+        a3 = car t3
+
+        switch head.jsValue
+          when def!
+            return defineNewValue (head, (cdr malList), envs) 
+          when let*
+            _reduce = (env, malKey, malExpr) ->
+              envValue = _evaluate (malExpr, envs)
+              jsKey = malKey.jsValue
+              env[jsKey] = envValue
+              env
+            malExpr = a2
+            envs = addEnv (envs, reduceBy2 ({}, _reduce, a1))
+
+          # How optimize tail calls?
+          when _do
+            return evalAllSideEffects (head, (cdr malList), envs)
+
+          when _if
+            jsBool = (_evaluate (a1, envs)).jsValue
+            malExpr = if jsBool then a2 else a3
+          when fn*
+            return createFn (head, (cdr malList), envs)
+          when cond
+            return evalMultiCondition (head, (cdr malList), envs)
+          when macro*
+            return createMacro (head, (cdr malList), envs)
+          when quote
+            return evalQuote (head, (cdr malList), envs)
+          when quasiquote
+            return evalQuasiquotedExpr (head, (cdr malList), envs)
+          when spliceUnquote
+            return ((z, x, y) -> x) (head, (cdr malList), envs)
+          when unquote
+            return ((z, x, y) -> x) (head, (cdr malList), envs)
+          else
+            malSymbol = head
+            malList = cdr malList
+
+            malInvokable = _evaluate (malSymbol, envs)
+
+            switch
+              when malMacro? malInvokable
+                return invokeMacro (
+                  malInvokable
+                  map ((evaluate envs), malList)
+                  envs)
+              when malCoreFunction? malInvokable
+                return invokeCoreFn (
+                  malInvokable
+                  map((evaluate envs), malList)
+                  envs)
+              when malUserFunction? malInvokable
+                _reduce = (env, malKey, malExpr) ->
+                  envValue = _evaluate (malExpr, envs)
+                  jsKey = malKey.jsValue
+                  env[jsKey] = envValue
+                  env
+
+                { malExpression, malParameters } = malInvokable.jsValue
+
+                malArgs = map ((evaluate envs), malList)
+
+                malExpr = malExpression
+                jsParameters = map (extractJsValue, malParameters)
+                newEnv = createLocalEnv (jsParameters, malArgs)
+                envs = addEnv (envs, newEnv)
+
+              else
+                throw 'Value is not a function'
+
+      when malSymbol? malExpr
+        return evalSymbol (malExpr, envs)
+      else
+        return evalDefault (malExpr, envs)
 
 evaluate = \envs \malExpr ->
   return commentSignal if malExpr == commentSignal
