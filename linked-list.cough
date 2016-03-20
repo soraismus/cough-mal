@@ -13,15 +13,19 @@ cdr = \malList ->
   else
     malList.next
 
-concat = (malList0, malList1) ->
-  return malList1 if empty? malList0
-  result = copy malList0
-  prior = malList0
-  current = cdr malList0
-  until empty? current
-    prior = cdr prior
-    current = cdr current
-  prior.next = malList1
+concat = (malLists...) ->
+  return EOL if malLists.length == 0
+  result = copy malLists[0]
+  tail = lastTail result
+  for malList in malLists[1 .. ]
+    _copy = copy malList
+    if empty? tail
+      result = _copy
+      tail = lastTail result
+      continue
+    unless empty? _copy
+      tail.next = _copy
+      tail = lastTail _copy
   result
 
 ###
@@ -67,12 +71,16 @@ forEach = (fn, list) ->
 identity = \x -> x
 
 last = \malList ->
+  car (lastTail malList)
+
+lastTail = \malList ->
+  return malList if empty? malList
   prior = malList
   current = cdr malList
   until empty? current
     prior = cdr prior
     current = cdr current
-  car prior
+  prior
 
 map = (fn, list) ->
   _reduce = (list, value) ->

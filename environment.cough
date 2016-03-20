@@ -150,8 +150,8 @@ stem = \fn \malArgs ->
   fn (car malArgs)
 
 _concat = \malArgs ->
-  [malList0, malList1] = toPartialArray (2, malArgs)
-  concat (malList0, malList1)
+  malLists = toArray malArgs
+  concat malLists...
 
 count = \malArgs ->
   _reduce = (sum, value) -> sum + 1
