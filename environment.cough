@@ -153,6 +153,10 @@ _concat = \malArgs ->
   malLists = toArray malArgs
   concat malLists...
 
+append = \malArgs ->
+  [malList, malValues...] = toArray malArgs
+  concat (malList, (fromArray malValues))
+
 count = \malArgs ->
   _reduce = (sum, value) -> sum + 1
   createMalNumber (reduce (0, _reduce, (car malArgs)))
@@ -169,8 +173,11 @@ _drop = \malArgs ->
 _evaluate_ = \jsString ->
   _process_ [environment] jsString
 
-_evaluate = \malArgs ->
+_evaluateString = \malArgs ->
   _evaluate_ (stripQuotes (extractJsValue (car malArgs)))
+
+_evaluate = \malArgs ->
+  evaluate [environment] (car malArgs)
 
 first = \malArgs ->
   car (car malArgs)
@@ -193,6 +200,12 @@ nth = \malArgs ->
   for i in [0 ... (extractJsValue malNumber)]
     malList = cdr malList
   car malList
+
+prepend = \malArgs ->
+  [malList, malValues...] = toArray malArgs
+  _reduce = (list, val) ->
+    createMalList (val, list)
+  malValues.reduce (_reduce, malList)
 
 _quit_ = ->
   process.exit 0
@@ -245,6 +258,7 @@ write = \malArgs ->
 
 functionsOnMalValues = {
   '='        : areEqual
+  'append'   : append
   'apply'    : apply
   'boolean?' : boolean?
   'car'      : _car
@@ -255,6 +269,7 @@ functionsOnMalValues = {
   'drop'     : _drop
   'empty?'   : _empty?
   'eval'     : _evaluate
+  'evalStr'  : _evaluateString
   'first'    : first
   'last'     : _last
   'list'     : list
@@ -264,6 +279,7 @@ functionsOnMalValues = {
   'nil?'     : nil?
   'nth'      : nth
   'number?'  : number?
+  'prepend'  : prepend
   '-quit-'   : _quit_
   'read'     : read
   'rest'     : rest
