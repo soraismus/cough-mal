@@ -2,10 +2,16 @@
 malListType = malTypes[4]
 
 car = \malList ->
-  malList.value
+  if malList == _EOL
+    _EOL
+  else
+    malList.value
 
 cdr = \malList ->
-  malList.next
+  if malList == _EOL
+    _EOL
+  else
+    malList.next
 
 concat = (malList0, malList1) ->
   return malList1 if empty? malList0

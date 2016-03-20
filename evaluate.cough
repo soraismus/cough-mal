@@ -7,7 +7,7 @@ commentSignal                = require './commentSignal'
 { cons }                     = require './linked-list'
 { createMalList }            = require './mal-type-utilities'
 { createMalMacro }           = require './mal-type-utilities'
-{ createMalNumber }           = require './mal-type-utilities'
+{ createMalNumber }          = require './mal-type-utilities'
 { createMalString }          = require './mal-type-utilities'
 { createMalSymbol }          = require './mal-type-utilities'
 { createMalUserFunction }    = require './mal-type-utilities'
@@ -39,9 +39,12 @@ extractJsValue               = require './extractJsValue'
 { reverse }                  = require './linked-list'
 { setMainEnv }               = require './env-utilities'
 { toArray }                  = require './linked-list'
+{ undef! }                   = require './keyTokens'
+{ unsetMainEnv }             = require './env-utilities'
 
 createFn = (head, malList, envs) ->
   createMalUserFunction
+    localEnvs     : (envs.slice 0)
     malExpression : (next malList)
     malParameters : (car malList)
 
@@ -68,6 +71,10 @@ defineNewValue = (head, malList, envs) ->
   jsKey = extractJsValue (car malList)
   malValue = _evaluate ((next malList), envs)
   setMainEnv (envs, jsKey, malValue)
+
+undefineValue = (head, malList, envs) ->
+  jsKey = extractJsValue (car malList)
+  unsetMainEnv (envs, jsKey)
 
 MALQUOTE  = createMalSymbol quote
 MALCONS   = createMalSymbol 'cons'
@@ -174,7 +181,6 @@ _evaluate = (malExpr, envs) ->
   loop
     switch
       when malList? malExpr
-
         malList = malExpr
         head = car malList
         t1 = cdr malList
@@ -184,13 +190,17 @@ _evaluate = (malExpr, envs) ->
         t3 = cdr t2
         a3 = car t3
 
-        switch head.jsValue
+        switch (extractJsValue head)
           when def!
             return defineNewValue (head, (cdr malList), envs) 
+
+          when undef!
+            return undefineValue (head, (cdr malList), envs) 
+
           when let*
             _reduce = (env, malKey, malExpr) ->
               envValue = _evaluate (malExpr, envs)
-              jsKey = malKey.jsValue
+              jsKey = extractJsValue malKey
               env[jsKey] = envValue
               env
             malExpr = a2
@@ -201,7 +211,8 @@ _evaluate = (malExpr, envs) ->
             return evalAllSideEffects (head, (cdr malList), envs)
 
           when _if
-            jsBool = (_evaluate (a1, envs)).jsValue
+            jsBool = extractJsValue (_evaluate (a1, envs))
+            #malExpr = if jsBool then a2 else a3
             malExpr = if jsBool then a2 else a3
           when fn*
             return createFn (head, (cdr malList), envs)
@@ -229,26 +240,28 @@ _evaluate = (malExpr, envs) ->
                   malInvokable
                   map ((evaluate envs), malList)
                   envs)
+
               when malCoreFunction? malInvokable
                 return invokeCoreFn (
                   malInvokable
                   map((evaluate envs), malList)
                   envs)
+
               when malUserFunction? malInvokable
                 _reduce = (env, malKey, malExpr) ->
                   envValue = _evaluate (malExpr, envs)
-                  jsKey = malKey.jsValue
+                  jsKey = extractJsValue malKey
                   env[jsKey] = envValue
                   env
 
-                { malExpression, malParameters } = malInvokable.jsValue
+                { localEnvs, malExpression, malParameters } =
+                  extractJsValue malInvokable
 
                 malArgs = map ((evaluate envs), malList)
-
                 malExpr = malExpression
                 jsParameters = map (extractJsValue, malParameters)
                 newEnv = createLocalEnv (jsParameters, malArgs)
-                envs = addEnv (envs, newEnv)
+                envs = addEnv (localEnvs, newEnv)
 
               else
                 throw 'Value is not a function'

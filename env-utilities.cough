@@ -24,4 +24,12 @@ set = (env, key, value) ->
 setMainEnv = (envStack, key, value) ->
   set ((getLast envStack), key, value)
 
-module.exports = { addEnv, lookup, setMainEnv }
+unset = (env, key) ->
+  value = env[key]
+  delete env[key]
+  value
+
+unsetMainEnv = (envStack, key) ->
+  unset ((getLast envStack), key)
+
+module.exports = { addEnv, lookup, setMainEnv, unsetMainEnv }

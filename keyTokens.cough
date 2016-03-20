@@ -23,6 +23,7 @@ keyTokens = [
   spliceUnquoteGlyph = '~@'
   _true              = 'true'
   try*               = 'try*'
+  undef!             = 'undef!'
   unquote            = 'unquote'
   unquoteGlyph       = '~'
 ]
@@ -69,6 +70,7 @@ module.exports = {
   spliceUnquoteGlyph
   _true
   try*
+  undef!
   unquote
   unquoteGlyph
 }
