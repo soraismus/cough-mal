@@ -128,6 +128,12 @@ toArray = \list ->
     jsArray
   reduce ([], _reduce, list)
 
+fromArray = \array ->
+  list = createMalList ()
+  _reduce = (list, value) ->
+    createMalList (value, list)
+  reverse (array.reduce (_reduce, list))
+
 toPartialArray = (nbr, list) ->
   result = []
   until nbr == 0
@@ -160,6 +166,7 @@ module.exports = {
   drop
   empty?
   forEach
+  fromArray
   last
   map
   next

@@ -5,6 +5,7 @@ commentSignal                = require './commentSignal'
 { concat }                   = require './linked-list'
 { cond }                     = require './keyTokens'
 { cons }                     = require './linked-list'
+{ createMalIndex }           = require './mal-type-utilities'
 { createMalList }            = require './mal-type-utilities'
 { createMalMacro }           = require './mal-type-utilities'
 { createMalNumber }          = require './mal-type-utilities'
@@ -22,6 +23,7 @@ extractJsValue               = require './extractJsValue'
 { lookup }                   = require './env-utilities'
 { macro* }                   = require './keyTokens'
 { malCoreFunction? }         = require './mal-type-utilities'
+{ malIndex? }                = require './mal-type-utilities'
 { malList? }                 = require './mal-type-utilities'
 { malMacro? }                = require './mal-type-utilities'
 { malNil }                   = require './mal-type-utilities'
@@ -268,6 +270,15 @@ _evaluate = (malExpr, envs) ->
 
       when malSymbol? malExpr
         return evalSymbol (malExpr, envs)
+
+      # NOTE: Happens over and over for every malIndex.
+      when malIndex? malExpr
+        index = extractJsValue malExpr
+        newIndex = {}
+        for own key, value of index
+          newIndex[key] = _evaluate (index[key], envs)
+        return createMalIndex newIndex
+
       else
         return evalDefault (malExpr, envs)
 

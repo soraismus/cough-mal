@@ -5,6 +5,7 @@
 { createJsLinkedList }    = require './linked-list'
 { createMalBoolean }      = require './mal-type-utilities'
 { createMalCoreFunction } = require './mal-type-utilities'
+{ createMalIndex }        = require './mal-type-utilities'
 { createMalList }         = require './mal-type-utilities'
 { createMalNumber }       = require './mal-type-utilities'
 { createMalString }       = require './mal-type-utilities'
@@ -12,6 +13,7 @@
 { empty? }                = require './linked-list'
 evaluate                  = require './evaluate'
 extractJsValue            = require './extractJsValue'
+{ fromArray }             = require './linked-list'
 { last }                  = require './linked-list'
 { malCoreFunction? }      = require './mal-type-utilities'
 { malBoolean? }           = require './mal-type-utilities'
@@ -52,7 +54,7 @@ _not = \bool ->
 
 lift = \fnOnJsValues \malValueList ->
   malValues = toArray malValueList
-  jsValues = malValues.map \malValue -> malValue.jsValue
+  jsValues = malValues.map extractJsValue
   fnOnJsValues jsValues...
 
 setCoreFnsOnJsValues! = (env, fns) ->
@@ -60,15 +62,44 @@ setCoreFnsOnJsValues! = (env, fns) ->
     env[fnName] = createMalCoreFunction (lift fn)
 
 functionsOnJsValues = {
-  '+'   : add
-  '/'   : divide
-  '>'   : greaterThan
-  '>='  : greaterThanOrEqual
-  '<'   : lessThan
-  '<='  : lessThanOrEqual
-  '*'   : multiply
-  'not' : _not
-  '-'   : subtract
+  '+'      : add
+  '/'      : divide
+  '>'      : greaterThan
+  '>='     : greaterThanOrEqual
+  '<'      : lessThan
+  '<='     : lessThanOrEqual
+  '*'      : multiply
+  'not'    : _not
+  '-'      : subtract
+  'get'    : (jsIndex, jsStr) -> jsIndex[jsStr]
+  'assoc' : (index, args...) ->
+    copy = {}
+    for own key, value of index
+      copy[key] = value
+    for k, i in args when i % 2 == 0
+      copy[k] = args[i + 1]
+    createMalIndex copy
+  'index'  : (args...) ->
+    index = {}
+    index[k] = args[i + 1] for k, i in args when i % 2 == 0
+    createMalIndex index
+  'dissoc' : (index, keys...) ->
+    copy = {}
+    for own key, value of index
+      copy[key] = value
+    delete copy[key] for key in keys
+    createMalIndex copy
+  'contains?' : (index, key) -> key of index
+  'keys'      : (index) ->
+    keys = []
+    for own key, value of index
+      keys.push key
+    fromArray keys
+  'vals'      : (index) ->
+    values = []
+    for own key, value of index
+      values.push value
+    fromArray values
 }
 
 # TODO: Refactor
@@ -106,7 +137,9 @@ areEqual = \jsList ->
 # ---------------------------------------------------------
 
 # TODO
-apply = \jsList ->
+apply = \malArgs ->
+  [malFn, malArgList] = toArray malArgs
+  evaluate [] (createMalList (malFn, malArgList))
 
 cons = \malArgs ->
   createMalList (
@@ -139,11 +172,21 @@ _evaluate_ = \jsString ->
 _evaluate = \malArgs ->
   _evaluate_ (stripQuotes (extractJsValue (car malArgs)))
 
+first = \malArgs ->
+  car (car malArgs)
+
 list = \malArgs ->
   malArgs
 
 load = \malArgs ->
   _evaluate_ (_read malArgs)
+
+map = \malArgs ->
+  [malFn, malArgList] = toArray malArgs
+  _malArgs = toArray malArgList
+  __malArgs = _malArgs.map \x -> createMalList (malFn, createMalList (x))
+  results = __malArgs.map (evaluate [])
+  fromArray results
 
 nth = \malArgs ->
   [malNumber, malList] = toPartialArray (2, malArgs)
@@ -160,6 +203,9 @@ _read = \malArgs ->
 
 read = \jsList ->
   createMalString (_read jsList)
+
+rest = \malArgs ->
+  cdr (car malArgs)
 
 setCoreFnsOnMalValues! = (env, fns) ->
   for own fnName, fn of fns
@@ -209,15 +255,18 @@ functionsOnMalValues = {
   'drop'     : _drop
   'empty?'   : _empty?
   'eval'     : _evaluate
+  'first'    : first
   'last'     : _last
   'list'     : list
   'list?'    : list?
   'load'     : load
+  'map'      : map
   'nil?'     : nil?
   'nth'      : nth
   'number?'  : number?
   '-quit-'   : _quit_
   'read'     : read
+  'rest'     : rest
   'string?'  : string?
   'symbol?'  : symbol?
   'write'    : write

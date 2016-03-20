@@ -1,12 +1,16 @@
 comment                = require './commentSignal'
 { createMalBoolean }   = require './mal-type-utilities'
+{ createMalIndex }     = require './mal-type-utilities'
 { createMalList }      = require './mal-type-utilities'
 { createMalNil }       = require './mal-type-utilities'
 { createMalNumber }    = require './mal-type-utilities'
 { createMalString }    = require './mal-type-utilities'
 { createMalSymbol }    = require './mal-type-utilities'
+extractJsValue         = require './extractJsValue'
 { _false }             = require './keyTokens'
 { glyphTokens }        = require './keyTokens'
+{ indexEnd }           = require './keyTokens'
+{ indexStart }         = require './keyTokens'
 { keyTokens }          = require './keyTokens'
 { listEnd }            = require './keyTokens'
 { listStart }          = require './keyTokens'
@@ -41,6 +45,9 @@ float? = \token ->
 glyph? = \token ->
   token in glyphTokens
 
+indexStart? = \token ->
+  token == indexStart
+
 integer? = \token ->
   /^(?:0|(?:(-|\+)?[1-9]\d*$))/.test token
 
@@ -54,6 +61,8 @@ _parse = (token, tokens) ->
   switch
     when listStart? token
       parseList tokens
+    when indexStart? token
+      parseIndex tokens
     when glyph? token
       parseGlyph (glyphIndex[token], tokens) 
     else
@@ -67,6 +76,22 @@ parseGlyph = (keyword, tokens) ->
   createMalList (
     (createMalSymbol keyword),
     (createMalList (parse tokens)))
+
+parseIndex = \tokens ->
+  jsIndex = {}
+  key = null
+  keyStep? = true
+
+  until (token = tokens.shift()) == indexEnd
+    #malList = createMalList ( (_parse (token, tokens)), malList)
+    if keyStep?
+      key = _parse (token, tokens)
+      keyStep? = false
+    else
+      jsIndex[extractJsValue key] = _parse (token, tokens)
+      keyStep? = true
+
+  createMalIndex jsIndex
 
 parseList = \tokens ->
   malList = createMalList ()
