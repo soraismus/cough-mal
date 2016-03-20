@@ -14,6 +14,7 @@
 evaluate                  = require './evaluate'
 extractJsValue            = require './extractJsValue'
 { fromArray }             = require './linked-list'
+interpret                 = require './interpret'
 { last }                  = require './linked-list'
 { malCoreFunction? }      = require './mal-type-utilities'
 { malBoolean? }           = require './mal-type-utilities'
@@ -210,6 +211,9 @@ prepend = \malArgs ->
 _quit_ = ->
   process.exit 0
 
+_interpret = \malArgs ->
+  interpret (stripQuotes (extractJsValue (car malArgs)))
+
 _read = \malArgs ->
   jsFileName = stripQuotes (extractJsValue (car malArgs))
   require('fs').readFileSync(jsFileName).toString()
@@ -271,6 +275,7 @@ functionsOnMalValues = {
   'eval'     : _evaluate
   'evalStr'  : _evaluateString
   'first'    : first
+  'parse'    : _interpret
   'last'     : _last
   'list'     : list
   'list?'    : list?
