@@ -1,5 +1,7 @@
 commentSignal        = require './commentSignal'
 extractJsValue       = require './extractJsValue'
+{ indexEnd }         = require './keyTokens'
+{ indexStart }       = require './keyTokens'
 { listEnd }          = require './keyTokens'
 { listStart }        = require './keyTokens'
 { malCoreFunction? } = require './mal-type-utilities'
@@ -7,17 +9,19 @@ extractJsValue       = require './extractJsValue'
 { malList? }         = require './mal-type-utilities'
 { malMacro? }        = require './mal-type-utilities'
 { malNil? }          = require './mal-type-utilities'
+{ malString? }       = require './mal-type-utilities'
 { malUserFunction? } = require './mal-type-utilities'
 { reduce }           = require './linked-list'
 
-adjoinMalValue = (memo, malValue) ->
-  serialized = serialize malValue
+# adjoinMalValue = (memo, malValue) ->
+adjoinMalValue = (printReadably?) -> (memo, malValue) ->
+  serialized = serialize (malValue, printReadably?)
   if memo.length == 0
     serialized
   else
     "#{memo} #{serialized}"
 
-serialize = \malExpr ->
+serialize = (malExpr, printReadably?) ->
   return commentSignal if malExpr == commentSignal
   _serialize = switch
     when malList? malExpr         then serializeList
@@ -26,40 +30,37 @@ serialize = \malExpr ->
     when malUserFunction? malExpr then \x -> userFunctionLabel
     when malMacro? malExpr        then \x -> macroLabel
     when malNil? malExpr          then \x -> 'nil'
+    when malString? malExpr       then serializeString
     when ? (malExpr.jsValue)      then extractJsValue
     else                               \x -> x
-  _serialize malExpr
+  _serialize (malExpr, printReadably?)
 
-serializeFunction = \label \malFunction ->
-  "[#{label}: #{malFunction.name}]"
-
-serializeIndex = \malIndex ->
+serializeIndex = (malIndex, printReadably?) ->
   jsIndex = malIndex.jsValue
 
   memo = ''
 
   for own key, malValue of jsIndex
     memo = if memo == ''
-      "#{key} #{serialize malValue}"
+      "#{key} #{serialize (malValue, printReadably?)}"
     else
-      "#{memo}, #{key} #{serialize malValue}"
+      "#{memo}, #{key} #{serialize (malValue, printReadably?)}"
 
   indexStart + memo + indexEnd
 
-serializeList = \malList ->
-  serializedList = reduce ("", adjoinMalValue, malList)
+serializeList = (malList, printReadably?) ->
+  serializedList = reduce ("", (adjoinMalValue printReadably?), malList)
   listStart + serializedList + listEnd
 
-indexDemarcatorPair = [
-  indexStart = '{ '
-  indexEnd   = ' }'
-]
+serializeString = (malString, printReadably?) ->
+  jsString = extractJsValue malString
+  return jsString unless printReadably?
+  '"' + jsString.replace(/\\/g, '\\\\')
+                .replace(/"/g,  '\\"')
+                .replace(/\n/g, '\\n') + '"'
 
 coreFunctionLabel = '(core function)'
 macroLabel        = '(macro)'
 userFunctionLabel = '(user function)'
-
-[serializeCoreFunction, serializeMacro, serializeUserFunction] =
-  [coreFunctionLabel, macroLabel, userFunctionLabel].map serializeFunction
 
 module.exports = serialize

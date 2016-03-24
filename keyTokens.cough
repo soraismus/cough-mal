@@ -3,7 +3,7 @@ keyTokens = [
   cond               = 'cond'
   def!               = 'def!'
   _do                = 'do'
-  expandMacro        = 'expandMacro'
+  expand-macro        = 'expand-macro'
   _false             = 'false'
   fn*                = 'fn*'
   _if                = 'if'
@@ -47,7 +47,7 @@ module.exports = {
   cond
   def!
   _do
-  expandMacro
+  expand-macro
   _false
   fn*
   glyphTokens

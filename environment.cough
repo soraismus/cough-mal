@@ -9,9 +9,11 @@
 { createMalList }         = require './mal-type-utilities'
 { createMalNumber }       = require './mal-type-utilities'
 { createMalString }       = require './mal-type-utilities'
+display                   = require './display'
 { drop }                  = require './linked-list'
 { empty? }                = require './linked-list'
-evaluate                  = require './evaluate'
+{ evaluate }              = require './evaluate'
+{ expandMacro }           = require './evaluate'
 extractJsValue            = require './extractJsValue'
 { fromArray }             = require './linked-list'
 interpret                 = require './interpret'
@@ -19,6 +21,7 @@ interpret                 = require './interpret'
 { malCoreFunction? }      = require './mal-type-utilities'
 { malBoolean? }           = require './mal-type-utilities'
 { malList? }              = require './mal-type-utilities'
+{ malNil }                = require './mal-type-utilities'
 { malNil? }               = require './mal-type-utilities'
 { malNumber? }            = require './mal-type-utilities'
 { malString? }            = require './mal-type-utilities'
@@ -53,14 +56,19 @@ greaterThanOrEqual = (nbrs...) ->
 _not = \bool ->
   createMalBoolean (!bool)
 
-lift = \fnOnJsValues \malValueList ->
-  malValues = toArray malValueList
-  jsValues = malValues.map extractJsValue
-  fnOnJsValues jsValues...
+#lift = \fnOnJsValues \malValueList ->
+lift = (fnOnJsValues, fnName) ->
+  __fn__ = (malValueList) ->
+    malValues = toArray malValueList
+    jsValues = malValues.map extractJsValue
+    fnOnJsValues jsValues...
+  __fn__.name = fnName
+  { fn: __fn__, fnName }
 
 setCoreFnsOnJsValues! = (env, fns) ->
   for own fnName, fn of fns
-    env[fnName] = createMalCoreFunction (lift fn)
+    #env[fnName] = createMalCoreFunction (lift fn)
+    env[fnName] = createMalCoreFunction (lift (fn, fnName))
 
 functionsOnJsValues = {
   '+'      : add
@@ -148,7 +156,13 @@ cons = \malArgs ->
     next malArgs)
 
 stem = \fn \malArgs ->
-  fn (car malArgs)
+  if fn == car
+    console.log 'CALLING car'
+    console.log 'malArgs =', serialize(malArgs)
+  result = fn (car malArgs)
+  if fn == car
+    console.log 'RESULT OF CAR =', serialize(result)
+  result
 
 _concat = \malArgs ->
   malLists = toArray malArgs
@@ -179,6 +193,13 @@ _evaluateString = \malArgs ->
 
 _evaluate = \malArgs ->
   evaluate [environment] (car malArgs)
+
+_expandMacro = \malArgs ->
+  console.log 'call _expandMacro'
+  [malMacro, malArgList] = toPartialArray (2, malArgs)
+  console.log 'malMacro =', malMacro
+  console.log 'malArgList =', malArgList
+  expandMacro (malMacro, malArgList, [])
 
 first = \malArgs ->
   car (car malArgs)
@@ -214,6 +235,37 @@ _quit_ = ->
 _interpret = \malArgs ->
   interpret (stripQuotes (extractJsValue (car malArgs)))
 
+pipe = \malArgs ->
+  [malValue, malExprs...] = toArray malArgs
+  console.log 'malValue =', malValue
+  console.log 'malExprs =', malExprs
+  _reduce = (malVal, malExpr) ->
+    #evaluate [] (concat (malVal, (createMalList malExpr)))
+    console.log 'inside _reduce'
+    console.log 'malVal = ', malVal
+    console.log 'malExpr =', malExpr
+    c = concat (malExpr, (createMalList malVal))
+    console.log 'c =', c
+    evaluate [environment] c
+  malExprs.reduce (_reduce, malValue)
+
+_prStr = (malArgs, printReadably?) ->
+  ((toArray malArgs).map \malArg -> serialize (malArg, printReadably?))
+
+prStr = \malArgs ->
+  (_prStr (malArgs, true)).join ' '
+
+str = \malArgs ->
+  (_prStr (malArgs, false)).join ' '
+
+prn = \malArgs ->
+  display ((_prStr (malArgs, true))...)
+  malNil
+
+println = \malArgs ->
+  display ((_prStr (malArgs, false))...)
+  malNil
+
 _read = \malArgs ->
   jsFileName = stripQuotes (extractJsValue (car malArgs))
   require('fs').readFileSync(jsFileName).toString()
@@ -226,7 +278,7 @@ rest = \malArgs ->
 
 setCoreFnsOnMalValues! = (env, fns) ->
   for own fnName, fn of fns
-    env[fnName] = createMalCoreFunction fn
+    env[fnName] = createMalCoreFunction { fn, fnName }
 
 stripQuotes = \jsString ->
   jsString[1 .. -2]
@@ -274,8 +326,8 @@ functionsOnMalValues = {
   'empty?'   : _empty?
   'eval'     : _evaluate
   'evalStr'  : _evaluateString
+  'expand-macro' : _expandMacro
   'first'    : first
-  'parse'    : _interpret
   'last'     : _last
   'list'     : list
   'list?'    : list?
@@ -284,10 +336,15 @@ functionsOnMalValues = {
   'nil?'     : nil?
   'nth'      : nth
   'number?'  : number?
+  'parse'    : _interpret
   'prepend'  : prepend
+  'println'  : println
+  'prn'      : prn
+  'prStr'    : prStr
   '-quit-'   : _quit_
   'read'     : read
   'rest'     : rest
+  'str'      : str
   'string?'  : string?
   'symbol?'  : symbol?
   'write'    : write
@@ -295,11 +352,22 @@ functionsOnMalValues = {
   'throw'    : _throw
   'time-ms'  : time-ms
   'typeof'   : typeOf
+  '->'       : pipe
 }
 
 environment = {}
 
-setCoreFnsOnJsValues! (environment, functionsOnJsValues)
-setCoreFnsOnMalValues! (environment, functionsOnMalValues)
+#setCoreFnsOnJsValues! (environment, functionsOnJsValues)
+#setCoreFnsOnMalValues! (environment, functionsOnMalValues)
+setCoreFnsOnJsValues! (environment, { '+' : add, '>' : greaterThan })
+setCoreFnsOnMalValues! (
+  environment, {
+    '='        : areEqual,
+    'car'      : _car,
+    'cdr'      : _cdr,
+    'count'    : count
+    'load'     : load
+    'str'      : str
+  })
 
 module.exports = environment

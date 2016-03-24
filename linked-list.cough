@@ -2,14 +2,18 @@
 malListType = malTypes[4]
 
 car = \malList ->
-  if malList == _EOL
-    _EOL
+  #if malList == _EOL
+  #  _EOL
+  if empty? malList
+    EOL
   else
     malList.value
 
 cdr = \malList ->
-  if malList == _EOL
-    _EOL
+  #if malList == _EOL
+  #  _EOL
+  if empty? malList
+    EOL
   else
     malList.next
 

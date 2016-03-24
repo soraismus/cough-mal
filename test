@@ -1,2 +1,10 @@
 (do
-  (def! not (fn* (bool) (if bool false true)))
+  (def! or (macro* (& xs)
+    (if (= 0 (count xs))
+      false
+      (if (car xs) (car xs) `(or ~@(cdr xs))))))
+
+  (def! cond2 (macro* (& xs)
+    (if (or (= 0 (count xs)) (= 1 (count xs)))
+      nil
+      (if (car xs) (car (cdr xs)) `(cond2 ~@(cdr (cdr xs))))))))

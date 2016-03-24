@@ -1,5 +1,5 @@
-evaluate  = require './evaluate'
-interpret = require './interpret'
+{ evaluate } = require './evaluate'
+interpret    = require './interpret'
 
 process = \envs \sourceCode ->
   evaluate envs (interpret sourceCode)
