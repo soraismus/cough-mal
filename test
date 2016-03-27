@@ -1,10 +1,29 @@
 (do
-  (def! or (macro* (& xs)
+  (def! or1 (macro* (& xs)
     (if (= 0 (count xs))
       false
-      (if (car xs) (car xs) `(or ~@(cdr xs))))))
+      (let* (-query- (car xs))
+        (if -query- -query- `(or1 ~@(cdr xs)))))))
 
   (def! cond2 (macro* (& xs)
-    (if (or (= 0 (count xs)) (= 1 (count xs)))
+    (if (or1 (= 0 (count xs)) (= 1 (count xs)))
       nil
-      (if (car xs) (car (cdr xs)) `(cond2 ~@(cdr (cdr xs))))))))
+      (if (car xs) (car (cdr xs)) `(cond2 ~@(cdr (cdr xs)))))))
+
+  (def! or2 (macro* (& xs)
+    (if (empty? xs)
+      false
+      `(let* (-query- ~(car xs))
+        (if -query- -query- (or2 ~@(cdr xs)))))))
+
+  (def! or3 (macro* (& xs)
+    (if (empty? xs)
+      false
+      (let* (-query- (car xs))
+        `(if ~-query- ~-query- (or3 ~@(cdr xs)))))))
+
+  (def! or4 (macro* (& xs)
+    (if (empty? xs)
+      false
+      (let* (-query- (car xs))
+        (if -query- -query- `(or4 ~@(cdr xs))))))))

@@ -79,17 +79,26 @@ createFn = (head, malList, envs) ->
 
 SPLAT-TOKEN = '&'
 createLocalEnv = (jsParams, malArgs) ->
+  _x = logFn 'createLocalEnv'
   env = {}
+  logValue 'jsParams', jsParams
+  logValue 'malArgs', malArgs
   until empty? jsParams
     jsParam = car jsParams
+    logValue 'jsParam', jsParam, true
     if jsParam == SPLAT-TOKEN
+      logBranch 'splat detected'
       env[next jsParams] = malArgs
+      if env['xs']
+        logValue 'env[xs]', env['xs']
+      return logResult (env, _x)
       return env
     else
       env[jsParam] = car malArgs
       jsParams = cdr jsParams
       malArgs = cdr malArgs
-  env
+  return logResult (env, _x)
+  #env
 
 createMacro = (head, malList, envs) ->
   createMalMacro
@@ -164,7 +173,6 @@ normalizeQuasiquote = \malExpr ->
   _normalizeQuasiquote malExpr
 
 evalQuasiquotedExpr = (head, expr, envs) ->
-  _x = logFn 'evalQuasiquotedExpr'
   _expr = car expr
   res = switch
     when unquotedExpr? _expr
@@ -173,7 +181,6 @@ evalQuasiquotedExpr = (head, expr, envs) ->
       _evalQuasiquotedExpr (_expr, envs)
     else
       _expr
-  logResult (res, _x)
   res
 
 __manageUnquotedExpr = (expr, envs) ->
@@ -189,7 +196,6 @@ __manageSpliceUnquotedExpr = (expr, envs) ->
   reverse (reduce (createMalList (), manageItem, expr))
 
 _evalQuasiquotedExpr = (expr, envs) ->
-  _x = logFn '_evalQuasiquotedExpr'
   manageItem = (memo, item) ->
     switch
       when unquotedExpr? item
@@ -212,23 +218,12 @@ evalQuote = (head, malList, envs) ->
   car malList
 
 evalSymbol = (malSymbol, envs) ->
-  _x = logFn 'evalSymbol'
-  logValue 'malSymbol', malSymbol
-  logValue 'envs', envs, true, false
-  if envs[0]['xs']
-    logValue ('xs', envs[0]['xs'])
-  logResult ((lookup (envs, (extractJsValue malSymbol))), _x)
+  lookup (envs, (extractJsValue malSymbol))
 
 _evaluate = (malExpr, envs) ->
-  _x = logFn '_evaluate'
-  logValue 'malExpr', malExpr
-  logValue 'envs', envs, true, false
-  if envs[0]['xs']
-    logValue ('xs', envs[0]['xs'])
   loop
     switch
       when malList? malExpr
-        logBranch 'malList?'
         malList = malExpr
         head = car malList
         t1 = cdr malList
@@ -259,16 +254,8 @@ _evaluate = (malExpr, envs) ->
             return evalAllSideEffects (head, (cdr malList), envs)
 
           when _if
-            console.log "*********************************************"
-            _x = logBranch '_if'
-            logValue 'a1', a1
-            logValue 'envs', envs, true, false
-            if envs[0]['xs']
-              logValue ('xs', envs[0]['xs'])
             jsBool = extractJsValue (_evaluate (a1, envs))
-            logValue 'jsBool', jsBool, true, false
-            #malExpr = if jsBool then a2 else a3
-            malExpr = logResult ((if jsBool then a2 else a3), _x)
+            malExpr = if jsBool then a2 else a3
 
           when fn*
             return createFn (head, (cdr malList), envs)
@@ -284,62 +271,49 @@ _evaluate = (malExpr, envs) ->
 
           when quasiquote
             _x = logBranch 'quasiquote'
-            return logResult ((evalQuasiquotedExpr (head, (cdr malList), envs)), _x)
             #return evalQuasiquotedExpr (head, (cdr malList), envs)
+            #return logResult ((evalQuasiquotedExpr (head, (cdr malList), envs)), _x)
+            malExpr = evalQuasiquotedExpr (head, (cdr malList), envs)
 
           when spliceUnquote
-            _x = logBranch 'spliceUnquote'
-            logValue 'malList', malList
-            logValue 'cdr malList', (cdr malList)
             #return logResult ((((z, x, y) -> x) (head, (cdr malList), envs)), _x)
             #return logResult ((__manageSpliceUnquotedExpr ((cdr malList), envs)), _x)
-            malExpr = logResult ((__manageSpliceUnquotedExpr ((cdr malList), envs)), _x)
-            #malExpr = __manageSpliceUnquotedExpr ((cdr malList), envs)
+            malExpr = __manageSpliceUnquotedExpr ((cdr malList), envs)
 
           when unquote
-            x = logBranch 'unquote'
-            return logResult ((((z, x, y) -> x) (head, (cdr malList), envs)), _x)
+            return (((z, x, y) -> x) (head, (cdr malList), envs))
 
           when expand-macro
-            _x = logBranch 'expand-macro'
-            #return expandMacro ((car a1), (cdr a1), envs)
-            return logResult ((expandMacro ((car a1), (cdr a1), envs)), _x)
+            return expandMacro ((car a1), (cdr a1), envs)
 
           else
-            logBranch '_evaluate default'
             malSymbol = head
-            logValue 'malSymbol', malSymbol
             malList = cdr malList
-            logValue 'malList', malList
 
             malInvokable = _evaluate (malSymbol, envs)
-            logValue 'malInvokable', malInvokable
 
             switch
               when malMacro? malInvokable
-                _x = logBranch 'malMacro?'
-                malExpr = logResult ((expandMacro (head, t1, envs)), _x)
+                malExpr = expandMacro (head, t1, envs)
 
               when malCoreFunction? malInvokable
-                _x = logBranch 'malCoreFunction?'
-                return logResult ((invokeCoreFn (
+                return invokeCoreFn (
                   malInvokable
                   map ((evaluate envs), malList)
-                  envs)), _x)
+                  envs)
 
               when malUserFunction? malInvokable
-                _x = logBranch 'malUserFunction?'
-                _reduce = (env, malKey, malExpr) ->
-                  envValue = _evaluate (malExpr, envs)
-                  jsKey = extractJsValue malKey
-                  env[jsKey] = envValue
-                  env
+                #_reduce = (env, malKey, malExpr) ->
+                #  envValue = _evaluate (malExpr, envs)
+                #  jsKey = extractJsValue malKey
+                #  env[jsKey] = envValue
+                #  env
 
                 { localEnvs, malExpression, malParameters } =
                   extractJsValue malInvokable
 
                 malArgs = map ((evaluate envs), malList)
-                malExpr = logResult (malExpression, _x)
+                malExpr = malExpression
                 jsParameters = map (extractJsValue, malParameters)
                 newEnv = createLocalEnv (jsParameters, malArgs)
                 envs = addEnv (localEnvs, newEnv)
@@ -348,9 +322,7 @@ _evaluate = (malExpr, envs) ->
                 throw 'Value is not a function'
 
       when malSymbol? malExpr
-        _x = logBranch 'malSymbol?'
-        logValue 'malExpr', malExpr
-        return logResult ((evalSymbol (malExpr, envs)), _x)
+        return evalSymbol (malExpr, envs)
 
       # NOTE: Happens over and over for every malIndex.
       when malIndex? malExpr
@@ -361,8 +333,7 @@ _evaluate = (malExpr, envs) ->
         return createMalIndex newIndex
 
       else
-        _x = logBranch '_evaluate default'
-        return logResult ((evalDefault (malExpr, envs)), _x)
+        return evalDefault (malExpr, envs)
 
 evaluate = \envs \malExpr ->
   return commentSignal if malExpr == commentSignal
@@ -380,6 +351,7 @@ evalWithLocalValue = (head, malList, envs) ->
 expandMacro = (malMacroSymbol, malArgs, envs) ->
   malMacro = _evaluate (malMacroSymbol, envs)
   invokeUserFn (malMacro, malArgs, envs)
+  #invokeUserFn (malMacro, (car malArgs), envs)
 
 invokeMacro = (malMacro, malArgs, envs) ->
   _evaluate (
@@ -387,36 +359,20 @@ invokeMacro = (malMacro, malArgs, envs) ->
     envs)
 
 invokeCoreFn = (malCoreFunction, malArgs, envs) ->
-  _x = logFn 'invokeCoreFn'
   #extractJsValue malCoreFunction malArgs
   { fn, fnName } = extractJsValue malCoreFunction
-  log 'function name ---->', fnName
-  logResult ((fn malArgs), _x)
+  fn malArgs
 
 invokeUserFn = (malUserFunction, malArgs, envs) ->
+  #_x = logFn 'invokeUserFn'
   { localEnvs, malExpression, malParameters } = extractJsValue malUserFunction
+  _malArgs = map ((evaluate envs), malArgs)
   jsParameters = map (extractJsValue, malParameters)
-  newEnv = createLocalEnv (jsParameters, malArgs)
+  #newEnv = createLocalEnv (jsParameters, malArgs)
+  newEnv = createLocalEnv (jsParameters, _malArgs)
+  #logValue 'newEnv', newEnv, true
   newEnvStack = addEnv (localEnvs, newEnv)
   _evaluate (malExpression, newEnvStack)
-
-###
-                _x = logBranch 'malUserFunction?'
-                _reduce = (env, malKey, malExpr) ->
-                  envValue = _evaluate (malExpr, envs)
-                  jsKey = extractJsValue malKey
-                  env[jsKey] = envValue
-                  env
-
-                { localEnvs, malExpression, malParameters } =
-                  extractJsValue malInvokable
-
-                malArgs = map ((evaluate envs), malList)
-                malExpr = logResult (malExpression, _x)
-                jsParameters = map (extractJsValue, malParameters)
-                newEnv = createLocalEnv (jsParameters, malArgs)
-                envs = addEnv (localEnvs, newEnv)
-###
 
 spliceUnquote? = \malValue ->
   spliceUnquote == (extractJsValue malValue)

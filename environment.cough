@@ -156,12 +156,12 @@ cons = \malArgs ->
     next malArgs)
 
 stem = \fn \malArgs ->
-  if fn == car
-    console.log 'CALLING car'
-    console.log 'malArgs =', serialize(malArgs)
+  if fn == empty?
+    console.log 'empty?'
+    console.log 'malArgs =', (serialize malArgs)
   result = fn (car malArgs)
-  if fn == car
-    console.log 'RESULT OF CAR =', serialize(result)
+  if fn == empty?
+    console.log 'result = ', result
   result
 
 _concat = \malArgs ->
@@ -195,10 +195,7 @@ _evaluate = \malArgs ->
   evaluate [environment] (car malArgs)
 
 _expandMacro = \malArgs ->
-  console.log 'call _expandMacro'
   [malMacro, malArgList] = toPartialArray (2, malArgs)
-  console.log 'malMacro =', malMacro
-  console.log 'malArgList =', malArgList
   expandMacro (malMacro, malArgList, [])
 
 first = \malArgs ->
@@ -237,15 +234,9 @@ _interpret = \malArgs ->
 
 pipe = \malArgs ->
   [malValue, malExprs...] = toArray malArgs
-  console.log 'malValue =', malValue
-  console.log 'malExprs =', malExprs
   _reduce = (malVal, malExpr) ->
     #evaluate [] (concat (malVal, (createMalList malExpr)))
-    console.log 'inside _reduce'
-    console.log 'malVal = ', malVal
-    console.log 'malExpr =', malExpr
     c = concat (malExpr, (createMalList malVal))
-    console.log 'c =', c
     evaluate [environment] c
   malExprs.reduce (_reduce, malValue)
 
@@ -357,17 +348,7 @@ functionsOnMalValues = {
 
 environment = {}
 
-#setCoreFnsOnJsValues! (environment, functionsOnJsValues)
-#setCoreFnsOnMalValues! (environment, functionsOnMalValues)
-setCoreFnsOnJsValues! (environment, { '+' : add, '>' : greaterThan })
-setCoreFnsOnMalValues! (
-  environment, {
-    '='        : areEqual,
-    'car'      : _car,
-    'cdr'      : _cdr,
-    'count'    : count
-    'load'     : load
-    'str'      : str
-  })
+setCoreFnsOnJsValues! (environment, functionsOnJsValues)
+setCoreFnsOnMalValues! (environment, functionsOnMalValues)
 
 module.exports = environment
