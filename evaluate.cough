@@ -81,8 +81,8 @@ SPLAT-TOKEN = '&'
 createLocalEnv = (jsParams, malArgs) ->
   _x = logFn 'createLocalEnv'
   env = {}
-  logValue 'jsParams', jsParams
-  logValue 'malArgs', malArgs
+  logValue 'jsParams', jsParams, false, true
+  logValue 'malArgs', malArgs, false, true
   until empty? jsParams
     jsParam = car jsParams
     logValue 'jsParam', jsParam, true
@@ -254,8 +254,18 @@ _evaluate = (malExpr, envs) ->
             return evalAllSideEffects (head, (cdr malList), envs)
 
           when _if
+            logBranch '_if'
+            logValue 'a1', a1
             jsBool = extractJsValue (_evaluate (a1, envs))
-            malExpr = if jsBool then a2 else a3
+            #malExpr = if jsBool then a2 else a3
+            malExpr = if jsBool
+              logBranch 'true'
+              logValue 'a2', a2
+              a2
+            else
+              logBranch 'false'
+              logValue 'a3', a3
+              a3
 
           when fn*
             return createFn (head, (cdr malList), envs)
@@ -297,18 +307,18 @@ _evaluate = (malExpr, envs) ->
                 malExpr = expandMacro (head, t1, envs)
 
               when malCoreFunction? malInvokable
-                return invokeCoreFn (
-                  malInvokable
-                  map ((evaluate envs), malList)
-                  envs)
+                #return invokeCoreFn (
+                #  malInvokable
+                #  map ((evaluate envs), malList)
+                #  envs)
+                _x = logBranch 'malCoreFunction?'
+                { fn, fnName } = extractJsValue malInvokable
+                malArgs = map ((evaluate envs), malList)
+                logValue 'malArgs', malArgs, false, true
+                return logResult ((fn malArgs), _x)
+                return fn malArgs
 
               when malUserFunction? malInvokable
-                #_reduce = (env, malKey, malExpr) ->
-                #  envValue = _evaluate (malExpr, envs)
-                #  jsKey = extractJsValue malKey
-                #  env[jsKey] = envValue
-                #  env
-
                 { localEnvs, malExpression, malParameters } =
                   extractJsValue malInvokable
 

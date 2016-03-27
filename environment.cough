@@ -20,12 +20,14 @@ interpret                 = require './interpret'
 { last }                  = require './linked-list'
 { malCoreFunction? }      = require './mal-type-utilities'
 { malBoolean? }           = require './mal-type-utilities'
+{ malFalse }              = require './mal-type-utilities'
 { malList? }              = require './mal-type-utilities'
 { malNil }                = require './mal-type-utilities'
 { malNil? }               = require './mal-type-utilities'
 { malNumber? }            = require './mal-type-utilities'
 { malString? }            = require './mal-type-utilities'
 { malSymbol? }            = require './mal-type-utilities'
+{ malTrue }               = require './mal-type-utilities'
 { malUserFunction? }      = require './mal-type-utilities'
 { next }                  = require './linked-list'
 _process_                 = require './process'
@@ -302,6 +304,12 @@ write = \malArgs ->
 
 [_car, _cdr, _empty?, _last] =
   [car, cdr, empty?, last].map stem
+
+_empty? = \malArgs ->
+  if empty? malArgs
+    malFalse
+  else
+    if empty? (car malArgs) then malTrue else malFalse
 
 functionsOnMalValues = {
   '='        : areEqual

@@ -6,7 +6,7 @@
         (if -query- -query- `(or1 ~@(cdr xs)))))))
 
   (def! cond2 (macro* (& xs)
-    (if (or1 (= 0 (count xs)) (= 1 (count xs)))
+    (if (or4 (= 0 (count xs)) (= 1 (count xs)))
       nil
       (if (car xs) (car (cdr xs)) `(cond2 ~@(cdr (cdr xs)))))))
 
