@@ -158,13 +158,7 @@ cons = \malArgs ->
     next malArgs)
 
 stem = \fn \malArgs ->
-  if fn == empty?
-    console.log 'empty?'
-    console.log 'malArgs =', (serialize malArgs)
-  result = fn (car malArgs)
-  if fn == empty?
-    console.log 'result = ', result
-  result
+  fn (car malArgs)
 
 _concat = \malArgs ->
   malLists = toArray malArgs
