@@ -23,7 +23,9 @@
         (if (empty? '~(cdr xs))
           -base-
           (let* (-fn- ~(car (cdr xs)))
-            (-fn- -base-)))))))
+            (if (empty? '(cdr (cdr xs)))
+              (-fn- -base-)
+              (-> (-fn- -base-) ~@(cdr (cdr xs))))))))))
           
 
 )
