@@ -31,7 +31,6 @@ logResult = (value, logIndex = 0) ->
 { cdr }                      = require './linked-list'
 commentSignal                = require './commentSignal'
 { concat }                   = require './linked-list'
-{ cond }                     = require './keyTokens'
 { cons }                     = require './linked-list'
 { createMalIndex }           = require './mal-type-utilities'
 { createMalList }            = require './mal-type-utilities'
@@ -282,9 +281,6 @@ _evaluate = (malExpr, envs) ->
 
           when fn*
             return createFn (head, (cdr malList), envs)
-
-          when cond
-            return evalMultiCondition (head, (cdr malList), envs)
 
           when macro*
             return createMacro (head, (cdr malList), envs)

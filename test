@@ -8,45 +8,22 @@
           -query-
           (or ~@(cdr xs)))))))
 
-  (def! cond1 (macro* (& xs)
-    `(if (empty? '~xs)
-      nil
-      (let* (-query- ~(car xs))
-        (if -query-
-          ~(car (cdr xs))
-          (cond1 ~@(cdr (cdr xs))))))))
-
-  (def! cond2 (macro* (& xs)
+  (def! cond (macro* (& xs)
     `(if (or (empty? '~xs) (empty? '~(cdr xs)))
       nil
       (let* (-query- ~(car xs))
         (if -query-
           ~(car (cdr xs))
-          (cond2 ~@(cdr (cdr xs))))))))
+          (cond ~@(cdr (cdr xs))))))))
+
+  (def! -> (macro* (& xs)
+    `(if (empty? '~xs)
+      nil
+      (let* (-base- ~(car xs))
+        (if (empty? '~(cdr xs))
+          -base-
+          (let* (-fn- ~(car (cdr xs)))
+            (-fn- -base-)))))))
+          
 
 )
-
-;  (def! or0 (macro* (& xs)
-;    `(if (empty? '~xs)
-;      false
-;      (let* (-query- (car '~xs))
-;        (if -query- -query- (eval '(or0 ~@(cdr xs))))))))
-
-;  (def! or1 (macro* (& xs)
-;    `(if (empty? '~xs)
-;      false
-;      (let* (-query- (car ~xs))
-;        (if -query- -query- (eval '(or1 ~@(cdr xs))))))))
-
-;(def! or2 (macro* (& xs)
-;  `(if (empty? '~xs)
-;    false
-;    (let* (-query- '(car ~xs))
-;      (if -query- -query- (eval '(or2 ~@(cdr xs)))))))))
-
-
-;  (def! or4 (macro* (& xs)
-;    `(if (empty? '~xs)
-;      false
-;      (let* (-query- ~(car '~xs))
-;        (if -query- -query- (eval '(or4 ~@(cdr xs)))))))))
