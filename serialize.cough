@@ -13,7 +13,6 @@ extractJsValue       = require './extractJsValue'
 { malUserFunction? } = require './mal-type-utilities'
 { reduce }           = require './linked-list'
 
-# adjoinMalValue = (memo, malValue) ->
 adjoinMalValue = (printReadably?) -> (memo, malValue) ->
   serialized = serialize (malValue, printReadably?)
   if memo.length == 0

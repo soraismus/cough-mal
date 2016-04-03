@@ -9,6 +9,7 @@
 { createMalList }         = require './mal-type-utilities'
 { createMalNumber }       = require './mal-type-utilities'
 { createMalString }       = require './mal-type-utilities'
+{ createMalSymbol }       = require './mal-type-utilities'
 display                   = require './display'
 { drop }                  = require './linked-list'
 { empty? }                = require './linked-list'
@@ -33,6 +34,7 @@ interpret                 = require './interpret'
 _process_                 = require './process'
 { recurse }               = require './linked-list'
 { reduce }                = require './linked-list'
+{ reverse }               = require './linked-list'
 serialize                 = require './serialize'
 { take }                  = require './linked-list'
 { toArray }               = require './linked-list'
@@ -46,6 +48,10 @@ multiply = (nbrs...) ->
   createMalNumber (nbrs.reduce ((x, nbr) -> x *= nbr))
 divide = (nbrs...) ->
   createMalNumber (nbrs.reduce ((x, nbr) -> x /= nbr))
+exponentiate = (nbrs...) ->
+  createMalNumber (nbrs.reduce ((x, nbr) -> Math.pow (x, nbr)))
+negate = \nbr ->
+  createMalNumber (-1 * nbr)
 greaterThan = (nbrs...) ->
   createMalBoolean (nbrs[0] > nbrs[1])
 lessThan = (nbrs...) ->
@@ -80,6 +86,8 @@ functionsOnJsValues = {
   '<'      : lessThan
   '<='     : lessThanOrEqual
   '*'      : multiply
+  '**'     : exponentiate
+  'negate' : negate
   'not'    : _not
   '-'      : subtract
   'get'    : (jsIndex, jsStr) -> jsIndex[jsStr]
@@ -152,6 +160,9 @@ apply = \malArgs ->
   [malFn, malArgList] = toArray malArgs
   evaluate [] (createMalList (malFn, malArgList))
 
+call = \malArgs ->
+  evaluate [] malArgs
+
 cons = \malArgs ->
   createMalList (
     car malArgs
@@ -210,6 +221,24 @@ map = \malArgs ->
   results = __malArgs.map (evaluate [])
   fromArray results
 
+malReduce = \malArgs ->
+  [malSeed, malFn, malArgList] = toArray malArgs
+  _malArgs = toArray malArgList
+  _reduce = (memo, item) ->
+    _memo = if malList? memo
+        createMalList (
+          createMalSymbol 'quote'
+          createMalList memo)
+      else
+        memo
+    evaluate [] (
+      createMalList (
+        malFn
+        createMalList (
+          _memo
+            createMalList item)))
+  _malArgs.reduce (_reduce, malSeed)
+
 nth = \malArgs ->
   [malNumber, malList] = toPartialArray (2, malArgs)
   for i in [0 ... (extractJsValue malNumber)]
@@ -227,14 +256,6 @@ _quit_ = ->
 
 _interpret = \malArgs ->
   interpret (stripQuotes (extractJsValue (car malArgs)))
-
-pipe = \malArgs ->
-  [malValue, malExprs...] = toArray malArgs
-  _reduce = (malVal, malExpr) ->
-    #evaluate [] (concat (malVal, (createMalList malExpr)))
-    c = concat (malExpr, (createMalList malVal))
-    evaluate [environment] c
-  malExprs.reduce (_reduce, malValue)
 
 _prStr = (malArgs, printReadably?) ->
   ((toArray malArgs).map \malArg -> serialize (malArg, printReadably?))
@@ -261,7 +282,8 @@ read = \jsList ->
   createMalString (_read jsList)
 
 rest = \malArgs ->
-  cdr (car malArgs)
+  arg = car malArgs
+  if malList? arg then cdr arg else malNil
 
 setCoreFnsOnMalValues! = (env, fns) ->
   for own fnName, fn of fns
@@ -296,8 +318,13 @@ write = \malArgs ->
     malSymbol?
   ].map createPredicate
 
-[_car, _cdr, _empty?, _last] =
-  [car, cdr, empty?, last].map stem
+_car = \malArgs ->
+  arg = car malArgs
+  if malList? arg then car arg else malNil
+
+_cdr = \malArgs ->
+  arg = car malArgs
+  if malList? arg then cdr arg else malNil
 
 _empty? = \malArgs ->
   if empty? malArgs
@@ -305,12 +332,21 @@ _empty? = \malArgs ->
   else
     if empty? (car malArgs) then malTrue else malFalse
 
+_last = \malArgs ->
+  arg = car malArgs
+  if malList? arg then last arg else malNil
+
+_reverse = \malArgs ->
+  arg = car malArgs
+  if malList? arg then reverse arg else malNil
+
 functionsOnMalValues = {
   '='        : areEqual
   'append'   : append
   'apply'    : apply
   'boolean?' : boolean?
   'car'      : _car
+  'call'     : call
   'cdr'      : _cdr
   'cons'     : cons
   'concat'   : _concat
@@ -320,7 +356,7 @@ functionsOnMalValues = {
   'eval'     : _evaluate
   'evalStr'  : _evaluateString
   'expand-macro' : _expandMacro
-  'first'    : first
+  'first'    : _car
   'last'     : _last
   'list'     : list
   'list?'    : list?
@@ -336,7 +372,9 @@ functionsOnMalValues = {
   'prStr'    : prStr
   '-quit-'   : _quit_
   'read'     : read
-  'rest'     : rest
+  'reduce'   : malReduce
+  'rest'     : _cdr
+  'reverse'  : _reverse
   'str'      : str
   'string?'  : string?
   'symbol?'  : symbol?
@@ -345,7 +383,6 @@ functionsOnMalValues = {
   'throw'    : _throw
   'time-ms'  : time-ms
   'typeof'   : typeOf
-  '->'       : pipe
 }
 
 environment = {}

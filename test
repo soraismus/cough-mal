@@ -1,5 +1,7 @@
 (do
 
+  (def! incr (fn* (x) (+ 1 x)))
+
   (def! or (macro* (& xs)
     `(if (empty? '~xs)
       false
@@ -22,10 +24,74 @@
       (let* (-base- ~(car xs))
         (if (empty? '~(cdr xs))
           -base-
-          (let* (-fn- ~(car (cdr xs)))
-            (if (empty? '(cdr (cdr xs)))
-              (-fn- -base-)
-              (-> (-fn- -base-) ~@(cdr (cdr xs))))))))))
+          (let* (-form- '~(car (cdr xs)))
+            (if (list? -form-)
+              (if (empty? '~(cdr (cdr xs)))
+                (~@(car (cdr xs)) ~(car xs))
+                nil)
+              (let* (-fn- ~(car (cdr xs)))
+                (if (empty? '(cdr (cdr xs)))
+                  (-fn- -base-)
+                  (-> (~(car (cdr xs)) ~(car xs)) ~@(cdr (cdr xs))))))))))))
           
 
 )
+                ;'(~@(car (cdr xs)) ~(car xs))
+                ;'~(car (cdr xs))
+                ;'(~@(car (cdr xs)))
+                ;(list? '~(car (cdr xs)))
+                ;'(~@-form-) ; Why can't this let-var be resolved?
+                ;'(~@'~(car (cdr xs)))
+                ;'(~@~(car (cdr xs)))
+
+                ;(~@(car (cdr (cdr xs))) ~(car xs))
+
+; read-string
+; slurp
+; inner-comment macro
+; *ARGV*
+; load-file
+; eval (esp. with configurable parameters)
+; def! a (atom 2)
+; (atom? a) ; => true
+; (deref a) ; => 2
+; (reset! a 3)
+; (swap! a incr)
+; (swap! a + 3)
+; (def! f0 (fn* () (swap! a incr)))
+; (f0)
+; enable `load-file` of a file that contains a multi-line map
+; fix determination of equality
+; symbol-keys (like :abc)
+; amend results from "str" function
+; pr-str, str, prn, println, readline, read-string, slurp
+; readline
+; *host-language*
+; gensym -- for hygienic macros
+
+; -----------
+; METADATA
+; -----------
+; (meta (fn* (a) a)) ; => nil
+; (meta (with-meta (fn* (a) a) { "b" 1 })) ; => { "b" 1 }
+; (meta (with-meta (fn* (a) a) "abc"))     ; => "abc"
+
+; (def! x0 (with-meta (fn* (a) a) { "b" 2 })) ; => ???
+; (meta x0)                                   ; => { "b" 2 }
+; (meta (with-meta x0 { "c" 3 }))             ; => { "c" 3 }
+; (meta x0)                                   ; => { "b" 2 }
+
+; (def! x1 ^{"abc" 1} (fn* (a) (+ 1 a)))      ; => ???
+; (meta x1)                                   ; => { "abc" 1 }
+
+; (meta +) ; => nil
+
+; (def! gen-plusX (fn* (x) (with-meta (fn* (y) (+ x y) { "meta" 1 }))))
+; (def! plus7 (gen-plusX 7))
+; (plus7 8) ; => 15
+; (meta plus7) ; => { "meta" 1 }
+
+; (meta '(1 2 3)) ; => nil
+; (with-meta '(1 2 3) { "a" 1 }) ; => '(1 2 3)
+; (meta (with-meta '(1 2 3) { "a" 1 })) ; => { "a" 1 }
+

@@ -205,30 +205,37 @@ __manageSpliceUnquotedExpr = (expr, envs) ->
   reverse (reduce (createMalList (), manageItem, expr))
 
 _evalQuasiquotedExpr = (expr, envs) ->
-  #logFn '_evalQuasiquotedExpr'
-  #logValue 'expr', expr, false, true
-  #if envs[0]['xs']
-    #logValue 'envs[0][xs]', envs[0]['xs'], false, true
+  logFn '_evalQuasiquotedExpr'
+  logValue 'expr', expr, false, true
+  if envs[0]['xs']
+    logValue 'envs[0][xs]', envs[0]['xs'], false, true
   manageItem = (memo, item) ->
-    #logValue 'memo', memo, false, true
-    #logValue 'item', item, false, true
+    logFn 'manageItem'
+    logValue 'memo', memo, false, true
+    logValue 'item', item, false, true
     switch
       when unquotedExpr? item
-        #logBranch 'unquotedExpr?'
+        logBranch 'unquotedExpr?'
         cons(_evaluate(next(item), envs), memo)
-        #cons ((next item), memo)
       when spliceUnquotedExpr? item
-        #logBranch 'spliceUnquotedExpr?'
+        logBranch 'spliceUnquotedExpr?'
         _manageItem = (_memo, _item) ->
-          #cons (_evaluate (_item, envs), _memo)
+          logFn '_manageItem'
+          logValue '_memo', _memo, false, true
+          logValue '_item', _item, false, true
           cons (_item, _memo)
+        logValue '(next item)', (next item), false, true
+        if envs[0]['xs']
+          logValue 'envs[0][xs]', envs[0]['xs'], false, true
+        logValue '_evaluate (next item)', _evaluate(next(item),envs), false, true
         reduce (memo, _manageItem, (_evaluate ((next item), envs)))
-        #reduce (memo, _manageItem, (next item))
       when malList? item
-        #logBranch 'malList?'
+        logBranch 'malList?'
+        logValue 'item', item, false, true
         cons (_evalQuasiquotedExpr (item, envs), memo)
       else
-        #logBranch 'default'
+        logBranch 'default'
+        logValue 'item', item, false, true
         cons (item, memo)
   reverse(
     reduce (
