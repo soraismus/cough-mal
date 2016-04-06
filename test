@@ -19,21 +19,39 @@
           (cond ~@(cdr (cdr xs))))))))
 
   (def! -> (macro* (& xs)
-    `(if (empty? '~xs)
+    (if (empty? xs)
       nil
-      (let* (-base- ~(car xs))
-        (if (empty? '~(cdr xs))
-          -base-
-          (let* (-form- '~(car (cdr xs)))
-            (if (list? -form-)
-              (if (empty? '~(cdr (cdr xs)))
-                (~@(car (cdr xs)) ~(car xs))
-                nil)
-              (let* (-fn- ~(car (cdr xs)))
-                (if (empty? '(cdr (cdr xs)))
-                  (-fn- -base-)
-                  (-> (~(car (cdr xs)) ~(car xs)) ~@(cdr (cdr xs))))))))))))
-          
+      (let* (x  (car xs)
+             xs (cdr xs))
+        (if (empty? xs)
+          x
+          (let* (form  (car xs)
+                 forms (cdr xs))
+            (if (empty? forms)
+              (if (list? form)
+                (if (= (symbol "fn*") (car form))
+                  `(~form ~x)
+                  `(~(car form) ~x ~@(cdr form)))
+                (list form x))
+              `(-> (-> ~x ~form) ~@forms)))))))))
+
+  (def! ->> (macro* (& xs)
+    (if (empty? xs)
+      nil
+      (let* (x  (car xs)
+             xs (cdr xs))
+        (if (empty? xs)
+          x
+          (let* (form  (car xs)
+                 forms (cdr xs))
+            (if (empty? forms)
+              (if (list? form)
+                (if (= (symbol "fn*") (car form))
+                  `(~form ~x)
+                  `(~@form  ~x))
+                (list form x))
+              `(->> (->> ~x ~form) ~@forms))))))))
+
 
 )
                 ;'(~@(car (cdr xs)) ~(car xs))
@@ -95,3 +113,18 @@
 ; (with-meta '(1 2 3) { "a" 1 }) ; => '(1 2 3)
 ; (meta (with-meta '(1 2 3) { "a" 1 })) ; => { "a" 1 }
 
+
+;  (def! ->> (macro* (& xs)
+;    (if (empty? xs)
+;      nil
+;      (let* (x  (car xs)
+;             xs (cdr xs))
+;        (if (empty? xs)
+;          x
+;          (let* (form  (car xs)
+;                 forms (cdr xs))
+;            (if (empty? forms)
+;              (if (list? form)
+;                `(~@form  ~x)
+;                (list form x))
+;              `(->> (->> ~x ~form) ~@forms))))))))

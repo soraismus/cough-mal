@@ -148,10 +148,8 @@ __areEqual = (malValue0, malValue1) ->
       false
 
 # TODO: Refactor.
-areEqual = \jsList ->
-  malValue0 = jsList.value
-  cdr = recurse jsList
-  malValue1 = cdr.value
+areEqual = \malArgs ->
+  [malValue0, malValue1] = toArray malArgs
   createMalBoolean (__areEqual (malValue0, malValue1))
 # ---------------------------------------------------------
 
@@ -261,10 +259,10 @@ _prStr = (malArgs, printReadably?) ->
   ((toArray malArgs).map \malArg -> serialize (malArg, printReadably?))
 
 prStr = \malArgs ->
-  (_prStr (malArgs, true)).join ' '
+  (_prStr (malArgs, true)).join ''
 
 str = \malArgs ->
-  (_prStr (malArgs, false)).join ' '
+  (_prStr (malArgs, false)).join ''
 
 prn = \malArgs ->
   display ((_prStr (malArgs, true))...)
@@ -309,14 +307,20 @@ time-ms = () ->
 write = \malArgs ->
   createMalString (serialize (car malArgs))
 
-[boolean?, list?, nil?, number?, symbol?, string?] =
+[boolean?, list?, nil?, number?, symbol?, string?, coreFn?, userFn?] =
   [ malBoolean?
     malList?
     malNil?
     malNumber?
-    malString?
     malSymbol?
+    malString?
+    malCoreFunction?
+    malUserFunction?
   ].map createPredicate
+
+function? = \jsList ->
+  malValue = jsList.value
+  createMalBoolean (malCoreFunction? malValue || malUserFunction? malValue)
 
 _car = \malArgs ->
   arg = car malArgs
@@ -340,6 +344,14 @@ _reverse = \malArgs ->
   arg = car malArgs
   if malList? arg then reverse arg else malNil
 
+symbol = \malArgs ->
+  malValue = car malArgs
+  if malString? malValue
+    jsStr = extractJsValue malValue
+    createMalSymbol jsStr[1 ... -1]
+  else
+    malNil
+
 functionsOnMalValues = {
   '='        : areEqual
   'append'   : append
@@ -350,6 +362,7 @@ functionsOnMalValues = {
   'cdr'      : _cdr
   'cons'     : cons
   'concat'   : _concat
+  'core-fn?' : coreFn?
   'count'    : count
   'drop'     : _drop
   'empty?'   : _empty?
@@ -357,6 +370,7 @@ functionsOnMalValues = {
   'evalStr'  : _evaluateString
   'expand-macro' : _expandMacro
   'first'    : _car
+  'function?' : function?
   'last'     : _last
   'list'     : list
   'list?'    : list?
@@ -377,12 +391,14 @@ functionsOnMalValues = {
   'reverse'  : _reverse
   'str'      : str
   'string?'  : string?
+  'symbol'   : symbol
   'symbol?'  : symbol?
   'write'    : write
   'take'     : _take
   'throw'    : _throw
   'time-ms'  : time-ms
   'typeof'   : typeOf
+  'user-fn?' : userFn?
 }
 
 environment = {}
