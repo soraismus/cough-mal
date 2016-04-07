@@ -1,19 +1,21 @@
 (do
 
-  (def! incr (fn* (x) (+ 1 x)))
+  (def! 1st car)
+  (def! 2nd (fn* (-list-) (nth 1 -list-)))
+  (def! 3rd (fn* (-list-) (nth 2 -list-)))
 
   (def! or (macro* (& xs)
-    `(if (empty? '~xs)
+    (if (empty? xs)
       false
-      (let* (-query- ~(car xs))
-        (if -query-
+      `(let* (-query- ~(car xs))
+        (if -query- 
           -query-
           (or ~@(cdr xs)))))))
 
   (def! cond (macro* (& xs)
-    `(if (or (empty? '~xs) (empty? '~(cdr xs)))
+    (if (or (empty? xs) (empty? (cdr xs)))
       nil
-      (let* (-query- ~(car xs))
+      `(let* (-query- ~(car xs))
         (if -query-
           ~(car (cdr xs))
           (cond ~@(cdr (cdr xs))))))))
@@ -33,7 +35,7 @@
                   `(~form ~x)
                   `(~(car form) ~x ~@(cdr form)))
                 (list form x))
-              `(-> (-> ~x ~form) ~@forms)))))))))
+              `(-> (-> ~x ~form) ~@forms))))))))
 
   (def! ->> (macro* (& xs)
     (if (empty? xs)
@@ -53,16 +55,11 @@
               `(->> (->> ~x ~form) ~@forms))))))))
 
 
-)
-                ;'(~@(car (cdr xs)) ~(car xs))
-                ;'~(car (cdr xs))
-                ;'(~@(car (cdr xs)))
-                ;(list? '~(car (cdr xs)))
-                ;'(~@-form-) ; Why can't this let-var be resolved?
-                ;'(~@'~(car (cdr xs)))
-                ;'(~@~(car (cdr xs)))
+  (def! ->* (macro* (& xs) `(fn* (-x-) (-> -x- ~@xs))))
 
-                ;(~@(car (cdr (cdr xs))) ~(car xs))
+  (def! ->>* (macro* (& xs) `(fn* (-x-) (->> -x- ~@xs))))
+
+)
 
 ; read-string
 ; slurp
@@ -112,19 +109,3 @@
 ; (meta '(1 2 3)) ; => nil
 ; (with-meta '(1 2 3) { "a" 1 }) ; => '(1 2 3)
 ; (meta (with-meta '(1 2 3) { "a" 1 })) ; => { "a" 1 }
-
-
-;  (def! ->> (macro* (& xs)
-;    (if (empty? xs)
-;      nil
-;      (let* (x  (car xs)
-;             xs (cdr xs))
-;        (if (empty? xs)
-;          x
-;          (let* (form  (car xs)
-;                 forms (cdr xs))
-;            (if (empty? forms)
-;              (if (list? form)
-;                `(~@form  ~x)
-;                (list form x))
-;              `(->> (->> ~x ~form) ~@forms))))))))
