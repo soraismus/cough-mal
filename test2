@@ -26,9 +26,11 @@
   (test 1 (if (< 0 0) (+ 0 0) (+ 0 1)))
   
   (def! --test-var-0-- 5)
-
   (test 5 --test-var-0--)
+  (undef! --test-var-0--)
+
   (test 5 (def! --test-var-1-- 5))
+  (undef! --test-var-1--)
 
   (test 5 (let* (x 5) x))
 
@@ -80,6 +82,10 @@
 
   (test 10  ((->* (/ 100)) 1000))
   (test 100 ((->>* (/ 100)) 1))
+
+  (def! -add- (fn* (x y) (if (= 0 x) y (-add- (- x 1) (+ x y)))))
+  (test 50005000 (-add- 10000 0))
+  (undef! -add-)
 
   ;(test 12 ((\ + _ (* _ _)) 3))
 

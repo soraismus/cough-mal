@@ -38,7 +38,7 @@ extractJsValue               = require './extractJsValue'
 { reduceBy2 }                = require './linked-list'
 { reverse }                  = require './linked-list'
 { setMainEnv }               = require './env-utilities'
-{ toArray }                  = require './linked-list'
+{ toPartialArray }           = require './linked-list'
 { undef! }                   = require './keyTokens'
 { unsetMainEnv }             = require './env-utilities'
 
@@ -153,9 +153,8 @@ _evaluate = (malExpr, envs) ->
   loop
     switch
       when malList? malExpr
-        malList = malExpr
-        [head, a1, a2, a3] = toArray malList
-        t1 = cdr malList
+        [head, a1, remaining] = toPartialArray (2, malExpr)
+        t1 = cdr malExpr
 
         switch (extractJsValue head)
           when def!
@@ -170,7 +169,7 @@ _evaluate = (malExpr, envs) ->
               jsKey = extractJsValue malKey
               env[jsKey] = envValue
               env
-            malExpr = a2
+            malExpr = (car remaining)
             envs = addEnv (envs, reduceBy2 ({}, _reduce, a1))
 
           # How optimize tail calls?
@@ -179,7 +178,7 @@ _evaluate = (malExpr, envs) ->
 
           when _if
             jsBool = extractJsValue (_evaluate (a1, envs))
-            malExpr = if jsBool then a2 else a3
+            malExpr = if jsBool then (car remaining) else (next remaining)
 
           when fn*
             return createFn (t1, envs)
@@ -198,7 +197,7 @@ _evaluate = (malExpr, envs) ->
 
           else
             malSymbol = head
-            malList = t1
+            malExpr = t1
 
             malInvokable = _evaluate (malSymbol, envs)
 
@@ -208,14 +207,14 @@ _evaluate = (malExpr, envs) ->
 
               when malCoreFunction? malInvokable
                 { fn, fnName } = extractJsValue malInvokable
-                malArgs = map ((evaluate envs), malList)
+                malArgs = map ((evaluate envs), malExpr)
                 return fn malArgs
 
               when malUserFunction? malInvokable
                 { localEnvs, malExpression, malParameters } =
                   extractJsValue malInvokable
 
-                malArgs = map ((evaluate envs), malList)
+                malArgs = map ((evaluate envs), malExpr)
                 malExpr = malExpression
                 jsParameters = map (extractJsValue, malParameters)
                 newEnv = createLocalEnv (jsParameters, malArgs)

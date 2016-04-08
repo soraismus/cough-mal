@@ -176,3 +176,6 @@
   ;                (nth clauses 1)
   ;                (throw "cond requires an even number of forms"))
   ;            (cons 'cond (rest (rest clauses)))))))
+
+
+; defined?

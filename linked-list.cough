@@ -153,6 +153,7 @@ toPartialArray = (nbr, list) ->
     list = cdr list
     result.push node
     nbr = nbr - 1
+  result.push list
   result
 
 zip = (seed, fn, list0, list1) ->
