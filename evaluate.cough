@@ -73,10 +73,6 @@ defineNewValue = (malList, envs) ->
   malValue = _evaluate ((next malList), envs)
   setMainEnv (envs, jsKey, malValue)
 
-undefineValue = (malList, envs) ->
-  jsKey = extractJsValue (car malList)
-  unsetMainEnv (envs, jsKey)
-
 evalAllSideEffects = (malList, envs) ->
   forEach ((evaluate envs), malList)
 
@@ -87,31 +83,6 @@ evalCondition = (malList, envs) ->
 
 evalDefault = (malExpr, envs) ->
   malExpr
-
-evalMultiCondition = (malList, envs) ->
-  until empty? malList
-    condition = car malList
-    jsBool = extractJsValue (_evaluate ((car condition), envs))
-    return _evaluate ((next condition), envs) if jsBool
-    malList = cdr malList
-  malNil
-
-_normalizeQuasiquote = \malExpr ->
-  if unquotedExpr? malExpr
-    next malExpr
-  else if spliceUnquotedExpr? malExpr
-    concat ((car malExpr), (normalizeQuasiquote (cdr malExpr)))
-  else if malList? malExpr
-    map (normalizeQuasiquote, malExpr)
-  else
-    malExpr
-
-normalizeQuasiquote = \malExpr ->
-  if not malList? malExpr
-    return doQuote malExpr
-  if empty? malExpr
-    return doQuote malExpr
-  _normalizeQuasiquote malExpr
 
 evalQuasiquotedExpr = (expr, envs) ->
   _expr = car expr
@@ -170,7 +141,7 @@ _evaluate = (malExpr, envs) ->
               env[jsKey] = envValue
               env
             malExpr = (car remaining)
-            envs = addEnv (envs, reduceBy2 ({}, _reduce, a1))
+            envs = addEnv (envs, reduceBy2 ({}, (reduceLet* envs), a1))
 
           # How optimize tail calls?
           when _do
@@ -249,11 +220,21 @@ expandMacro = (malMacroSymbol, malArgs, envs) ->
   newEnvStack = addEnv (localEnvs, newEnv)
   _evaluate (malExpression, newEnvStack)
 
+reduceLet* = (envs) -> (env, malKey, malExpr) ->
+  envValue = _evaluate (malExpr, envs)
+  jsKey = extractJsValue malKey
+  env[jsKey] = envValue
+  env
+
 spliceUnquote? = \malValue ->
   spliceUnquote == (extractJsValue malValue)
 
 spliceUnquotedExpr? = \malValue ->
   malList? malValue && (spliceUnquote? (car malValue))
+
+undefineValue = (malList, envs) ->
+  jsKey = extractJsValue (car malList)
+  unsetMainEnv (envs, jsKey)
 
 unquote? = \malValue ->
   unquote == (extractJsValue malValue)
