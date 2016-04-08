@@ -1,0 +1,87 @@
+(do
+
+  (load "test")
+
+  (def! testIndex 0)
+
+  (def! test (fn* (expected actual)
+    (do
+      (println testIndex)
+      (def! testIndex (+ testIndex 1))
+      ;(println expected)
+      ;(println actual)
+      (println (= expected actual)))))
+
+  (test 10 (+ 1 2 3 4))
+  (test 24 (* 1 2 3 4))
+  (test 94 (- 100 1 2 3))
+  (test 10 (/ 100 2 5))
+  (test 81 (** 3 2 2))
+
+  (test 0 (if true 0 1))
+  (test 1 (if false 0 1))
+  (test 0 (if (= 0 0) 0 1))
+  (test 1 (if (< 0 0) 0 1))
+  (test 0 (if (= 0 0) (+ 0 0) 1))
+  (test 1 (if (< 0 0) (+ 0 0) (+ 0 1)))
+  
+  (def! --test-var-0-- 5)
+
+  (test 5 --test-var-0--)
+  (test 5 (def! --test-var-1-- 5))
+
+  (test 5 (let* (x 5) x))
+
+  (test true  (number? 0))
+  (test false (number? "zero"))
+  (test true (number? '0))
+  (test false (number? (fn* () nil)))
+  (test false (number? +))
+
+  (test true (nil? nil))
+
+  (test true (boolean? true))
+  (test true (boolean? false))
+
+  (test true  (string? "hello"))
+  (test false (string? 'hello))
+  (test false (string? 50))
+
+  (test true (function? +))
+  (test true (function? (fn* () nil)))
+
+  (test false (or))
+  (test false (or false false false false))
+  (test true (or false false true false))
+  (test false (or false (= 0 1) (= 0 1) false))
+  (test true (or false (= 0 1) (< 0 1) false))
+
+  (test true (and))
+  (test false (and false false false false))
+  (test false (and false false true false))
+  (test true (and true true true true))
+  (test false (and true (< 0 1) (< 0 1) (= 0 1)))
+  (test true (and true (< 0 1) (< 0 1) (< 0 1)))
+
+  (test nil (cond))
+  (test nil (cond true))
+  (test nil (cond false))
+  (test nil (cond (= 0 0)))
+  (test 0 (cond (= 0 0) 0))
+  (test nil (cond (< 0 0) 0))
+  (test 1 (cond (< 0 0) 0 (= 0 0) 1))
+  (test 3 (cond (< 0 0) 0 (< 0 0) 1 (< 0 0) 2 (= 0 0) 3))
+
+  (test 10  (-> 1000 (/ 100)))
+  (test 100 (->> 1   (/ 100)))
+
+  (test true (function? (->*  (/ 100))))
+  (test true (function? (->>* (cons 'prefix))))
+
+  (test 10  ((->* (/ 100)) 1000))
+  (test 100 ((->>* (/ 100)) 1))
+
+  (test 12 ((\ + _ (* _ _)) 3))
+
+  "tests complete"
+)

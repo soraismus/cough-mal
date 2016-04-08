@@ -1,8 +1,8 @@
 (do
 
   (def! 1st car)
-  (def! 2nd (fn* (-list-) (nth 1 -list-)))
-  (def! 3rd (fn* (-list-) (nth 2 -list-)))
+  (def! 2nd (fn* (xs) (nth 1 xs)))
+  (def! 3rd (fn* (xs) (nth 2 xs)))
 
   (def! or (macro* (& xs)
     (if (empty? xs)
@@ -12,12 +12,20 @@
           -query-
           (or ~@(cdr xs)))))))
 
+  (def! and (macro* (& xs)
+    (if (empty? xs)
+      true
+      `(let* (-query- ~(car xs))
+        (if -query-
+          (and ~@(cdr xs))
+          false)))))
+
   (def! cond (macro* (& xs)
     (if (or (empty? xs) (empty? (cdr xs)))
       nil
       `(let* (-query- ~(car xs))
         (if -query-
-          ~(car (cdr xs))
+          ~(2nd xs)
           (cond ~@(cdr (cdr xs))))))))
 
   (def! -> (macro* (& xs)
@@ -54,10 +62,48 @@
                 (list form x))
               `(->> (->> ~x ~form) ~@forms))))))))
 
-
   (def! ->* (macro* (& xs) `(fn* (-x-) (-> -x- ~@xs))))
 
   (def! ->>* (macro* (& xs) `(fn* (-x-) (->> -x- ~@xs))))
+
+  (def! inc   (->* (+ 1)))
+  (def! dec   (->* (- 1)))
+  (def! zero? (->* (= 0)))
+
+  (def! skip (fn* (nbr xs)
+    (if (= 0 nbr)
+      xs
+      (let* (_skip (fn* (nbr xs)
+        (if (= 1 nbr)
+          (cdr xs)
+          (_skip (- nbr 1) (cdr xs)))))
+        (_skip nbr xs)))))
+
+  (def! not (fn* (x) (if x false true)))
+
+  (def! identity (fn* (x) x))
+
+  (def! reduce
+    (fn* (seed f xs)
+      (if (empty? xs)
+        seed
+        (reduce (f seed (car xs)) f (cdr xs)))))
+
+  (def! every?
+    (fn* (pred xs)
+      (if (empty? xs)
+        true
+        (if (pred (car xs))
+          (every? pred (cdr xs))
+          false))))
+
+  (def! some?
+    (fn* (pred xs)
+      (if (empty? xs)
+        false
+        (if (pred (car xs))
+          true
+          (some? pred (cdr xs))))))
 
 )
 
@@ -109,3 +155,24 @@
 ; (meta '(1 2 3)) ; => nil
 ; (with-meta '(1 2 3) { "a" 1 }) ; => '(1 2 3)
 ; (meta (with-meta '(1 2 3) { "a" 1 })) ; => { "a" 1 }
+
+
+  ;(defmacro! and
+  ;  (fn* (& xs)
+  ;    (if (empty? xs)
+  ;      true
+  ;      (if (= 1 (count xs))
+  ;        (first xs)
+  ;        (let* (condvar (gensym))
+  ;          `(let* (~condvar ~(first xs))
+  ;            (if ~condvar (and ~@(rest xs)) ~condvar)))))))
+
+
+  ;(defmacro! cond
+  ;  (fn* (& clauses)
+  ;    (if (> (count clauses) 0)
+  ;      (list 'if (first clauses)
+  ;            (if (> (count clauses) 1)
+  ;                (nth clauses 1)
+  ;                (throw "cond requires an even number of forms"))
+  ;            (cons 'cond (rest (rest clauses)))))))
