@@ -1,4 +1,5 @@
 { createMalList } = require './linked-list'
+{ malAtomType }   = require './mal-types'
 { malTypes }      = require './mal-types'
 
 create-factory-&-predicate = \malType ->
@@ -7,6 +8,9 @@ create-factory-&-predicate = \malType ->
   predicate = \malValue ->
     malValue.type == malType
   [factory, predicate]
+
+createMalAtom = \malValue ->
+  { malValue, type: malAtomType }
 
 createMalBoolean = \jsBoolean ->
   if jsBoolean then malTrue else malFalse
@@ -33,6 +37,7 @@ createPredicate = \constant \value ->
   [createMalSymbol,        malSymbol?      ]
   [_createMalUnit,         _malUnit?       ]
   [createMalUserFunction,  malUserFunction?]
+  [_createMalAtom,         malAtom?        ]
 ] = malTypes.map create-factory-&-predicate
 
 malNil = _createMalUnit null
@@ -43,6 +48,7 @@ malNil = _createMalUnit null
   [malFalse, malNil, malTrue].map createPredicate
 
 module.exports = {
+  createMalAtom
   createMalBoolean
   createMalCoreFunction
   createMalIndex
@@ -55,6 +61,7 @@ module.exports = {
   createMalString
   createMalSymbol
   createMalUserFunction
+  malAtom?
   malBoolean?
   malCoreFunction?
   malFalse

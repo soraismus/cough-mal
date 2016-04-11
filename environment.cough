@@ -3,6 +3,7 @@
 { copy }                  = require './linked-list'
 { concat }                = require './linked-list'
 { createJsLinkedList }    = require './linked-list'
+{ createMalAtom }         = require './mal-type-utilities'
 { createMalBoolean }      = require './mal-type-utilities'
 { createMalCoreFunction } = require './mal-type-utilities'
 { createMalIndex }        = require './mal-type-utilities'
@@ -19,6 +20,7 @@ extractJsValue            = require './extractJsValue'
 { fromArray }             = require './linked-list'
 interpret                 = require './interpret'
 { last }                  = require './linked-list'
+{ malAtom? }              = require './mal-type-utilities'
 { malCoreFunction? }      = require './mal-type-utilities'
 { malBoolean? }           = require './mal-type-utilities'
 { malFalse }              = require './mal-type-utilities'
@@ -64,18 +66,20 @@ greaterThanOrEqual = (nbrs...) ->
 _not = \bool ->
   createMalBoolean (!bool)
 
-#lift = \fnOnJsValues \malValueList ->
+deref = \malArgs ->
+  (car malArgs).malValue
+
+setMalValue = (malAtom, malValue) ->
+  malAtom.malValue = malValue
+  malAtom
+
 lift = (fnOnJsValues, fnName) ->
   __fn__ = (malValueList) ->
-    malValues = toArray malValueList
-    jsValues = malValues.map extractJsValue
-    fnOnJsValues jsValues...
-  __fn__.name = fnName
+    fnOnJsValues (((toArray malValueList).map extractJsValue)...)
   { fn: __fn__, fnName }
 
 setCoreFnsOnJsValues! = (env, fns) ->
   for own fnName, fn of fns
-    #env[fnName] = createMalCoreFunction (lift fn)
     env[fnName] = createMalCoreFunction (lift (fn, fnName))
 
 functionsOnJsValues = {
@@ -90,7 +94,7 @@ functionsOnJsValues = {
   'negate' : negate
   'not'    : _not
   '-'      : subtract
-  'get'    : (jsIndex, jsStr) -> jsIndex[jsStr]
+  'get'    : (jsIndex, jsKey) -> jsIndex[jsKey]
   'assoc' : (index, args...) ->
     copy = {}
     for own key, value of index
@@ -307,8 +311,9 @@ time-ms = () ->
 write = \malArgs ->
   createMalString (serialize (car malArgs))
 
-[boolean?, list?, nil?, number?, symbol?, string?, coreFn?, userFn?] =
-  [ malBoolean?
+[atom?, boolean?, list?, nil?, number?, symbol?, string?, coreFn?, userFn?] =
+  [ malAtom?
+    malBoolean?
     malList?
     malNil?
     malNumber?
@@ -356,6 +361,8 @@ functionsOnMalValues = {
   '='        : areEqual
   'append'   : append
   'apply'    : apply
+  'atom'     : \malArgs -> createMalAtom (car malArgs)
+  'atom?'    : atom?
   'boolean?' : boolean?
   'car'      : _car
   'call'     : call
@@ -364,6 +371,7 @@ functionsOnMalValues = {
   'concat'   : _concat
   'core-fn?' : coreFn?
   'count'    : count
+  'deref'    : deref
   'drop'     : _drop
   'empty?'   : _empty?
   'eval'     : _evaluate
@@ -387,6 +395,9 @@ functionsOnMalValues = {
   '-quit-'   : _quit_
   'read'     : read
   'reduce'   : malReduce
+  'reset!'   : \malArgs ->
+    [atom, value] = toPartialArray (2, malArgs)
+    setMalValue (atom, value)
   'rest'     : _cdr
   'reverse'  : _reverse
   'str'      : str
@@ -399,6 +410,21 @@ functionsOnMalValues = {
   'time-ms'  : time-ms
   'typeof'   : typeOf
   'user-fn?' : userFn?
+  'set!'      : \malArgs ->
+    [index, key, val] = toPartialArray (3, malArgs)
+    (extractJsValue index)[extractJsValue key] = val
+    index
+  'with-meta' : \malArgs ->
+    [malVal, malMeta] = toPartialArray (2, malArgs)
+    if malAtom? malVal
+      { malValue, type } = malVal
+      { malValue, type, meta: malMeta }
+    else
+      { jsValue, type } = malVal
+      { jsValue, type, meta: malMeta }
+  'meta'      : \malArgs ->
+    malMeta = (car malArgs).meta
+    if ? malMeta then malMeta else malNil
 }
 
 environment = {}

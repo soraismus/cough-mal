@@ -1,5 +1,10 @@
 (do
 
+  (def! fix
+    (fn* (f)
+      ( (fn* (x) (f (fn* (y) ((x x) y))))
+        (fn* (x) (f (fn* (y) ((x x) y)))))))
+
   (def! 1st car)
   (def! 2nd (fn* (xs) (nth 1 xs)))
   (def! 3rd (fn* (xs) (nth 2 xs)))
@@ -66,22 +71,25 @@
 
   (def! ->>* (macro* (& xs) `(fn* (-x-) (->> -x- ~@xs))))
 
-  (def! inc   (->* (+ 1)))
-  (def! dec   (->* (- 1)))
-  (def! zero? (->* (= 0)))
+  (def! swap! (macro* (atom & xs)
+    (if (empty? xs)
+      atom
+      `(let* (-atom- ~atom)
+        (do
+          (reset! -atom- (~(car xs) (deref -atom-) ~@(cdr xs)))
+          (deref -atom-))))))
 
-  (def! skip (fn* (nbr xs)
-    (if (= 0 nbr)
-      xs
-      (let* (_skip (fn* (nbr xs)
-        (if (= 1 nbr)
-          (cdr xs)
-          (_skip (- nbr 1) (cdr xs)))))
-        (_skip nbr xs)))))
+  (def! incr  (->* (+ 1)))
+  (def! decr  (->* (- 1)))
+  (def! zero? (->* (= 0)))
 
   (def! not (fn* (x) (if x false true)))
 
   (def! identity (fn* (x) x))
+
+  (def! constant-fn (fn* (x) (fn* (y) x)))
+
+  (def! call-on (fn* (& xs) (fn* (fn) (apply fn xs))))
 
   (def! reduce
     (fn* (seed f xs)
@@ -105,6 +113,32 @@
           true
           (some? pred (cdr xs))))))
 
+  (def! letrec* (macro* (alias expr)
+    `(let* (~(car alias) (fix (fn* (~(car alias)) ~(2nd alias)))) ~expr)))
+
+  (def! skip (fn* (nbr xs)
+    (letrec* (-skip- (fn* (ys)
+      (let* (nbr (car ys)
+             xs (2nd ys))
+        (cond
+          (= 0 nbr) xs
+          (= 1 nbr) (cdr xs)
+          "default" (-skip- (list (decr nbr) (cdr xs)))))))
+      (-skip- (list nbr xs)))))
+
+  (def! . (macro* (x key & xs)
+    `((get ~x ~key) ~@xs)))
+
+  (def! .. (fn* (lo hi)
+    (letrec* (-..- (fn* (ys)
+      (let* (lo     (1st ys)
+             hi     (2nd ys)
+             -list- (3rd ys))
+        (if (= lo hi)
+          (cons hi -list-)
+          (-..- (list lo (decr hi) (cons hi -list-)))))))
+      (-..- (list lo hi '())))))
+
 )
 
 ; read-string
@@ -113,15 +147,7 @@
 ; *ARGV*
 ; load-file
 ; eval (esp. with configurable parameters)
-; def! a (atom 2)
-; (atom? a) ; => true
-; (deref a) ; => 2
-; (reset! a 3)
-; (swap! a incr)
-; (swap! a + 3)
-; (def! f0 (fn* () (swap! a incr)))
-; (f0)
-; enable `load-file` of a file that contains a multi-line map
+
 ; fix determination of equality
 ; symbol-keys (like :abc)
 ; amend results from "str" function
@@ -130,32 +156,18 @@
 ; *host-language*
 ; gensym -- for hygienic macros
 
+; throw
+; try catch
+
+; ^
+; @
+
 ; -----------
 ; METADATA
 ; -----------
-; (meta (fn* (a) a)) ; => nil
-; (meta (with-meta (fn* (a) a) { "b" 1 })) ; => { "b" 1 }
-; (meta (with-meta (fn* (a) a) "abc"))     ; => "abc"
-
-; (def! x0 (with-meta (fn* (a) a) { "b" 2 })) ; => ???
-; (meta x0)                                   ; => { "b" 2 }
-; (meta (with-meta x0 { "c" 3 }))             ; => { "c" 3 }
-; (meta x0)                                   ; => { "b" 2 }
 
 ; (def! x1 ^{"abc" 1} (fn* (a) (+ 1 a)))      ; => ???
 ; (meta x1)                                   ; => { "abc" 1 }
-
-; (meta +) ; => nil
-
-; (def! gen-plusX (fn* (x) (with-meta (fn* (y) (+ x y) { "meta" 1 }))))
-; (def! plus7 (gen-plusX 7))
-; (plus7 8) ; => 15
-; (meta plus7) ; => { "meta" 1 }
-
-; (meta '(1 2 3)) ; => nil
-; (with-meta '(1 2 3) { "a" 1 }) ; => '(1 2 3)
-; (meta (with-meta '(1 2 3) { "a" 1 })) ; => { "a" 1 }
-
 
   ;(defmacro! and
   ;  (fn* (& xs)
@@ -166,7 +178,6 @@
   ;        (let* (condvar (gensym))
   ;          `(let* (~condvar ~(first xs))
   ;            (if ~condvar (and ~@(rest xs)) ~condvar)))))))
-
 
   ;(defmacro! cond
   ;  (fn* (& clauses)

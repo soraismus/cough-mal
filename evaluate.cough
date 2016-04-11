@@ -49,16 +49,16 @@ createFn = (malList, envs) ->
     malParameters : (car malList)
 
 SPLAT-TOKEN = '&'
-createLocalEnv = (jsParams, malArgs) ->
+createLocalEnv = (malParams, malArgs) ->
   env = {}
-  until empty? jsParams
-    jsParam = car jsParams
+  until empty? malParams
+    jsParam = extractJsValue (car malParams)
     if jsParam == SPLAT-TOKEN
-      env[next jsParams] = malArgs
+      env[extractJsValue (next malParams)] = malArgs
       return env
     else
       env[jsParam] = car malArgs
-      jsParams = cdr jsParams
+      malParams = cdr malParams
       malArgs = cdr malArgs
   env
 
@@ -135,11 +135,6 @@ _evaluate = (malExpr, envs) ->
             return undefineValue (t1, envs) 
 
           when let*
-            _reduce = (env, malKey, malExpr) ->
-              envValue = _evaluate (malExpr, envs)
-              jsKey = extractJsValue malKey
-              env[jsKey] = envValue
-              env
             malExpr = (car remaining)
             envs = addEnv (envs, reduceBy2 ({}, (reduceLet* envs), a1))
 
@@ -166,6 +161,27 @@ _evaluate = (malExpr, envs) ->
           when expand-macro
             return expandMacro ((car a1), (cdr a1), envs)
 
+          when "try*"
+            console.log 'try*'
+            try
+              return _evaluate (a1, envs)
+            catch ex
+              console.log 'catch*'
+              console.log ex
+              console.log remaining
+              if empty? remaining
+                throw ex
+              else
+                [_catch, _ex, catchExpr] = toPartialArray (3, (car remaining))
+                console.log _catch
+                console.log _ex
+                console.log catchExpr
+                throw ex if (extractJsValue _catch) != "catch*"
+                ex = ex.message if ex instanceof Error
+                newEnv = {}
+                newEnv[extractJsValue _ex] = ex
+                return _evaluate (catchExpr, addEnv (envs, newEnv))
+
           else
             malSymbol = head
             malExpr = t1
@@ -177,7 +193,7 @@ _evaluate = (malExpr, envs) ->
                 malExpr = expandMacro (head, t1, envs)
 
               when malCoreFunction? malInvokable
-                { fn, fnName } = extractJsValue malInvokable
+                { fn } = extractJsValue malInvokable
                 malArgs = map ((evaluate envs), malExpr)
                 return fn malArgs
 
@@ -187,8 +203,7 @@ _evaluate = (malExpr, envs) ->
 
                 malArgs = map ((evaluate envs), malExpr)
                 malExpr = malExpression
-                jsParameters = map (extractJsValue, malParameters)
-                newEnv = createLocalEnv (jsParameters, malArgs)
+                newEnv = createLocalEnv (malParameters, malArgs)
                 envs = addEnv (localEnvs, newEnv)
 
               else
@@ -215,8 +230,7 @@ evaluate = \envs \malExpr ->
 expandMacro = (malMacroSymbol, malArgs, envs) ->
   malMacro = _evaluate (malMacroSymbol, envs)
   { localEnvs, malExpression, malParameters } = extractJsValue malMacro
-  jsParameters = map (extractJsValue, malParameters)
-  newEnv = createLocalEnv (jsParameters, malArgs)
+  newEnv = createLocalEnv (malParameters, malArgs)
   newEnvStack = addEnv (localEnvs, newEnv)
   _evaluate (malExpression, newEnvStack)
 

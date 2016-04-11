@@ -1,4 +1,6 @@
 keyTokens = [
+  atom               = 'atom'
+  atomGlyph          = '@'
   catch*             = 'catch*'
   cond               = 'cond'
   def!               = 'def!'
@@ -36,6 +38,7 @@ macroTokens = [
 ]
 
 glyphTokens = [
+  atomGlyph
   quasiquoteGlyph
   quoteGlyph
   spliceUnquoteGlyph
@@ -43,6 +46,8 @@ glyphTokens = [
 ]
 
 module.exports = {
+  atom
+  atomGlyph
   catch*
   cond
   def!

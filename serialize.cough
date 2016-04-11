@@ -4,6 +4,7 @@ extractJsValue       = require './extractJsValue'
 { indexStart }       = require './keyTokens'
 { listEnd }          = require './keyTokens'
 { listStart }        = require './keyTokens'
+{ malAtom? }         = require './mal-type-utilities'
 { malCoreFunction? } = require './mal-type-utilities'
 { malIndex? }        = require './mal-type-utilities'
 { malList? }         = require './mal-type-utilities'
@@ -30,9 +31,13 @@ serialize = (malExpr, printReadably?) ->
     when malMacro? malExpr        then \x -> macroLabel
     when malNil? malExpr          then \x -> 'nil'
     when malString? malExpr       then serializeString
+    when malAtom? malExpr         then serializeAtom
     when ? (malExpr.jsValue)      then extractJsValue
     else                               \x -> x
   _serialize (malExpr, printReadably?)
+
+serializeAtom = (malAtom, printReadably?) ->
+  "(atom #{serialize (malAtom.malValue, printReadably?)})"
 
 serializeIndex = (malIndex, printReadably?) ->
   jsIndex = malIndex.jsValue

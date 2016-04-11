@@ -11,9 +11,11 @@ malTypes = [
   malSymbolType       = 'malSymbolType'
   malUnitType         = 'malUnitType'
   malUserFunctionType = 'malUserFunctionType'
+  malAtomType         = 'malAtomType'
 ]
 
 module.exports = {
+  malAtomType
   malBooleanType
   malCoreFunctionType
   malIndexType
