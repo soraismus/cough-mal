@@ -11,6 +11,7 @@
 { createMalNumber }       = require './mal-type-utilities'
 { createMalString }       = require './mal-type-utilities'
 { createMalSymbol }       = require './mal-type-utilities'
+{ createMalUserFunction } = require './mal-type-utilities'
 display                   = require './display'
 { drop }                  = require './linked-list'
 { empty? }                = require './linked-list'
@@ -73,14 +74,12 @@ setMalValue = (malAtom, malValue) ->
   malAtom.malValue = malValue
   malAtom
 
-lift = (fnOnJsValues, fnName) ->
-  __fn__ = (malValueList) ->
-    fnOnJsValues (((toArray malValueList).map extractJsValue)...)
-  { fn: __fn__, fnName }
+lift = (fnOnJsValues) -> (malValueList) ->
+  fnOnJsValues (((toArray malValueList).map extractJsValue)...)
 
 setCoreFnsOnJsValues! = (env, fns) ->
   for own fnName, fn of fns
-    env[fnName] = createMalCoreFunction (lift (fn, fnName))
+    env[fnName] = createMalCoreFunction (lift fn)
 
 functionsOnJsValues = {
   '+'      : add
@@ -112,7 +111,7 @@ functionsOnJsValues = {
       copy[key] = value
     delete copy[key] for key in keys
     createMalIndex copy
-  'contains?' : (index, key) -> key of index
+  'contains?' : (index, key) -> createMalBoolean (key of index)
   'keys'      : (index) ->
     keys = []
     for own key, value of index
@@ -193,6 +192,12 @@ createPredicate = \pred \jsList ->
 _drop = \malArgs ->
   [malNumber, malList] = toPartialArray (2, malArgs)
   drop ((extractJsValue malNumber), malList)
+
+__evaluate__ = \malVal ->
+  evaluate [environment] malVal
+
+__evaluate__2 = \malVal ->
+  __evaluate__ (__evaluate__ malVal)
 
 _evaluate_ = \jsString ->
   _process_ [environment] jsString
@@ -289,7 +294,7 @@ rest = \malArgs ->
 
 setCoreFnsOnMalValues! = (env, fns) ->
   for own fnName, fn of fns
-    env[fnName] = createMalCoreFunction { fn, fnName }
+    env[fnName] = createMalCoreFunction fn 
 
 stripQuotes = \jsString ->
   jsString[1 .. -2]
@@ -425,7 +430,30 @@ functionsOnMalValues = {
   'meta'      : \malArgs ->
     malMeta = (car malArgs).meta
     if ? malMeta then malMeta else malNil
+  'fix' : \malArgs ->
+    malFnF = car malArgs
+    jsFnX = \malArgs1 ->
+      malFnX = car malArgs1
+      jsFnY = \malArgs2 ->
+        malValY = car malArgs2
+        __evaluate__2 (createMalList (
+          createMalList (
+            malFnX
+            createMalList malFnX)
+          createMalList malValY))
+      malFnY = createMalCoreFunction jsFnY
+      __evaluate__2 (createMalList (
+        malFnF
+        createMalList malFnY))
+    malFnX = createMalCoreFunction jsFnX
+    __evaluate__2 (createMalList (
+      malFnX
+      createMalList malFnX))
 }
+
+#setCoreFnsOnMalValues! = (env, fns) ->
+#  for own fnName, fn of fns
+#    env[fnName] = createMalCoreFunction fn 
 
 environment = {}
 

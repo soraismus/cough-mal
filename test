@@ -1,6 +1,11 @@
 (do
 
-  (def! fix
+  ;(def! fix
+  ;  (fn* (f)
+  ;    ( (fn* (x) (f (fn* (y) ((x x) y))))
+  ;      (fn* (x) (f (fn* (y) ((x x) y)))))))
+
+  (def! memfix
     (fn* (f)
       ( (fn* (x) (f (fn* (y) ((x x) y))))
         (fn* (x) (f (fn* (y) ((x x) y)))))))
@@ -113,8 +118,8 @@
           true
           (some? pred (cdr xs))))))
 
-  (def! letrec* (macro* (alias expr)
-    `(let* (~(car alias) (fix (fn* (~(car alias)) ~(2nd alias)))) ~expr)))
+  ;(def! letrec* (macro* (alias expr)
+  ;  `(let* (~(car alias) (fix (fn* (~(car alias)) ~(2nd alias)))) ~expr)))
 
   (def! skip (fn* (nbr xs)
     (letrec* (-skip- (fn* (ys)

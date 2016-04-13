@@ -1,3 +1,5 @@
+serialize = require './serialize'
+
 { addEnv }                   = require './env-utilities'
 { car }                      = require './linked-list'
 { cdr }                      = require './linked-list'
@@ -16,6 +18,7 @@ commentSignal                = require './commentSignal'
 extractJsValue               = require './extractJsValue'
 { fn* }                      = require './keyTokens'
 { forEach }                  = require './linked-list'
+{ fromArray }                = require './linked-list'
 { _if }                      = require './keyTokens'
 { let* }                     = require './keyTokens'
 { lookup }                   = require './env-utilities'
@@ -136,7 +139,11 @@ _evaluate = (malExpr, envs) ->
 
           when let*
             malExpr = (car remaining)
-            envs = addEnv (envs, reduceBy2 ({}, (reduceLet* envs), a1))
+            envs = addEnv (envs, reduceLet* (envs, a1))
+
+          when 'letrec*'
+            malExpr = (car remaining)
+            envs = addEnv (envs, reduceLetrec* (envs, a1))
 
           # How optimize tail calls?
           when _do
@@ -193,7 +200,7 @@ _evaluate = (malExpr, envs) ->
                 malExpr = expandMacro (head, t1, envs)
 
               when malCoreFunction? malInvokable
-                { fn } = extractJsValue malInvokable
+                fn = extractJsValue malInvokable
                 malArgs = map ((evaluate envs), malExpr)
                 return fn malArgs
 
@@ -234,11 +241,37 @@ expandMacro = (malMacroSymbol, malArgs, envs) ->
   newEnvStack = addEnv (localEnvs, newEnv)
   _evaluate (malExpression, newEnvStack)
 
-reduceLet* = (envs) -> (env, malKey, malExpr) ->
-  envValue = _evaluate (malExpr, envs)
-  jsKey = extractJsValue malKey
-  env[jsKey] = envValue
-  env
+reduceLet* = (envs, list) ->
+  newEnv = {}
+  _envs = addEnv (envs, newEnv)
+  until empty? list
+    jsKey = extractJsValue list.value
+    list = recurse list
+    envValue = _evaluate (list.value, _envs)
+    newEnv[jsKey] = envValue
+    list = recurse list
+  newEnv
+
+reduceLetrec* = (envs, list) ->
+  newEnv = {}
+  _envs = addEnv (envs, newEnv)
+  until empty? list
+    jsKey = extractJsValue list.value
+    list = recurse list
+
+    _malExpr = fromArray ([
+      createMalSymbol "fix"
+      fromArray ([
+        createMalSymbol "fn*"
+        fromArray ([jsKey])
+        list.value
+      ])
+    ])
+
+    envValue = _evaluate (_malExpr, _envs)
+    newEnv[jsKey] = envValue
+    list = recurse list
+  newEnv
 
 spliceUnquote? = \malValue ->
   spliceUnquote == (extractJsValue malValue)
