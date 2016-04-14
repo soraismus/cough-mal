@@ -1,16 +1,5 @@
 (do
 
-  ;(def! fix
-  ;  (fn* (f)
-  ;    ( (fn* (x) (f (fn* (y) ((x x) y))))
-  ;      (fn* (x) (f (fn* (y) ((x x) y)))))))
-
-  ;(def! memfix
-  ;  (fn* (f cache)
-  ;    ( (fn* (x cache) (f (fn* (y) ((x x cache) y)) cache))
-  ;      (fn* (x cache) (f (fn* (y) ((x x cache) y)) cache))
-  ;      cache)))
-
   (def! memfix
     (fn* (f)
       (let* (cache {})
