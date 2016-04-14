@@ -1,5 +1,10 @@
 (do
 
+  (def! fix*
+    (fn* (f)
+      ( (fn* (x) (f (fn* (& ys) (apply (x x) ys))))
+        (fn* (x) (f (fn* (& ys) (apply (x x) ys)))))))
+
   (def! memfix
     (fn* (f)
       (let* (cache {})
@@ -132,6 +137,9 @@
 
   ;(def! letrec* (macro* (alias expr)
   ;  `(let* (~(car alias) (fix (fn* (~(car alias)) ~(2nd alias)))) ~expr)))
+
+  (def! letmemrec* (macro* (alias expr)
+    `(let* (~(car alias) (memfix (fn* (~(car alias)) ~(2nd alias)))) ~expr)))
 
   (def! skip (fn* (nbr xs)
     (letrec* (-skip- (fn* (ys)

@@ -63,6 +63,8 @@ lessThanOrEqual = (nbrs...) ->
   createMalBoolean (nbrs[0] <= nbrs[1])
 greaterThanOrEqual = (nbrs...) ->
   createMalBoolean (nbrs[0] >= nbrs[1])
+mod = (nbr0, nbr1) ->
+  createMalNumber (nbr0 % nbr1)
 
 _not = \bool ->
   createMalBoolean (!bool)
@@ -93,6 +95,7 @@ functionsOnJsValues = {
   'negate' : negate
   'not'    : _not
   '-'      : subtract
+  '%'      : mod
   'get'    : (jsIndex, jsKey) -> jsIndex[jsKey]
   'assoc' : (index, args...) ->
     copy = {}
