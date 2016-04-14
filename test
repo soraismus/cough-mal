@@ -12,25 +12,26 @@
   ;      cache)))
 
   (def! memfix
-    (fn* (f cache)
-      (
-        (fn* (x cache)
-          (f
-            (fn* (z)
-              (if (contains? cache z)
-                (get cache z)
-                (let* (result ((fn* (y) ((x x cache) y)) z))
-                  (do (set! cache z result) result))))
-            cache))
-        (fn* (x cache)
-          (f
-            (fn* (z)
-              (if (contains? cache z)
-                (get cache z)
-                (let* (result ((fn* (y) ((x x cache) y)) z))
-                  (do (set! cache z result) result))))
-            cache))
-        cache)))
+    (fn* (f)
+      (let* (cache {})
+        (
+          (fn* (x cache)
+            (f
+              (fn* (z)
+                (if (contains? cache z)
+                  (get cache z)
+                  (let* (result ((fn* (y) ((x x cache) y)) z))
+                    (do (set! cache z result) result))))
+              cache))
+          (fn* (x cache)
+            (f
+              (fn* (z)
+                (if (contains? cache z)
+                  (get cache z)
+                  (let* (result ((fn* (y) ((x x cache) y)) z))
+                    (do (set! cache z result) result))))
+              cache))
+          cache))))
 
   (def! 1st car)
   (def! 2nd (fn* (xs) (nth 1 xs)))
