@@ -31,13 +31,26 @@
   (def! 2nd (fn* (xs) (nth 1 xs)))
   (def! 3rd (fn* (xs) (nth 2 xs)))
 
+  (def! swap! (macro* (atom & xs)
+    (if (empty? xs)
+      atom
+      `(let* (-atom- ~atom)
+        (do
+          (reset! -atom- (~(car xs) (deref -atom-) ~@(cdr xs)))
+          (deref -atom-))))))
+
+  (def! *gensym-counter* (atom 0))
+  (def! gensym (fn* ()
+    (symbol (str "G__" (swap! *gensym-counter* incr)))))
+
   (def! or (macro* (& xs)
     (if (empty? xs)
       false
-      `(let* (-query- ~(car xs))
-        (if -query- 
-          -query-
-          (or ~@(cdr xs)))))))
+      (let* (-query- (gensym))
+        `(let* (~-query- ~(car xs))
+          (if ~-query- 
+            ~-query-
+            (or ~@(cdr xs))))))))
 
   (def! and (macro* (& xs)
     (if (empty? xs)
@@ -92,14 +105,6 @@
   (def! ->* (macro* (& xs) `(fn* (-x-) (-> -x- ~@xs))))
 
   (def! ->>* (macro* (& xs) `(fn* (-x-) (->> -x- ~@xs))))
-
-  (def! swap! (macro* (atom & xs)
-    (if (empty? xs)
-      atom
-      `(let* (-atom- ~atom)
-        (do
-          (reset! -atom- (~(car xs) (deref -atom-) ~@(cdr xs)))
-          (deref -atom-))))))
 
   (def! incr  (->* (+ 1)))
   (def! decr  (->* (- 1)))

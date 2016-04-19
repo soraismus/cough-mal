@@ -202,8 +202,6 @@ count = \malArgs ->
 
 createPredicate = \pred \jsList ->
   malValue = jsList.value
-  console.log 'malValue =', malValue
-  console.log ({}.toString.call(malValue))
   createMalBoolean (pred malValue)
 
 # WET; cf. `_take`.
@@ -316,17 +314,17 @@ _prStr = (malArgs, printReadably?) ->
   ((toArray malArgs).map \malArg -> serialize (malArg, printReadably?))
 
 prStr = \malArgs ->
-  (_prStr (malArgs, true)).join ''
+  createMalString ('"' + (_prStr (malArgs, true)).join '' + '"')
 
 str = \malArgs ->
-  (_prStr (malArgs, false)).join ''
+  createMalString ('"' + (_prStr (malArgs, false)).join '' + '"')
 
 prn = \malArgs ->
-  display ((_prStr (malArgs, true))...)
+  display (_prStr (malArgs, true).join '')
   malNil
 
 println = \malArgs ->
-  display ((_prStr (malArgs, false))...)
+  display (_prStr (malArgs, false).join '')
   malNil
 
 _read = \malArgs ->
@@ -508,10 +506,11 @@ environment = {}
 
 setCoreFnsOnJsValues! (environment, functionsOnJsValues)
 setCoreFnsOnMalValues! (environment, functionsOnMalValues)
+  
+environment['*ARGV*'] = createMalList ()
 
 jsString? = \jsVal ->
   Object.prototype.toString.call jsVal == '[object String]'
-  
 fromJsObject = \jsObject ->
   copy = {}
   for own key, val of jsObject

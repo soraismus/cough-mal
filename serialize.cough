@@ -57,11 +57,15 @@ serializeList = (malList, printReadably?) ->
   listStart + serializedList + listEnd
 
 serializeString = (malString, printReadably?) ->
-  jsString = extractJsValue malString
+  jsString = stripQuotes (extractJsValue malString)
   return jsString unless printReadably?
-  '"' + jsString.replace(/\\/g, '\\\\')
-                .replace(/"/g,  '\\"')
-                .replace(/\n/g, '\\n') + '"'
+  jsString.replace(/\\/g, '\\\\')
+          .replace(/"/g,  '\\"')
+          .replace(/\n/g, '\\n')
+
+# WET.
+stripQuotes = \jsString ->
+  jsString[1 .. -2]
 
 coreFunctionLabel = '(core function)'
 macroLabel        = '(macro)'
