@@ -67,6 +67,10 @@ greaterThanOrEqual = (nbrs...) ->
 mod = (nbr0, nbr1) ->
   createMalNumber (nbr0 % nbr1)
 
+_length = \jsVal ->
+  return malNil unless jsString? jsVal
+  createMalNumber (jsVal.length - 2)
+
 jsNumber? = \val -> {}.toString.call val == '[object Number]'
 jsNaN? = \val -> jsNumber? val && val != val
 
@@ -103,6 +107,7 @@ functionsOnJsValues = {
   '<='     : lessThanOrEqual
   '*'      : multiply
   '**'     : exponentiate
+  'length' : _length
   'negate' : negate
   '-'      : subtract
   '%'      : mod
