@@ -83,7 +83,6 @@ parseIndex = \tokens ->
   keyStep? = true
 
   until (token = tokens.shift()) == indexEnd
-    #malList = createMalList ( (_parse (token, tokens)), malList)
     if keyStep?
       key = _parse (token, tokens)
       keyStep? = false

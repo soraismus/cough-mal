@@ -224,6 +224,35 @@ list = \malArgs ->
 load = \malArgs ->
   _evaluate_ (_read malArgs)
 
+fromMalIndex = \malIndex ->
+  localEnv = {}
+  for own key, value of malIndex.jsValue
+    if jsString? key
+      localEnv[stripQuotes key] = value
+    else
+      localEnv[key] = value
+  localEnv
+
+evalWithEnv = \malArgs ->
+  [expr, localEnv] = toPartialArray (2, malArgs)
+  evaluate [(fromMalIndex localEnv), environment] expr
+
+evalWithBareEnv = \malArgs ->
+  [expr, localEnv] = toPartialArray (2, malArgs)
+  evaluate [(fromMalIndex localEnv)] expr
+
+loadWithEnv = \malArgs ->
+  [malFileName, localEnv] = toPartialArray (2, malArgs)
+  jsFileName = stripQuotes (extractJsValue malFileName)
+  file = require('fs').readFileSync(jsFileName).toString()
+  _process_ [(fromMalIndex localEnv), environment] file
+
+loadWithBareEnv = \malArgs ->
+  [malFileName, localEnv] = toPartialArray (2, malArgs)
+  jsFileName = stripQuotes (extractJsValue malFileName)
+  file = require('fs').readFileSync(jsFileName).toString()
+  _process_ [(fromMalIndex localEnv)] file
+
 map = \malArgs ->
   [malFn, malArgList] = toArray malArgs
   _malArgs = toArray malArgList
@@ -391,6 +420,10 @@ functionsOnMalValues = {
   'list'     : list
   'list?'    : list?
   'load'     : load
+  'eval-with-env'     : evalWithEnv
+  'load-with-env'     : loadWithEnv
+  'eval-with-bare-env'     : evalWithBareEnv
+  'load-with-bare-env'     : loadWithBareEnv
   'map'      : map
   'nil?'     : nil?
   'nth'      : nth
@@ -454,13 +487,23 @@ functionsOnMalValues = {
       createMalList malFnX))
 }
 
-#setCoreFnsOnMalValues! = (env, fns) ->
-#  for own fnName, fn of fns
-#    env[fnName] = createMalCoreFunction fn 
-
 environment = {}
 
 setCoreFnsOnJsValues! (environment, functionsOnJsValues)
 setCoreFnsOnMalValues! (environment, functionsOnMalValues)
+
+jsString? = \jsVal ->
+  Object.prototype.toString.call jsVal == '[object String]'
+  
+fromJsObject = \jsObject ->
+  copy = {}
+  for own key, val of jsObject
+    if jsString? key
+      copy['"' + key + '"'] = val
+    else
+      copy[key] = val
+  createMalIndex copy
+_environment_ = fromJsObject environment
+environment['*DEFAULT-ENV*'] = _environment_
 
 module.exports = environment

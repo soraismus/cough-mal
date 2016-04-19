@@ -1,12 +1,33 @@
 display         = require './display'
 mainEnvironment = require './environment'
-process         = require './process'
+_process         = require './process'
 readPrompt      = require './readPrompt'
 serialize       = require './serialize'
+
+{ addEnv }                   = require './env-utilities'
+{ createMalSymbol }       = require './mal-type-utilities'
+{ fromArray }             = require './linked-list'
+
+
+# repl
+# repl_env = new Env()
+# rep = (str) -> PRINT(EVAL(READ(str), repl_env))
+
+if ? process && process.argv.length > 2
+  _environments = [
+    { '*ARGV*' : fromArray(process.argv[3..]) }
+    mainEnvironment
+  ]
+
+  try display (serialize (_process _environments "(load \"#{process.argv[2]}\")"))
+  catch e
+    display ("repl error: (" + e + ")")
+
+  process.exit 0
 
 environments = [mainEnvironment]
 
 loop
-  try display (serialize (process environments (readPrompt ())))
+  try display (serialize (_process environments (readPrompt ())))
   catch e
     display ("repl error: (" + e + ")")
