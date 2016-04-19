@@ -59,6 +59,8 @@
   (test "swap! with fn" 10 (swap! (atom 9) incr))
   (test "swap! with fn and arg" 10 (swap! (atom 5) + 5))
 
+  (test "closure" 12 (((fn* (a) (fn* (b) (+ a b))) 5) 7))
+
   (test "or with no args" false (or))
   (test "or with all 'false'" false (or false false false false))
   (test "or with a 'true'" true (or false false true false))

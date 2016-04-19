@@ -151,7 +151,10 @@ _evaluate = (malExpr, envs) ->
 
           when _if
             jsBool = extractJsValue (_evaluate (a1, envs))
-            malExpr = if jsBool then (car remaining) else (next remaining)
+            malExpr = if jsBool
+                (car remaining)
+              else
+                if (empty? (otherwise = (next remaining))) then malNil else otherwise
 
           when fn*
             return createFn (t1, envs)

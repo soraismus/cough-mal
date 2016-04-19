@@ -1,37 +1,27 @@
-display                      = require './display'
-{ environment, evalWithEnv, fromJsObject } = require './environment'
-{ evaluate }                 = require './evaluate'
-_process                     = require './process'
-readPrompt                   = require './readPrompt'
-serialize                    = require './serialize'
+{ createMalString } = require './mal-type-utilities'
+display             = require './display'
+{ environment }     = require './environment'
+{ fromArray }       = require './linked-list'
+_process            = require './process'
+readPrompt          = require './readPrompt'
+serialize           = require './serialize'
 
-{ addEnv }                   = require './env-utilities'
-{ createMalSymbol }          = require './mal-type-utilities'
-{ fromArray }                = require './linked-list'
-
-_process_                 = require './process'
-_evaluate_ = \jsString ->
-  _process_ [environment] jsString
+_createMalString = \jsString ->
+  createMalString('"' + jsString + '"')
 
 if ? process && process.argv.length > 2
-  console.log 1
   _environments = [
-    { '*ARGV*' : fromArray(process.argv[3..]) }
+    { '*ARGV*' : fromArray(process.argv[3..].map _createMalString) }
     environment
   ]
 
-  console.log 2
   fileName = process.argv[2]
 
-  console.log 3
   file = require('fs').readFileSync(fileName).toString()
 
-  console.log 4
   try display (serialize (_process _environments file))
   catch e
     display ("repl error: (" + e + ")")
-
-  console.log 5
 
   process.exit 0
 

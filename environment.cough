@@ -25,6 +25,7 @@ interpret                 = require './interpret'
 { malCoreFunction? }      = require './mal-type-utilities'
 { malBoolean? }           = require './mal-type-utilities'
 { malFalse }              = require './mal-type-utilities'
+{ malFalse? }             = require './mal-type-utilities'
 { malList? }              = require './mal-type-utilities'
 { malNil }                = require './mal-type-utilities'
 { malNil? }               = require './mal-type-utilities'
@@ -66,8 +67,18 @@ greaterThanOrEqual = (nbrs...) ->
 mod = (nbr0, nbr1) ->
   createMalNumber (nbr0 % nbr1)
 
-_not = \bool ->
-  createMalBoolean (!bool)
+jsNumber? = \val -> {}.toString.call val == '[object Number]'
+jsNaN? = \val -> jsNumber? val && val != val
+
+parseNumber = \jsVal ->
+  return jsVal if jsNumber? jsVal
+  return malNil unless jsString? jsVal
+  jsNbr = parseFloat ((stripQuotes jsVal), 10)
+  if jsNaN? jsNbr then malNil else createMalNumber jsNbr
+
+_not = \malArgs ->
+  malVal = car malArgs
+  if malNil? malVal || malFalse? malVal then malTrue else malFalse
 
 deref = \malArgs ->
   (car malArgs).malValue
@@ -93,7 +104,6 @@ functionsOnJsValues = {
   '*'      : multiply
   '**'     : exponentiate
   'negate' : negate
-  'not'    : _not
   '-'      : subtract
   '%'      : mod
   'get'    : (jsIndex, jsKey) -> jsIndex[jsKey]
@@ -120,6 +130,7 @@ functionsOnJsValues = {
     for own key, value of index
       keys.push key
     fromArray keys
+  'parse-number' : parseNumber
   'vals'      : (index) ->
     values = []
     for own key, value of index
@@ -184,11 +195,15 @@ append = \malArgs ->
   concat (malList, (fromArray malValues))
 
 count = \malArgs ->
+  malList = car malArgs
+  return malNil unless malList? malList
   _reduce = (sum, value) -> sum + 1
   createMalNumber (reduce (0, _reduce, (car malArgs)))
 
 createPredicate = \pred \jsList ->
   malValue = jsList.value
+  console.log 'malValue =', malValue
+  console.log ({}.toString.call(malValue))
   createMalBoolean (pred malValue)
 
 # WET; cf. `_take`.
@@ -427,6 +442,7 @@ functionsOnMalValues = {
   'load-with-bare-env'     : loadWithBareEnv
   'map'      : map
   'nil?'     : nil?
+  'not'      : _not
   'nth'      : nth
   'number?'  : number?
   'parse'    : _interpret
