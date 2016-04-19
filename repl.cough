@@ -1,31 +1,41 @@
-display         = require './display'
-mainEnvironment = require './environment'
-_process         = require './process'
-readPrompt      = require './readPrompt'
-serialize       = require './serialize'
+display                      = require './display'
+{ environment, evalWithEnv, fromJsObject } = require './environment'
+{ evaluate }                 = require './evaluate'
+_process                     = require './process'
+readPrompt                   = require './readPrompt'
+serialize                    = require './serialize'
 
 { addEnv }                   = require './env-utilities'
-{ createMalSymbol }       = require './mal-type-utilities'
-{ fromArray }             = require './linked-list'
+{ createMalSymbol }          = require './mal-type-utilities'
+{ fromArray }                = require './linked-list'
 
-
-# repl
-# repl_env = new Env()
-# rep = (str) -> PRINT(EVAL(READ(str), repl_env))
+_process_                 = require './process'
+_evaluate_ = \jsString ->
+  _process_ [environment] jsString
 
 if ? process && process.argv.length > 2
+  console.log 1
   _environments = [
     { '*ARGV*' : fromArray(process.argv[3..]) }
-    mainEnvironment
+    environment
   ]
 
-  try display (serialize (_process _environments "(load \"#{process.argv[2]}\")"))
+  console.log 2
+  fileName = process.argv[2]
+
+  console.log 3
+  file = require('fs').readFileSync(fileName).toString()
+
+  console.log 4
+  try display (serialize (_process _environments file))
   catch e
     display ("repl error: (" + e + ")")
 
+  console.log 5
+
   process.exit 0
 
-environments = [mainEnvironment]
+environments = [environment]
 
 loop
   try display (serialize (_process environments (readPrompt ())))

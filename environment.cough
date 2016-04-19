@@ -241,6 +241,7 @@ evalWithBareEnv = \malArgs ->
   [expr, localEnv] = toPartialArray (2, malArgs)
   evaluate [(fromMalIndex localEnv)] expr
 
+# WET.
 loadWithEnv = \malArgs ->
   [malFileName, localEnv] = toPartialArray (2, malArgs)
   jsFileName = stripQuotes (extractJsValue malFileName)
@@ -506,4 +507,9 @@ fromJsObject = \jsObject ->
 _environment_ = fromJsObject environment
 environment['*DEFAULT-ENV*'] = _environment_
 
-module.exports = environment
+module.exports = {
+  environment
+  evalWithEnv
+  _evaluateString
+  fromJsObject
+}
