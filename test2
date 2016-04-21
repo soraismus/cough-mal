@@ -6,8 +6,8 @@
 
   (def! test (fn* (msg expected actual)
     (do
-      (println testIndex)
-      (println msg)
+      ;(println testIndex)
+      ;(println msg)
       (def! testIndex (+ testIndex 1))
       ;(println expected)
       ;(println actual)

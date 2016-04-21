@@ -1,7 +1,3 @@
 comment = {}
 
-commentMap = (fn) -> (args...) ->
-  return comment if args[0] == comment
-  fn args...
-
 module.exports = comment

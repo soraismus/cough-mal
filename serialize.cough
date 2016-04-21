@@ -1,5 +1,5 @@
 commentSignal        = require './commentSignal'
-extractJsValue       = require './extractJsValue'
+{ extractJsValue }   = require './mal-type-utilities'
 { indexEnd }         = require './keyTokens'
 { indexStart }       = require './keyTokens'
 { listEnd }          = require './keyTokens'

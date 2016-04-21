@@ -1,8 +1,6 @@
 { car }                   = require './linked-list'
 { cdr }                   = require './linked-list'
-{ copy }                  = require './linked-list'
 { concat }                = require './linked-list'
-{ createJsLinkedList }    = require './linked-list'
 { createMalAtom }         = require './mal-type-utilities'
 { createMalBoolean }      = require './mal-type-utilities'
 { createMalCoreFunction } = require './mal-type-utilities'
@@ -11,13 +9,11 @@
 { createMalNumber }       = require './mal-type-utilities'
 { createMalString }       = require './mal-type-utilities'
 { createMalSymbol }       = require './mal-type-utilities'
-{ createMalUserFunction } = require './mal-type-utilities'
 display                   = require './display'
 { drop }                  = require './linked-list'
 { empty? }                = require './linked-list'
 { evaluate }              = require './evaluate'
-{ expandMacro }           = require './evaluate'
-extractJsValue            = require './extractJsValue'
+{ extractJsValue }        = require './mal-type-utilities'
 { fromArray }             = require './linked-list'
 interpret                 = require './interpret'
 { last }                  = require './linked-list'
@@ -33,6 +29,7 @@ interpret                 = require './interpret'
 { malString? }            = require './mal-type-utilities'
 { malSymbol? }            = require './mal-type-utilities'
 { malTrue }               = require './mal-type-utilities'
+{ malTrue? }              = require './mal-type-utilities'
 { malUserFunction? }      = require './mal-type-utilities'
 { next }                  = require './linked-list'
 _process_                 = require './process'
@@ -43,7 +40,6 @@ serialize                 = require './serialize'
 { take }                  = require './linked-list'
 { toArray }               = require './linked-list'
 { toPartialArray }        = require './linked-list'
-
 
 jsNaN? = \val -> jsNumber? val && val != val
 
@@ -185,9 +181,6 @@ _evaluateString = \malArgs ->
   _evaluate_ (stripQuotes (extractJsValue (car malArgs)))
 _evaluate = \malArgs ->
   evaluate [environment] (car malArgs)
-_expandMacro = \malArgs ->
-  [malMacro, malArgList] = toPartialArray (2, malArgs)
-  expandMacro (malMacro, malArgList, [])
 
 _prStr = (malArgs, printReadably?) ->
   ((toArray malArgs).map \malArg -> serialize (malArg, printReadably?))
@@ -408,16 +401,18 @@ withMeta = \malArgs ->
 write = \malArgs ->
   createMalString (serialize (car malArgs))
 
-[atom?, boolean?, list?, nil?, number?, symbol?, string?, coreFn?, userFn?] =
+[atom?, boolean?, coreFn?, false?, list?, nil?, number?, symbol?, string?, userFn?, true?] =
   [ malAtom?
     malBoolean?
+    malCoreFunction?
+    malFalse?
     malList?
     malNil?
     malNumber?
     malSymbol?
     malString?
-    malCoreFunction?
     malUserFunction?
+    malTrue?
   ].map createPredicate
 
 functionsOnMalValues = {
@@ -439,8 +434,8 @@ functionsOnMalValues = {
   'empty?'             : _empty?
   'eval'               : _evaluate
   'evalStr'            : _evaluateString
-  'expand-macro'       : _expandMacro
   'first'              : _car
+  'false?'             : false?
   'function?'          : function?
   'last'               : _last
   'list'               : list
@@ -474,6 +469,7 @@ functionsOnMalValues = {
   'take'               : _take
   'throw'              : _throw
   'time-ms'            : time-ms
+  'true?'              : true?
   'typeof'             : typeOf
   'user-fn?'           : userFn?
   'set!'               : set

@@ -24,6 +24,9 @@ createMalValue = (jsValue, malType) ->
 createPredicate = \constant \value ->
   value == constant
 
+extractJsValue = \malValue ->
+  malValue.jsValue
+
 [
   [_createMalBoolean,      malBoolean?     ]
   [createMalCoreFunction,  malCoreFunction?]
@@ -61,6 +64,7 @@ module.exports = {
   createMalString
   createMalSymbol
   createMalUserFunction
+  extractJsValue
   malAtom?
   malBoolean?
   malCoreFunction?
