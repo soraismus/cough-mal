@@ -2,16 +2,12 @@
 malListType = malTypes[4]
 
 car = \malList ->
-  #if malList == _EOL
-  #  _EOL
   if empty? malList
     EOL
   else
     malList.value
 
 cdr = \malList ->
-  #if malList == _EOL
-  #  _EOL
   if empty? malList
     EOL
   else
@@ -32,22 +28,13 @@ concat = (malLists...) ->
       tail = lastTail _copy
   result
 
-###
-splice = (malList0, malList1, malList2) ->
-  if empty? malList0
-    if empty? malList1
-      return malList2
-    else
-      return concat (malList1, malList2)
-###
-
 cons = \malArgs ->
   createMalList (
     car malArgs
     next malArgs)
 
 copy = \malList ->
-  map (identity, malList)
+  map ((\x -> x), malList)
 
 createMalList = (value, nextNode) ->
   return EOL unless ? value
@@ -71,8 +58,6 @@ forEach = (fn, list) ->
     result = fn list.value
     list = recurse list
   result
-
-identity = \x -> x
 
 last = \malList ->
   car (lastTail malList)
@@ -118,12 +103,6 @@ reverse = \list ->
     result = createMalList (list.value, result)
     list = list.next
   result
-
-safeHead = \malList ->
-  if empty? list then list else list.value
-
-safeNext = \malList ->
-  safeHead (recurse malList)
 
 take = (nbr, malList) ->
   result = createMalList ()
@@ -187,8 +166,6 @@ module.exports = {
   reduce
   reduceBy2
   reverse
-  safeHead
-  safeNext
   take
   toArray
   toPartialArray
