@@ -51,6 +51,10 @@ commentSignal                = require './commentSignal'
 { undef! }                   = require './keyTokens'
 { unsetMainEnv }             = require './env-utilities'
 
+# WET.
+circumpendQuotes = \jsString ->
+  '"' + jsString + '"'
+
 createFn = (malList, envs) ->
   createMalUserFunction
     localEnvs     : (envs.slice 0)
@@ -196,22 +200,16 @@ _evaluate = (malExpr, envs) ->
             return expandMacro ((car a1), (cdr a1), envs)
 
           when try*
-            console.log 'try*'
             try
               return _evaluate (a1, envs)
             catch ex
-              console.log 'catch*'
-              console.log ex
-              console.log remaining
               if empty? remaining
                 throw ex
               else
                 [_catch, _ex, catchExpr] = toPartialArray (3, (car remaining))
-                console.log _catch
-                console.log _ex
-                console.log catchExpr
                 throw ex if (extractJsValue _catch) != "catch*"
-                ex = ex.message if ex instanceof Error
+                if ex instanceof Error
+                  ex = createMalString (circumpendQuotes ex.message)
                 newEnv = {}
                 newEnv[extractJsValue _ex] = ex
                 return _evaluate (catchExpr, addEnv (envs, newEnv))
@@ -253,6 +251,10 @@ expandMacro = (malMacroSymbol, malArgs, envs) ->
   newEnv = createLocalEnv (malParameters, malArgs)
   newEnvStack = addEnv (localEnvs, newEnv)
   _evaluate (malExpression, newEnvStack)
+
+# WET.
+jsString? = \jsVal ->
+  Object.prototype.toString.call jsVal == '[object String]'
 
 reduceLet* = (envs, list) ->
   newEnv = {}

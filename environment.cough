@@ -395,7 +395,7 @@ typeOf = \malArgs ->
   malValue = car malArgs
   createMalString (circumpendQuotes malValue.type)
 _throw = \malArgs ->
-  throw (serialize (car malArgs))
+  throw (car malArgs)
 time-ms = () ->
   createMalNumber (new Date().getTime ())
 withMeta = \malArgs ->
