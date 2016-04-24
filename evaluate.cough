@@ -85,17 +85,6 @@ defineNewValue = (malList, envs) ->
   malValue = _evaluate ((next malList), envs)
   setMainEnv (envs, jsKey, malValue)
 
-evalAllSideEffects = (malList, envs) ->
-  forEach ((evaluate envs), malList)
-
-evalCondition = (malList, envs) ->
-  jsBool = extractJsValue (_evaluate ((car malList), envs))
-  malExpr = if jsBool then next malList else next (cdr malList)
-  _evaluate (malExpr, envs)
-
-evalDefault = (malExpr, envs) ->
-  malExpr
-
 evalQuasiquotedExpr = (expr, envs) ->
   _expr = car expr
   res = switch
@@ -126,21 +115,15 @@ _evalQuasiquotedExpr = (expr, envs) ->
       manageItem
       expr))
 
-evalQuote = (malList, envs) ->
-  car malList
-
-evalSymbol = (malSymbol, envs) ->
-  jsString = extractJsValue malSymbol
-  if keyword? jsString
-    createMalKeyword jsString
-  else
-    lookup (envs, jsString)
-
 _evaluate = (malExpr, envs) ->
   loop
     switch
       when malSymbol? malExpr
-        return evalSymbol (malExpr, envs)
+        jsString = extractJsValue malExpr
+        if keyword? jsString
+          return createMalKeyword jsString
+        else
+          return lookup (envs, jsString)
 
       # NOTE: Happens over and over for every malIndex.
       when malIndex? malExpr
@@ -151,7 +134,7 @@ _evaluate = (malExpr, envs) ->
         return createMalIndex newIndex
 
       when ! (malList? malExpr)
-        return evalDefault (malExpr, envs)
+        return malExpr
 
       else
         malExpr = filter ((\x -> ! (malIgnore? x)), malExpr)
@@ -175,7 +158,7 @@ _evaluate = (malExpr, envs) ->
 
           # How optimize tail calls?
           when _do
-            return evalAllSideEffects (t1, envs)
+            return forEach ((evaluate envs), t1)
 
           when _if
             jsBool = extractJsValue (_evaluate (a1, envs))
@@ -191,7 +174,7 @@ _evaluate = (malExpr, envs) ->
             return createMacro (t1, envs)
 
           when quote
-            return evalQuote (t1, envs)
+            return car t1
 
           when quasiquote
             return evalQuasiquotedExpr (t1, envs)

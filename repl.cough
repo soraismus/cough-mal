@@ -21,7 +21,7 @@ if ? process && process.argv.length > 2
 
   try display (serialize (_process _environments file))
   catch e
-    display ("repl error: (" + e + ")")
+    display ("repl error: (" + (serialize e) + ")")
 
   process.exit 0
 
@@ -30,4 +30,4 @@ environments = [environment]
 loop
   try display (serialize (_process environments (readPrompt ())))
   catch e
-    display ("repl error: (" + e + ")")
+    display ("repl error: (" + (serialize e) + ")")

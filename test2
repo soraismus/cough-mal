@@ -76,14 +76,19 @@
 
   (test "cond with no args" nil (cond))
 
-  ;(test "cond with a single 'true' arg" nil (cond true))
-  ;(test "cond with a single 'false' arg" nil (cond false))
-  ;(test "cond with a single invocation"  nil (cond (= 0 0)))
+  (def! -error-msg- "`cond` requires an even number of forms.")
+  (test "cond with a single 'true' arg" -error-msg- (try* (cond true) (catch* e e)))
+  (test "cond with a single 'false' arg" -error-msg- (try* (cond false) (catch* e e)))
+  (test "cond with a single invocation" -error-msg- (try* (cond (= 0 0)) (catch* e e)))
 
   (test "cond with a true invocation" 0 (cond (= 0 0) 0))
-  (test "cond with a false invocation"  nil (cond (< 0 0) 0))
+  (test "cond with a false invocation" nil (cond (< 0 0) 0))
   (test "cond with two branches" 1 (cond (< 0 0) 0 (= 0 0) 1))
   (test "cond with multiple branches" 3 (cond (< 0 0) 0 (< 0 0) 1 (< 0 0) 2 (= 0 0) 3))
+
+  (test "cond with odd nbr args and no early true" -error-msg- (try* (cond false 0 false 1 false) (catch* e e)))
+  (test "cond with odd nbr args but early true" 0 (cond true 0 false 1 false))
+  (undef! --error-msg-)
 
   (test "->"  10  (-> 1000 (/ 100)))
   (test "->>" 100 (->> 1   (/ 100)))
@@ -94,16 +99,16 @@
   (test "->*"  10  ((->* (/ 100)) 1000))
   (test "->>*" 100 ((->>* (/ 100)) 1))
 
-  (def! -add- (fn* (x y) (if (= 0 x) y (-add- (- x 1) (+ x y)))))
-  (test "tail-call optimization" 50005000 (-add- 10000 0))
-  (undef! -add-)
-
   (test "constant-fn creates a function" true (function? (constant-fn 10)))
   (test "constant-fn" 10 ((constant-fn 10) 100))
 
   (test "call-on" 10 ((call-on 9) incr))
 
   (test "load multiline index" 20 (let* (idx (load "multiline_map")) (get (get idx "key3") "key1")))
+
+  (def! -add- (fn* (x y) (if (= 0 x) y (-add- (- x 1) (+ x y)))))
+  (test "tail-call optimization" 50005000 (-add- 10000 0))
+  (undef! -add-)
 
   ;(test "\ form" 12 ((\ + _ (* _ _)) 3))
 
