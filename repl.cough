@@ -9,6 +9,14 @@ serialize           = require './serialize'
 _createMalString = \jsString ->
   createMalString('"' + jsString + '"')
 
+repl = (envs, jsString) ->
+  try display (serialize (_process envs jsString))
+  catch e
+    display ("repl error: (" + (serialize e) + ")")
+
+_repl = \jsString ->
+  repl ([environment], jsString)
+
 if ? process && process.argv.length > 2
   _environments = [
     { '*ARGV*' : fromArray(process.argv[3..].map _createMalString) }
@@ -16,18 +24,11 @@ if ? process && process.argv.length > 2
   ]
 
   fileName = process.argv[2]
-
   file = require('fs').readFileSync(fileName).toString()
-
-  try display (serialize (_process _environments file))
-  catch e
-    display ("repl error: (" + (serialize e) + ")")
-
+  repl (_environments, file)
   process.exit 0
 
-environments = [environment]
+_repl '(load "standard")'
 
 loop
-  try display (serialize (_process environments (readPrompt ())))
-  catch e
-    display ("repl error: (" + (serialize e) + ")")
+  _repl (readPrompt ())

@@ -1,0 +1,20 @@
+(def! hofstadter-male-female (fn* (n)
+  (let*
+    (
+      female (memfix* (fn* (female) (fn* (n)
+        (if (= n 0)
+          1
+          (- n (male (female (- n 1))))))))
+      male (memfix* (fn* (male) (fn* (n)
+        (if (= n 0)
+          0
+          (- n (female (male (- n 1)))))))))
+    (let*
+      (
+        loop (fn* (i)
+          (if (> i n)
+            '()
+            (cons
+              (cons (female i) (list (male i)))
+              (loop (+ i 1))))))
+      (loop 0)))))

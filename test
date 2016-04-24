@@ -1,200 +1,113 @@
 (do
+  (def! testIndex 0)
 
-  (def! fix*
-    (fn* (f)
-      ( (fn* (x) (f (fn* (& ys) (apply (x x) ys))))
-        (fn* (x) (f (fn* (& ys) (apply (x x) ys)))))))
+  (def! test (fn* (msg expected actual)
+    (do
+      ;(println testIndex)
+      ;(println msg)
+      (def! testIndex (+ testIndex 1))
+      ;(println expected)
+      ;(println actual)
+      (println (= expected actual)))))
 
-  (def! memfix*
-    (fn* (f)
-      (let* (cache {})
-        (
-          (fn* (x cache)
-            (f
-              (fn* (z)
-                (if (contains? cache z)
-                  (get cache z)
-                  (let* (result ((fn* (y) ((x x cache) y)) z))
-                    (do (set! cache z result) result))))
-              cache))
-          (fn* (x cache)
-            (f
-              (fn* (z)
-                (if (contains? cache z)
-                  (get cache z)
-                  (let* (result ((fn* (y) ((x x cache) y)) z))
-                    (do (set! cache z result) result))))
-              cache))
-          cache))))
+  (test "+"  10 (+ 1 2 3 4))
+  (test "*"  24 (* 1 2 3 4))
+  (test "-"  94 (- 100 1 2 3))
+  (test "/"  10 (/ 100 2 5))
+  (test "**" 81 (** 3 2 2))
 
-  (def! 1st car)
-  (def! 2nd (fn* (xs) (nth 1 xs)))
-  (def! 3rd (fn* (xs) (nth 2 xs)))
+  (test "if" 0 (if true 0 1))
+  (test "if" 1 (if false 0 1))
+  (test "if" 0 (if (= 0 0) 0 1))
+  (test "if" 1 (if (< 0 0) 0 1))
+  (test "if" 0 (if (= 0 0) (+ 0 0) 1))
+  (test "if" 1 (if (< 0 0) (+ 0 0) (+ 0 1)))
+  
+  (def! --test-var-0-- 5)
+  (test "def!" 5 --test-var-0--)
+  (undef! --test-var-0--)
 
-  (def! swap! (macro* (atom & xs)
-    (if (empty? xs)
-      atom
-      `(let* (-atom- ~atom)
-        (do
-          (reset! -atom- (~(car xs) (deref -atom-) ~@(cdr xs)))
-          (deref -atom-))))))
+  (test "def!" 5 (def! --test-var-1-- 5))
+  (undef! --test-var-1--)
 
-  (def! *gensym-counter* (atom 0))
-  (def! gensym (fn* ()
-    (symbol (str "G__" (swap! *gensym-counter* incr)))))
+  (test "let*" 5 (let* (x 5) x))
 
-  (def! or (macro* (& xs)
-    (if (empty? xs)
-      false
-      (let* (-query- (gensym))
-        `(let* (~-query- ~(car xs))
-          (if ~-query- 
-            ~-query-
-            (or ~@(cdr xs))))))))
+  (test "number?" true  (number? 0))
+  (test "number?" false (number? "zero"))
+  (test "number?" true (number? '0))
+  (test "number?" false (number? (fn* () nil)))
+  (test "number?" false (number? +))
 
-  (def! and (macro* (& xs)
-    (if (empty? xs)
-      true
-      (let* (-query- (gensym))
-        `(let* (~-query- ~(car xs))
-          (if ~-query-
-            (and ~@(cdr xs))
-            false))))))
+  (test "nil?" true (nil? nil))
 
-  (def! cond (macro* (& xs)
-    (if (empty? xs)
-      nil
-      (if (empty? (cdr xs))
-        (throw "`cond` requires an even number of forms.")
-        (let* (-query- (gensym))
-          `(let* (~-query- ~(car xs))
-            (if ~-query-
-              ~(2nd xs)
-              (cond ~@(cdr (cdr xs))))))))))
+  (test "boolean?" true (boolean? true))
+  (test "boolean?" true (boolean? false))
 
-  (def! loop (macro* (form0 form1)
-    `(let* (loop (memfix* (fn* (loop) (fn* (~(1st form0)) ~form1)))) (loop ~(2nd form0)))))
+  (test "string? of strings" true  (string? "hello"))
+  (test "string? of symbols" false (string? 'hello))
+  (test "string? of numbers" false (string? 50))
 
-  (def! -> (macro* (& xs)
-    (if (empty? xs)
-      nil
-      (let* (x  (car xs)
-             xs (cdr xs))
-        (if (empty? xs)
-          x
-          (let* (form  (car xs)
-                 forms (cdr xs))
-            (if (empty? forms)
-              (if (list? form)
-                (if (= (symbol "fn*") (car form))
-                  `(~form ~x)
-                  `(~(car form) ~x ~@(cdr form)))
-                (list form x))
-              `(-> (-> ~x ~form) ~@forms))))))))
+  (test "function? of core fn" true (function? +))
+  (test "function? of user-defined fn"  true (function? (fn* () nil)))
 
-  (def! ->> (macro* (& xs)
-    (if (empty? xs)
-      nil
-      (let* (x  (car xs)
-             xs (cdr xs))
-        (if (empty? xs)
-          x
-          (let* (form  (car xs)
-                 forms (cdr xs))
-            (if (empty? forms)
-              (if (list? form)
-                (if (= (symbol "fn*") (car form))
-                  `(~form ~x)
-                  `(~@form  ~x))
-                (list form x))
-              `(->> (->> ~x ~form) ~@forms))))))))
+  (test "atom?" true (atom? (atom 5)))
+  (test "deref" 10 (deref (atom 10)))
+  (test "reset!" 10 (deref (reset! (atom 100) 10)))
+  (test "swap! with fn" 10 (swap! (atom 9) incr))
+  (test "swap! with fn and arg" 10 (swap! (atom 5) + 5))
 
-  (def! ->* (macro* (& xs) `(fn* (-x-) (-> -x- ~@xs))))
+  (test "closure" 12 (((fn* (a) (fn* (b) (+ a b))) 5) 7))
 
-  (def! ->>* (macro* (& xs) `(fn* (-x-) (->> -x- ~@xs))))
+  (test "or with no args" false (or))
+  (test "or with all 'false'" false (or false false false false))
+  (test "or with a 'true'" true (or false false true false))
+  (test "or with all false invocations" false (or false (= 0 1) (= 0 1) false))
+  (test "or with a true invocation" true (or false (= 0 1) (< 0 1) false))
 
-  (def! not (fn* (x) (if x false true)))
-  (def! incr  (->* (+ 1)))
-  (def! decr  (->* (- 1)))
-  (def! zero? (->* (= 0)))
+  (test "and with no args" true (and))
+  (test "and with all 'false'" false (and false false false false))
+  (test "and with a 'true'" false (and false false true false))
+  (test "and with all 'true'" true (and true true true true))
+  (test "and with a false invocation" false (and true (< 0 1) (< 0 1) (= 0 1)))
+  (test "and with all true invocations" true (and true (< 0 1) (< 0 1) (< 0 1)))
 
-  (def! identity (fn* (x) x))
+  (test "cond with no args" nil (cond))
 
-  (def! constant-fn (fn* (x) (fn* (y) x)))
+  (def! -error-msg- "`cond` requires an even number of forms.")
+  (test "cond with a single 'true' arg" -error-msg- (try* (cond true) (catch* e e)))
+  (test "cond with a single 'false' arg" -error-msg- (try* (cond false) (catch* e e)))
+  (test "cond with a single invocation" -error-msg- (try* (cond (= 0 0)) (catch* e e)))
 
-  (def! call-on (fn* (& xs) (fn* (fn) (apply fn xs))))
+  (test "cond with a true invocation" 0 (cond (= 0 0) 0))
+  (test "cond with a false invocation" nil (cond (< 0 0) 0))
+  (test "cond with two branches" 1 (cond (< 0 0) 0 (= 0 0) 1))
+  (test "cond with multiple branches" 3 (cond (< 0 0) 0 (< 0 0) 1 (< 0 0) 2 (= 0 0) 3))
 
-  (def! reduce
-    (fn* (seed f xs)
-      (if (empty? xs)
-        seed
-        (reduce (f seed (car xs)) f (cdr xs)))))
+  (test "cond with odd nbr args and no early true" -error-msg- (try* (cond false 0 false 1 false) (catch* e e)))
+  (test "cond with odd nbr args but early true" 0 (cond true 0 false 1 false))
+  (undef! --error-msg-)
 
-  (def! every?
-    (fn* (pred xs)
-      (if (empty? xs)
-        true
-        (if (pred (car xs))
-          (every? pred (cdr xs))
-          false))))
+  (test "->"  10  (-> 1000 (/ 100)))
+  (test "->>" 100 (->> 1   (/ 100)))
 
-  (def! some?
-    (fn* (pred xs)
-      (if (empty? xs)
-        false
-        (if (pred (car xs))
-          true
-          (some? pred (cdr xs))))))
+  (test "->* creates a function"  true (function? (->*  (/ 100))))
+  (test "->>* creates a function" true (function? (->>* (cons 'prefix))))
 
-  (def! letmemrec* (macro* (alias expr)
-    `(let* (~(car alias) (memfix* (fn* (~(car alias)) ~(2nd alias)))) ~expr)))
+  (test "->*"  10  ((->* (/ 100)) 1000))
+  (test "->>*" 100 ((->>* (/ 100)) 1))
 
-  (def! skip (fn* (nbr xs)
-    (letrec* (-skip- (fn* (ys)
-      (let* (nbr (car ys)
-             xs (2nd ys))
-        (cond
-          (= 0 nbr) xs
-          (= 1 nbr) (cdr xs)
-          "default" (-skip- (list (decr nbr) (cdr xs)))))))
-      (-skip- (list nbr xs)))))
+  (test "constant-fn creates a function" true (function? (constant-fn 10)))
+  (test "constant-fn" 10 ((constant-fn 10) 100))
 
-  (def! . (macro* (x key & xs)
-    `((get ~x ~key) ~@xs)))
+  (test "call-on" 10 ((call-on 9) incr))
 
-  (def! .. (fn* (lo hi)
-    (letrec* (-..- (fn* (ys)
-      (let* (lo     (1st ys)
-             hi     (2nd ys)
-             -list- (3rd ys))
-        (if (= lo hi)
-          (cons hi -list-)
-          (-..- (list lo (decr hi) (cons hi -list-)))))))
-      (-..- (list lo hi '())))))
+  (test "load multiline index" 20 (let* (idx (load "multiline_map")) (get (get idx "key3") "key1")))
 
+  (def! -add- (fn* (x y) (if (= 0 x) y (-add- (- x 1) (+ x y)))))
+  (test "tail-call optimization" 50005000 (-add- 10000 0))
+  (undef! -add-)
+
+  ;(test "\ form" 12 ((\ + _ (* _ _)) 3))
+
+  "tests complete"
 )
-
-; read-string
-; slurp
-; inner-comment macro
-; load-file
-; eval (esp. with configurable parameters)
-
-; fix determination of equality
-; symbol-keys (like :abc)
-; amend results from "str" function
-; pr-str, str, prn, println, readline, read-string, slurp
-; readline
-; *host-language*
-; gensym -- for hygienic macros
-
-; throw
-; try catch
-
-; ^
-; @
-; (def! x1 ^{"abc" 1} (fn* (a) (+ 1 a)))      ; => ???
-; (meta x1)                                   ; => { "abc" 1 }
-
-
-; defined?

@@ -86,17 +86,7 @@ defineNewValue = (malList, envs) ->
   setMainEnv (envs, jsKey, malValue)
 
 evalQuasiquotedExpr = (expr, envs) ->
-  _expr = car expr
-  res = switch
-    when unquotedExpr? _expr
-      _evaluate ((next _expr), envs)
-    when malList? _expr
-      _evalQuasiquotedExpr (_expr, envs)
-    else
-      _expr
-  res
-
-_evalQuasiquotedExpr = (expr, envs) ->
+  return expr unless malList? expr
   manageItem = (memo, item) ->
     switch
       when unquotedExpr? item
@@ -106,7 +96,7 @@ _evalQuasiquotedExpr = (expr, envs) ->
           createMalList (_item, _memo)
         reduce (memo, _manageItem, (_evaluate ((next item), envs)))
       when malList? item
-        createMalList (_evalQuasiquotedExpr (item, envs), memo)
+        createMalList (evalQuasiquotedExpr (item, envs), memo)
       else
         createMalList (item, memo)
   reverse(
@@ -162,7 +152,8 @@ _evaluate = (malExpr, envs) ->
 
           when _if
             jsBool = extractJsValue (_evaluate (a1, envs))
-            malExpr = if jsBool
+            malExpr =
+              if jsBool
                 (car remaining)
               else
                 if (empty? (otherwise = (next remaining))) then malNil else otherwise
@@ -177,7 +168,7 @@ _evaluate = (malExpr, envs) ->
             return car t1
 
           when quasiquote
-            return evalQuasiquotedExpr (t1, envs)
+            return evalQuasiquotedExpr ((car t1), envs)
 
           when expand-macro
             return expandMacro ((car a1), (cdr a1), envs)
