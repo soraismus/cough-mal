@@ -1,5 +1,6 @@
 comment                = require './commentSignal'
 { createMalBoolean }   = require './mal-type-utilities'
+{ createMalIgnore }    = require './mal-type-utilities'
 { createMalIndex }     = require './mal-type-utilities'
 { createMalList }      = require './mal-type-utilities'
 { createMalNil }       = require './mal-type-utilities'
@@ -9,6 +10,7 @@ comment                = require './commentSignal'
 { extractJsValue }     = require './mal-type-utilities'
 { _false }             = require './keyTokens'
 { glyphTokens }        = require './keyTokens'
+{ ignore }             = require './keyTokens'
 { indexEnd }           = require './keyTokens'
 { indexStart }         = require './keyTokens'
 { keyTokens }          = require './keyTokens'
@@ -29,6 +31,7 @@ comment                = require './commentSignal'
 atomize = \token ->
   createMalValue = switch
     when nil? token      then createMalNil
+    when ignore? token   then createMalIgnore
     when boolean? token  then ; createMalBoolean parseBoolean ;
     when string? token   then createMalString
     when integer? token  then ; createMalNumber parseInt10 ;
@@ -44,6 +47,9 @@ float? = \token ->
 
 glyph? = \token ->
   token in glyphTokens
+
+ignore? = \token ->
+  token == ignore
 
 indexStart? = \token ->
   token == indexStart

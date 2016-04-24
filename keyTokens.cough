@@ -3,13 +3,13 @@ keyword? = \jsString ->
 
 keyTokens = [
   catch*             = 'catch*'
-  cond               = 'cond'
   def!               = 'def!'
   _do                = 'do'
   expand-macro        = 'expand-macro'
   _false             = 'false'
   fn*                = 'fn*'
   _if                = 'if'
+  ignore             = 'ignore'
   indexEnd           = '}'
   indexStart         = '{'
   let*               = 'let*'
@@ -35,13 +35,13 @@ keyTokens = [
 
 keywords = [
   catch*
-  cond
   def!
   _do
   expand-macro
   _false
   fn*
   _if
+  ignore
   let*
   letrec*
   macro*
@@ -72,7 +72,6 @@ glyphTokens = [
 
 module.exports = {
   catch*
-  cond
   def!
   _do
   expand-macro
@@ -80,6 +79,7 @@ module.exports = {
   fn*
   glyphTokens
   _if
+  ignore
   indexEnd
   indexStart
   keyTokens

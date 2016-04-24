@@ -15,6 +15,9 @@ createMalAtom = \malValue ->
 createMalBoolean = \jsBoolean ->
   if jsBoolean then malTrue else malFalse
 
+createMalIgnore = ->
+  malIgnore
+
 createMalNil = ->
   malNil
 
@@ -43,17 +46,19 @@ extractJsValue = \malValue ->
   [_createMalAtom,         malAtom?        ]
 ] = malTypes.map create-factory-&-predicate
 
+malIgnore = _createMalUnit null
 malNil = _createMalUnit null
 
 [malFalse, malTrue] = [false, true].map _createMalBoolean
 
-[malFalse?, malNil?, malTrue?] =
-  [malFalse, malNil, malTrue].map createPredicate
+[malFalse?, malIgnore?, malNil?, malTrue?] =
+  [malFalse, malIgnore, malNil, malTrue].map createPredicate
 
 module.exports = {
   createMalAtom
   createMalBoolean
   createMalCoreFunction
+  createMalIgnore
   createMalIndex
   createMalKeyword
   createMalList
@@ -70,6 +75,8 @@ module.exports = {
   malCoreFunction?
   malFalse
   malFalse?
+  malIgnore
+  malIgnore?
   malIndex?
   malKeyword?
   malList?

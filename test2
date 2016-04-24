@@ -75,9 +75,11 @@
   (test "and with all true invocations" true (and true (< 0 1) (< 0 1) (< 0 1)))
 
   (test "cond with no args" nil (cond))
-  (test "cond with a single 'true' arg" nil (cond true))
-  (test "cond with a single 'false' arg" nil (cond false))
-  (test "cond with a single invocation"  nil (cond (= 0 0)))
+
+  ;(test "cond with a single 'true' arg" nil (cond true))
+  ;(test "cond with a single 'false' arg" nil (cond false))
+  ;(test "cond with a single invocation"  nil (cond (= 0 0)))
+
   (test "cond with a true invocation" 0 (cond (= 0 0) 0))
   (test "cond with a false invocation"  nil (cond (< 0 0) 0))
   (test "cond with two branches" 1 (cond (< 0 0) 0 (= 0 0) 1))

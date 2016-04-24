@@ -16,6 +16,7 @@ commentSignal                = require './commentSignal'
 { empty? }                   = require './linked-list' 
 { expand-macro }             = require './keyTokens'
 { extractJsValue }           = require './mal-type-utilities'
+{ filter }                   = require './linked-list'
 { fn* }                      = require './keyTokens'
 { forEach }                  = require './linked-list'
 { fromArray }                = require './linked-list'
@@ -26,6 +27,7 @@ commentSignal                = require './commentSignal'
 { lookup }                   = require './env-utilities'
 { macro* }                   = require './keyTokens'
 { malCoreFunction? }         = require './mal-type-utilities'
+{ malIgnore? }               = require './mal-type-utilities'
 { malIndex? }                = require './mal-type-utilities'
 { malList? }                 = require './mal-type-utilities'
 { malMacro? }                = require './mal-type-utilities'
@@ -148,6 +150,7 @@ _evaluate = (malExpr, envs) ->
         return evalDefault (malExpr, envs)
 
       else
+        malExpr = filter ((\x -> ! (malIgnore? x)), malExpr)
         [head, a1, remaining] = toPartialArray (2, malExpr)
         t1 = cdr malExpr
 

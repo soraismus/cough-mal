@@ -52,6 +52,14 @@ drop = (nbr, malList) ->
 empty? = \value ->
   value == EOL
 
+filter = (predicate, list) ->
+  _reduce = (list, value) ->
+    if predicate value
+      createMalList (value, list)
+    else
+      list
+  reverse (reduce (EOL, _reduce, list))
+
 forEach = (fn, list) ->
   result = list
   until empty? list
@@ -157,6 +165,7 @@ module.exports = {
   createMalList
   drop
   empty?
+  filter
   forEach
   fromArray
   last

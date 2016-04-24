@@ -6,6 +6,7 @@ commentSignal        = require './commentSignal'
 { listStart }        = require './keyTokens'
 { malAtom? }         = require './mal-type-utilities'
 { malCoreFunction? } = require './mal-type-utilities'
+{ malIgnore? }       = require './mal-type-utilities'
 { malIndex? }        = require './mal-type-utilities'
 { malKeyword? }      = require './mal-type-utilities'
 { malList? }         = require './mal-type-utilities'
@@ -26,12 +27,13 @@ serialize = (malExpr, printReadably?) ->
   return commentSignal if malExpr == commentSignal
   _serialize = switch
     when malList? malExpr         then serializeList
+    when malIgnore? malExpr       then \x -> ignoreLabel
     when malIndex? malExpr        then serializeIndex
     when malKeyword? malExpr      then \x -> keywordLabel
     when malCoreFunction? malExpr then \x -> coreFunctionLabel
     when malUserFunction? malExpr then \x -> userFunctionLabel
     when malMacro? malExpr        then \x -> macroLabel
-    when malNil? malExpr          then \x -> 'nil'
+    when malNil? malExpr          then \x -> nilLabel
     when malString? malExpr       then serializeString
     when malAtom? malExpr         then serializeAtom
     when ? (malExpr.jsValue)      then extractJsValue
@@ -69,9 +71,11 @@ serializeString = (malString, printReadably?) ->
 stripQuotes = \jsString ->
   jsString[1 .. -2]
 
-coreFunctionLabel = '(core function)'
-keywordLabel      = '(keyword)'
-macroLabel        = '(macro)'
-userFunctionLabel = '(user function)'
+coreFunctionLabel = '<core function>'
+ignoreLabel       = '<ignore>'
+keywordLabel      = '<keyword>'
+macroLabel        = '<macro>'
+nilLable          = 'nil'
+userFunctionLabel = '<user function>'
 
 module.exports = serialize
