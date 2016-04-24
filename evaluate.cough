@@ -151,9 +151,8 @@ _evaluate = (malExpr, envs) ->
             return forEach ((evaluate envs), t1)
 
           when _if
-            jsBool = extractJsValue (_evaluate (a1, envs))
             malExpr =
-              if jsBool
+              if extractJsValue (_evaluate (a1, envs))
                 (car remaining)
               else
                 if (empty? (otherwise = (next remaining))) then malNil else otherwise

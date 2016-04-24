@@ -1,5 +1,6 @@
 { car }                   = require './linked-list'
 { cdr }                   = require './linked-list'
+{ circumpendQuotes }      = require './js-utilities'
 { concat }                = require './linked-list'
 { createMalAtom }         = require './mal-type-utilities'
 { createMalBoolean }      = require './mal-type-utilities'
@@ -15,7 +16,12 @@ display                   = require './display'
 { evaluate }              = require './evaluate'
 { extractJsValue }        = require './mal-type-utilities'
 { fromArray }             = require './linked-list'
+{ fromJsObject }          = require './index-utilities'
+{ fromMalIndex }          = require './index-utilities'
 interpret                 = require './interpret'
+{ jsNaN? }                = require './js-utilities'
+{ jsNumber? }             = require './js-utilities'
+{ jsString? }             = require './js-utilities'
 { last }                  = require './linked-list'
 { malAtom? }              = require './mal-type-utilities'
 { malCoreFunction? }      = require './mal-type-utilities'
@@ -40,13 +46,6 @@ serialize                 = require './serialize'
 { take }                  = require './linked-list'
 { toArray }               = require './linked-list'
 { toPartialArray }        = require './linked-list'
-
-circumpendQuotes = \jsString ->
-  '"' + jsString + '"'
-
-jsNaN? = \val -> jsNumber? val && val != val
-
-jsNumber? = \val -> {}.toString.call val == '[object Number]'
 
 lift = (fnOnJsValues) -> (malValueList) ->
   fnOnJsValues (((toArray malValueList).map extractJsValue)...)
@@ -197,27 +196,6 @@ prn = \malArgs ->
 println = \malArgs ->
   display (_prStr (malArgs, false).join '')
   malNil
-
-fromJsObject = \jsObject ->
-  copy = {}
-  for own key, val of jsObject
-    if jsString? key
-      copy['"' + key + '"'] = val
-    else
-      copy[key] = val
-  createMalIndex copy
-
-fromMalIndex = \malIndex ->
-  localEnv = {}
-  for own key, value of malIndex.jsValue
-    if jsString? key
-      localEnv[stripQuotes key] = value
-    else
-      localEnv[key] = value
-  localEnv
-
-jsString? = \jsVal ->
-  Object.prototype.toString.call jsVal == '[object String]'
 
 _read = \malArgs ->
   jsFileName = stripQuotes (extractJsValue (car malArgs))
@@ -501,5 +479,4 @@ module.exports = {
   environment
   evalWithEnv
   _evaluateString
-  fromJsObject
 }
