@@ -7,6 +7,7 @@ commentSignal        = require './commentSignal'
 { malAtom? }         = require './mal-type-utilities'
 { malCoreFunction? } = require './mal-type-utilities'
 { malIndex? }        = require './mal-type-utilities'
+{ malKeyword? }      = require './mal-type-utilities'
 { malList? }         = require './mal-type-utilities'
 { malMacro? }        = require './mal-type-utilities'
 { malNil? }          = require './mal-type-utilities'
@@ -26,6 +27,7 @@ serialize = (malExpr, printReadably?) ->
   _serialize = switch
     when malList? malExpr         then serializeList
     when malIndex? malExpr        then serializeIndex
+    when malKeyword? malExpr      then \x -> keywordLabel
     when malCoreFunction? malExpr then \x -> coreFunctionLabel
     when malUserFunction? malExpr then \x -> userFunctionLabel
     when malMacro? malExpr        then \x -> macroLabel
@@ -68,6 +70,7 @@ stripQuotes = \jsString ->
   jsString[1 .. -2]
 
 coreFunctionLabel = '(core function)'
+keywordLabel      = '(keyword)'
 macroLabel        = '(macro)'
 userFunctionLabel = '(user function)'
 

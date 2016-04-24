@@ -41,6 +41,9 @@ serialize                 = require './serialize'
 { toArray }               = require './linked-list'
 { toPartialArray }        = require './linked-list'
 
+circumpendQuotes = \jsString ->
+  '"' + jsString + '"'
+
 jsNaN? = \val -> jsNumber? val && val != val
 
 jsNumber? = \val -> {}.toString.call val == '[object Number]'
@@ -315,7 +318,7 @@ loadWithBareEnv = \malArgs ->
 loadWithEnv = \malArgs ->
   [malFileName, localEnv] = toPartialArray (2, malArgs)
   jsFileName = stripQuotes (extractJsValue malFileName)
-  file = require('fs').readFileSync(jsFileName).toString()
+  file = require('fs').readFileSync(jsFileName, 'utf-8').toString()
   _process_ [(fromMalIndex localEnv), environment] file
 malReduce = \malArgs ->
   [malSeed, malFn, malArgList] = toArray malArgs
@@ -373,6 +376,11 @@ set = \malArgs ->
   [index, key, val] = toPartialArray (3, malArgs)
   (extractJsValue index)[extractJsValue key] = val
   index
+slurp = \malArgs ->
+  jsFileName = stripQuotes (extractJsValue (car malArgs))
+  createMalString (
+    circumpendQuotes (
+      require('fs').readFileSync(jsFileName).toString()))
 symbol = \malArgs ->
   malValue = car malArgs
   if malString? malValue
@@ -385,7 +393,7 @@ _take = \malArgs ->
   take ((extractJsValue malNumber), malList)
 typeOf = \malArgs ->
   malValue = car malArgs
-  createMalString malValue.type 
+  createMalString (circumpendQuotes malValue.type)
 _throw = \malArgs ->
   throw (serialize (car malArgs))
 time-ms = () ->
@@ -434,18 +442,20 @@ functionsOnMalValues = {
   'empty?'             : _empty?
   'eval'               : _evaluate
   'evalStr'            : _evaluateString
+  'eval-with-env'      : evalWithEnv
+  'eval-with-bare-env' : evalWithBareEnv
   'first'              : _car
   'false?'             : false?
+  'fix'                : fix
   'function?'          : function?
   'last'               : _last
   'list'               : list
   'list?'              : list?
   'load'               : load
-  'eval-with-env'      : evalWithEnv
   'load-with-env'      : loadWithEnv
-  'eval-with-bare-env' : evalWithBareEnv
   'load-with-bare-env' : loadWithBareEnv
   'map'                : map
+  'meta'               : meta
   'nil?'               : nil?
   'not'                : _not
   'nth'                : nth
@@ -454,28 +464,27 @@ functionsOnMalValues = {
   'prepend'            : prepend
   'println'            : println
   'prn'                : prn
-  'prStr'              : prStr
+  'pr-str'             : prStr
   '-quit-'             : _quit_
   'read'               : read
   'reduce'             : malReduce
   'reset!'             : reset
   'rest'               : _cdr
   'reverse'            : _reverse
+  'set!'               : set
+  'slurp'              : slurp
   'str'                : str
   'string?'            : string?
   'symbol'             : symbol
   'symbol?'            : symbol?
-  'write'              : write
   'take'               : _take
   'throw'              : _throw
   'time-ms'            : time-ms
   'true?'              : true?
   'typeof'             : typeOf
   'user-fn?'           : userFn?
-  'set!'               : set
   'with-meta'          : withMeta
-  'meta'               : meta
-  'fix'                : fix
+  'write'              : write
 }
 
 environment = {}

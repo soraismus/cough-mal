@@ -1,8 +1,10 @@
 { addEnv }                   = require './env-utilities'
 { car }                      = require './linked-list'
+{ catch* }                   = require './keyTokens'
 { cdr }                      = require './linked-list'
 commentSignal                = require './commentSignal'
 { createMalIndex }           = require './mal-type-utilities'
+{ createMalKeyword }         = require './mal-type-utilities'
 { createMalList }            = require './mal-type-utilities'
 { createMalMacro }           = require './mal-type-utilities'
 { createMalNumber }          = require './mal-type-utilities'
@@ -18,7 +20,9 @@ commentSignal                = require './commentSignal'
 { forEach }                  = require './linked-list'
 { fromArray }                = require './linked-list'
 { _if }                      = require './keyTokens'
+{ keyword? }                 = require './keyTokens'
 { let* }                     = require './keyTokens'
+{ letrec* }                  = require './keyTokens'
 { lookup }                   = require './env-utilities'
 { macro* }                   = require './keyTokens'
 { malCoreFunction? }         = require './mal-type-utilities'
@@ -39,7 +43,9 @@ commentSignal                = require './commentSignal'
 { reduceBy2 }                = require './linked-list'
 { reverse }                  = require './linked-list'
 { setMainEnv }               = require './env-utilities'
+{ splat }                    = require './keyTokens'
 { toPartialArray }           = require './linked-list'
+{ try* }                     = require './keyTokens'
 { undef! }                   = require './keyTokens'
 { unsetMainEnv }             = require './env-utilities'
 
@@ -49,12 +55,11 @@ createFn = (malList, envs) ->
     malExpression : (next malList)
     malParameters : (car malList)
 
-SPLAT-TOKEN = '&'
 createLocalEnv = (malParams, malArgs) ->
   env = {}
   until empty? malParams
     jsParam = extractJsValue (car malParams)
-    if jsParam == SPLAT-TOKEN
+    if jsParam == splat
       env[extractJsValue (next malParams)] = malArgs
       return env
     else
@@ -119,12 +124,30 @@ evalQuote = (malList, envs) ->
   car malList
 
 evalSymbol = (malSymbol, envs) ->
-  lookup (envs, (extractJsValue malSymbol))
+  jsString = extractJsValue malSymbol
+  if keyword? jsString
+    createMalKeyword jsString
+  else
+    lookup (envs, jsString)
 
 _evaluate = (malExpr, envs) ->
   loop
     switch
-      when malList? malExpr
+      when malSymbol? malExpr
+        return evalSymbol (malExpr, envs)
+
+      # NOTE: Happens over and over for every malIndex.
+      when malIndex? malExpr
+        index = extractJsValue malExpr
+        newIndex = {}
+        for own key, value of index
+          newIndex[key] = _evaluate (index[key], envs)
+        return createMalIndex newIndex
+
+      when ! (malList? malExpr)
+        return evalDefault (malExpr, envs)
+
+      else
         [head, a1, remaining] = toPartialArray (2, malExpr)
         t1 = cdr malExpr
 
@@ -139,7 +162,7 @@ _evaluate = (malExpr, envs) ->
             malExpr = (car remaining)
             envs = addEnv (envs, reduceLet* (envs, a1))
 
-          when 'letrec*'
+          when letrec*
             malExpr = (car remaining)
             envs = addEnv (envs, reduceLetrec* (envs, a1))
 
@@ -169,7 +192,7 @@ _evaluate = (malExpr, envs) ->
           when expand-macro
             return expandMacro ((car a1), (cdr a1), envs)
 
-          when "try*"
+          when try*
             console.log 'try*'
             try
               return _evaluate (a1, envs)
@@ -216,20 +239,6 @@ _evaluate = (malExpr, envs) ->
 
               else
                 throw 'Value is not a function'
-
-      when malSymbol? malExpr
-        return evalSymbol (malExpr, envs)
-
-      # NOTE: Happens over and over for every malIndex.
-      when malIndex? malExpr
-        index = extractJsValue malExpr
-        newIndex = {}
-        for own key, value of index
-          newIndex[key] = _evaluate (index[key], envs)
-        return createMalIndex newIndex
-
-      else
-        return evalDefault (malExpr, envs)
 
 evaluate = \envs \malExpr ->
   return commentSignal if malExpr == commentSignal

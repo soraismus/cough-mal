@@ -1,6 +1,7 @@
+keyword? = \jsString ->
+  jsString in keywords
+
 keyTokens = [
-  atom               = 'atom'
-  atomGlyph          = '@'
   catch*             = 'catch*'
   cond               = 'cond'
   def!               = 'def!'
@@ -12,6 +13,7 @@ keyTokens = [
   indexEnd           = '}'
   indexStart         = '{'
   let*               = 'let*'
+  letrec*            = 'letrec*'
   listEnd            = ')'
   listStart          = '('
   macro*             = 'macro*'
@@ -21,6 +23,7 @@ keyTokens = [
   quasiquoteGlyph    = '`'
   quote              = 'quote'
   quoteGlyph         = '\''
+  splat              = '&'
   spliceUnquote      = 'splice-unquote'
   spliceUnquoteGlyph = '~@'
   _true              = 'true'
@@ -28,6 +31,29 @@ keyTokens = [
   undef!             = 'undef!'
   unquote            = 'unquote'
   unquoteGlyph       = '~'
+]
+
+keywords = [
+  catch*
+  cond
+  def!
+  _do
+  expand-macro
+  _false
+  fn*
+  _if
+  let*
+  letrec*
+  macro*
+  nil
+  _process
+  quasiquote
+  quote
+  spliceUnquote
+  _true
+  try*
+  undef!
+  unquote
 ]
 
 macroTokens = [
@@ -38,7 +64,6 @@ macroTokens = [
 ]
 
 glyphTokens = [
-  atomGlyph
   quasiquoteGlyph
   quoteGlyph
   spliceUnquoteGlyph
@@ -46,8 +71,6 @@ glyphTokens = [
 ]
 
 module.exports = {
-  atom
-  atomGlyph
   catch*
   cond
   def!
@@ -60,7 +83,9 @@ module.exports = {
   indexEnd
   indexStart
   keyTokens
+  keyword?
   let*
+  letrec*
   listEnd
   listStart
   macro*
@@ -71,6 +96,7 @@ module.exports = {
   quasiquoteGlyph
   quote
   quoteGlyph
+  splat
   spliceUnquote
   spliceUnquoteGlyph
   _true

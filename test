@@ -5,7 +5,7 @@
       ( (fn* (x) (f (fn* (& ys) (apply (x x) ys))))
         (fn* (x) (f (fn* (& ys) (apply (x x) ys)))))))
 
-  (def! memfix
+  (def! memfix*
     (fn* (f)
       (let* (cache {})
         (
@@ -55,18 +55,25 @@
   (def! and (macro* (& xs)
     (if (empty? xs)
       true
-      `(let* (-query- ~(car xs))
-        (if -query-
-          (and ~@(cdr xs))
-          false)))))
+      (let* (-query- (gensym))
+        `(let* (~-query- ~(car xs))
+          (if ~-query-
+            (and ~@(cdr xs))
+            false))))))
 
   (def! cond (macro* (& xs)
-    (if (or (empty? xs) (empty? (cdr xs)))
+    (if (empty? xs)
       nil
-      `(let* (-query- ~(car xs))
-        (if -query-
-          ~(2nd xs)
-          (cond ~@(cdr (cdr xs))))))))
+      (if (empty? (cdr xs))
+        (throw "`cond` requires an even number of forms.")
+        (let* (-query- (gensym))
+          `(let* (~-query- ~(car xs))
+            (if ~-query-
+              ~(2nd xs)
+              (cond ~@(cdr (cdr xs))))))))))
+
+  (def! loop (macro* (form0 form1)
+    `(let* (loop (memfix* (fn* (loop) (fn* (~(1st form0)) ~form1)))) (loop ~(2nd form0)))))
 
   (def! -> (macro* (& xs)
     (if (empty? xs)
@@ -106,11 +113,10 @@
 
   (def! ->>* (macro* (& xs) `(fn* (-x-) (->> -x- ~@xs))))
 
+  (def! not (fn* (x) (if x false true)))
   (def! incr  (->* (+ 1)))
   (def! decr  (->* (- 1)))
   (def! zero? (->* (= 0)))
-
-  (def! not (fn* (x) (if x false true)))
 
   (def! identity (fn* (x) x))
 
@@ -140,11 +146,8 @@
           true
           (some? pred (cdr xs))))))
 
-  ;(def! letrec* (macro* (alias expr)
-  ;  `(let* (~(car alias) (fix (fn* (~(car alias)) ~(2nd alias)))) ~expr)))
-
   (def! letmemrec* (macro* (alias expr)
-    `(let* (~(car alias) (memfix (fn* (~(car alias)) ~(2nd alias)))) ~expr)))
+    `(let* (~(car alias) (memfix* (fn* (~(car alias)) ~(2nd alias)))) ~expr)))
 
   (def! skip (fn* (nbr xs)
     (letrec* (-skip- (fn* (ys)
@@ -174,7 +177,6 @@
 ; read-string
 ; slurp
 ; inner-comment macro
-; *ARGV*
 ; load-file
 ; eval (esp. with configurable parameters)
 
@@ -191,32 +193,8 @@
 
 ; ^
 ; @
-
-; -----------
-; METADATA
-; -----------
-
 ; (def! x1 ^{"abc" 1} (fn* (a) (+ 1 a)))      ; => ???
 ; (meta x1)                                   ; => { "abc" 1 }
-
-  ;(defmacro! and
-  ;  (fn* (& xs)
-  ;    (if (empty? xs)
-  ;      true
-  ;      (if (= 1 (count xs))
-  ;        (first xs)
-  ;        (let* (condvar (gensym))
-  ;          `(let* (~condvar ~(first xs))
-  ;            (if ~condvar (and ~@(rest xs)) ~condvar)))))))
-
-  ;(defmacro! cond
-  ;  (fn* (& clauses)
-  ;    (if (> (count clauses) 0)
-  ;      (list 'if (first clauses)
-  ;            (if (> (count clauses) 1)
-  ;                (nth clauses 1)
-  ;                (throw "cond requires an even number of forms"))
-  ;            (cons 'cond (rest (rest clauses)))))))
 
 
 ; defined?
