@@ -52,6 +52,13 @@ drop = (nbr, malList) ->
 empty? = \value ->
   value == EOL
 
+equal? = (list0, list1, equivalent?) ->
+  until empty? list0 || empty? list1
+    return false unless equivalent? (list0.value, list1.value)
+    list0 = cdr list0
+    list1 = cdr list1
+  empty? list0 && empty? list1
+
 filter = (predicate, list) ->
   _reduce = (list, value) ->
     if predicate value
@@ -165,6 +172,7 @@ module.exports = {
   createMalList
   drop
   empty?
+  equal?
   filter
   forEach
   fromArray

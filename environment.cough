@@ -13,6 +13,7 @@
 display                   = require './display'
 { drop }                  = require './linked-list'
 { empty? }                = require './linked-list'
+{ equal? }                = require './linked-list'
 { evaluate }              = require './evaluate'
 { extractJsValue }        = require './mal-type-utilities'
 { fromArray }             = require './linked-list'
@@ -28,6 +29,7 @@ interpret                 = require './interpret'
 { malBoolean? }           = require './mal-type-utilities'
 { malFalse }              = require './mal-type-utilities'
 { malFalse? }             = require './mal-type-utilities'
+{ malIndex? }             = require './mal-type-utilities'
 { malList? }              = require './mal-type-utilities'
 { malNil }                = require './mal-type-utilities'
 { malNil? }               = require './mal-type-utilities'
@@ -84,10 +86,14 @@ _index = (args...) ->
   index[k] = args[i + 1] for k, i in args when i % 2 == 0
   createMalIndex index
 keys = \index ->
-  keys = []
+  _keys = []
   for own key, value of index
-    keys.push key
-  fromArray keys
+    _keys.unshift (
+      if jsNaN? (jsNbr = parseFloat (key, 10))
+        createMalString key
+      else
+        createMalNumber jsNbr)
+  fromArray _keys
 _length = \jsVal ->
   return malNil unless jsString? jsVal
   createMalNumber (jsVal.length - 2)
@@ -111,7 +117,7 @@ subtract = (nbrs...) ->
 vals = \index ->
   values = []
   for own key, value of index
-    values.push value
+    values.unshift value
   fromArray values
 
 functionsOnJsValues = {
@@ -136,38 +142,6 @@ functionsOnJsValues = {
   '-'            : subtract
   'vals'         : vals
 }
-
-# TODO: Refactor
-# ---------------------------------------------------------
-_areEqual = (malValue0, malValue1) ->
-  malValue0 == malValue1 ||
-    malValue0.jsValue == malValue1.jsValue
-
-__areEqual = (malValue0, malValue1) ->
-  if _areEqual (malValue0, malValue1)
-    return true
-
-  areBothLists? = malList? malValue0 && malList? malValue1
-
-  if areBothLists?
-      l0 = malValue0.jsValue
-      l1 = malValue1.jsValue
-      result = true
-      # TODO: Make more efficient.
-      until empty? l0 || empty? l1
-        result = result &&
-          __areEqual (l0.value, l1.value)
-        l0 = recurse l0
-        l1 = recurse l1
-      result && empty? l0 && empty? l1
-    else
-      false
-
-# TODO: Refactor.
-areEqual = \malArgs ->
-  [malValue0, malValue1] = toArray malArgs
-  createMalBoolean (__areEqual (malValue0, malValue1))
-# ---------------------------------------------------------
 
 createPredicate = \pred \jsList ->
   malValue = jsList.value
@@ -218,6 +192,19 @@ append = \malArgs ->
 apply = \malArgs ->
   [malFn, malArgList] = toArray malArgs
   evaluate [] (createMalList (malFn, malArgList))
+areEqual = \malArgs ->
+  [malValue0, malValue1] = toPartialArray (2, malArgs)
+  _areEqual = (malValue0, malValue1) ->
+    if malList? malValue0 && malList? malValue1
+      equal? (malValue0, malValue1, _areEqual)
+    else if malIndex? malValue0 && malIndex? malValue1
+      jsIndex0 = malValue0.jsValue
+      jsIndex1 = malValue1.jsValue
+      (_areEqual ((keys jsIndex0), (keys jsIndex1))) &&
+        (_areEqual ((vals jsIndex0), (vals jsIndex1)))
+    else
+      malValue0.jsValue == malValue1.jsValue
+  createMalBoolean (_areEqual (malValue0, malValue1))
 atom = \malArgs -> createMalAtom (car malArgs)
 call = \malArgs ->
   evaluate [] malArgs
