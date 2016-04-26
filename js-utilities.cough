@@ -1,0 +1,16 @@
+circumpendQuotes = \jsString ->
+  '"' + jsString + '"'
+
+jsNaN? = \val -> jsNumber? val && val != val
+
+jsNumber? = \val -> {}.toString.call val == '[object Number]'
+
+jsString? = \jsVal ->
+  Object.prototype.toString.call jsVal == '[object String]'
+
+module.exports = {
+  circumpendQuotes
+  jsNaN?
+  jsNumber?
+  jsString?
+}
