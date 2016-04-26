@@ -1,0 +1,25 @@
+{ createMalIndex } = require './mal-type-utilities'
+{ jsString? }      = require './js-utilities'
+
+fromJsObject = \jsObject ->
+  copy = {}
+  for own key, val of jsObject
+    if jsString? key
+      copy['"' + key + '"'] = val
+    else
+      copy[key] = val
+  createMalIndex copy
+
+fromMalIndex = \malIndex ->
+  localEnv = {}
+  for own key, value of malIndex.jsValue
+    if jsString? key
+      localEnv[stripQuotes key] = value
+    else
+      localEnv[key] = value
+  localEnv
+
+module.exports = {
+  fromJsObject
+  fromMalIndex
+}
