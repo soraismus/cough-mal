@@ -8,6 +8,8 @@ comment                 = require './commentSignal'
 { createMalNumber }     = require './mal-type-utilities'
 { createMalString }     = require './mal-type-utilities'
 { createMalSymbol }     = require './mal-type-utilities'
+{ deref }               = require './keyTokens'
+{ derefGlyph }          = require './keyTokens'
 { extractJsValue }      = require './mal-type-utilities'
 { _false }              = require './keyTokens'
 { glyphTokens }         = require './keyTokens'
@@ -121,6 +123,7 @@ startsWith? = \char \token ->
   token[0] == char
 
 glyphIndex = {}
+glyphIndex[derefGlyph]         = deref
 glyphIndex[quasiquoteGlyph]    = quasiquote
 glyphIndex[quoteGlyph]         = quote
 glyphIndex[spliceUnquoteGlyph] = spliceUnquote

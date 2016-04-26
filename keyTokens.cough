@@ -2,6 +2,8 @@ keyword? = \jsString ->
   jsString in keywords
 
 keyTokens = [
+  deref              = 'deref'
+  derefGlyph         = '@'
   catch*             = 'catch*'
   def!               = 'def!'
   _do                = 'do'
@@ -64,6 +66,7 @@ macroTokens = [
 ]
 
 glyphTokens = [
+  derefGlyph
   quasiquoteGlyph
   quoteGlyph
   spliceUnquoteGlyph
@@ -71,6 +74,8 @@ glyphTokens = [
 ]
 
 module.exports = {
+  deref
+  derefGlyph
   catch*
   def!
   _do
