@@ -1,6 +1,7 @@
 malTypes = [
   malBooleanType      = 'malBooleanType'
   malCoreFunctionType = 'malCoreFunctionType'
+  malIdentifierType   = 'malIdentifierType'
   malIndexType        = 'malIndexType'
   malKeywordType      = 'malKeywordType'
   malListType         = 'malListType'
@@ -18,6 +19,7 @@ module.exports = {
   malAtomType
   malBooleanType
   malCoreFunctionType
+  malIdentifierType
   malIndexType
   malKeywordType
   malListType
