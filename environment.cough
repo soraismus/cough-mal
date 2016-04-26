@@ -5,6 +5,7 @@
 { createMalAtom }         = require './mal-type-utilities'
 { createMalBoolean }      = require './mal-type-utilities'
 { createMalCoreFunction } = require './mal-type-utilities'
+{ createMalIdentifier }   = require './mal-type-utilities'
 { createMalIndex }        = require './mal-type-utilities'
 { createMalList }         = require './mal-type-utilities'
 { createMalNumber }       = require './mal-type-utilities'
@@ -88,9 +89,9 @@ _index = (args...) ->
 keys = \index ->
   _keys = []
   for own key, value of index
-    _keys.unshift (
+    _keys.push (
       if jsNaN? (jsNbr = parseFloat (key, 10))
-        createMalString key
+        (if key[0] == ':' then createMalIdentifier else createMalString) key
       else
         createMalNumber jsNbr)
   fromArray _keys
@@ -117,7 +118,7 @@ subtract = (nbrs...) ->
 vals = \index ->
   values = []
   for own key, value of index
-    values.unshift value
+    values.push value
   fromArray values
 
 functionsOnJsValues = {

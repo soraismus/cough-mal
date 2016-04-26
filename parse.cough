@@ -1,42 +1,44 @@
-comment                = require './commentSignal'
-{ createMalBoolean }   = require './mal-type-utilities'
-{ createMalIgnore }    = require './mal-type-utilities'
-{ createMalIndex }     = require './mal-type-utilities'
-{ createMalList }      = require './mal-type-utilities'
-{ createMalNil }       = require './mal-type-utilities'
-{ createMalNumber }    = require './mal-type-utilities'
-{ createMalString }    = require './mal-type-utilities'
-{ createMalSymbol }    = require './mal-type-utilities'
-{ extractJsValue }     = require './mal-type-utilities'
-{ _false }             = require './keyTokens'
-{ glyphTokens }        = require './keyTokens'
-{ ignore }             = require './keyTokens'
-{ indexEnd }           = require './keyTokens'
-{ indexStart }         = require './keyTokens'
-{ keyTokens }          = require './keyTokens'
-{ listEnd }            = require './keyTokens'
-{ listStart }          = require './keyTokens'
-{ nil }                = require './keyTokens'
-{ quasiquote }         = require './keyTokens'
-{ quote }              = require './keyTokens'
-{ spliceUnquote }      = require './keyTokens'
-{ unquote }            = require './keyTokens'
-{ quasiquoteGlyph }    = require './keyTokens'
-{ quoteGlyph }         = require './keyTokens'
-{ spliceUnquoteGlyph } = require './keyTokens'
-{ unquoteGlyph }       = require './keyTokens'
-{ reverse }            = require './linked-list'
-{ _true }              = require './keyTokens'
+comment                 = require './commentSignal'
+{ createMalBoolean }    = require './mal-type-utilities'
+{ createMalIdentifier } = require './mal-type-utilities'
+{ createMalIgnore }     = require './mal-type-utilities'
+{ createMalIndex }      = require './mal-type-utilities'
+{ createMalList }       = require './mal-type-utilities'
+{ createMalNil }        = require './mal-type-utilities'
+{ createMalNumber }     = require './mal-type-utilities'
+{ createMalString }     = require './mal-type-utilities'
+{ createMalSymbol }     = require './mal-type-utilities'
+{ extractJsValue }      = require './mal-type-utilities'
+{ _false }              = require './keyTokens'
+{ glyphTokens }         = require './keyTokens'
+{ ignore }              = require './keyTokens'
+{ indexEnd }            = require './keyTokens'
+{ indexStart }          = require './keyTokens'
+{ keyTokens }           = require './keyTokens'
+{ listEnd }             = require './keyTokens'
+{ listStart }           = require './keyTokens'
+{ nil }                 = require './keyTokens'
+{ quasiquote }          = require './keyTokens'
+{ quote }               = require './keyTokens'
+{ spliceUnquote }       = require './keyTokens'
+{ unquote }             = require './keyTokens'
+{ quasiquoteGlyph }     = require './keyTokens'
+{ quoteGlyph }          = require './keyTokens'
+{ spliceUnquoteGlyph }  = require './keyTokens'
+{ unquoteGlyph }        = require './keyTokens'
+{ reverse }             = require './linked-list'
+{ _true }               = require './keyTokens'
 
 atomize = \token ->
   createMalValue = switch
-    when nil? token      then createMalNil
-    when ignore? token   then createMalIgnore
-    when boolean? token  then ; createMalBoolean parseBoolean ;
-    when string? token   then createMalString
-    when integer? token  then ; createMalNumber parseInt10 ;
-    when float? token    then ; createMalNumber parseFloat10 ;
-    else                      createMalSymbol
+    when nil? token       then createMalNil
+    when ignore? token    then createMalIgnore
+    when boolean? token   then ; createMalBoolean parseBoolean ;
+    when string? token    then createMalString
+    when identifer? token then createMalIdentifier
+    when integer? token   then ; createMalNumber parseInt10 ;
+    when float? token     then ; createMalNumber parseFloat10 ;
+    else                       createMalSymbol
   createMalValue token
 
 boolean? = \token ->
@@ -98,14 +100,6 @@ parseIndex = \tokens ->
 
   createMalIndex jsIndex
 
-parseList = \tokens ->
-  malList = createMalList ()
-  until (token = tokens.shift()) == listEnd
-    malList = createMalList (
-      (_parse (token, tokens)),
-      malList)
-  reverse malList
-
 parseBoolean = \token ->
   token == _true
 
@@ -115,8 +109,13 @@ parseFloat10 = \token ->
 parseInt10 = \token ->
   parseInt (token, 10)
 
-reserved? = \token ->
-  token in keyTokens
+parseList = \tokens ->
+  malList = createMalList ()
+  until (token = tokens.shift()) == listEnd
+    malList = createMalList (
+      (_parse (token, tokens)),
+      malList)
+  reverse malList
 
 startsWith? = \char \token ->
   token[0] == char
@@ -127,6 +126,7 @@ glyphIndex[quoteGlyph]         = quote
 glyphIndex[spliceUnquoteGlyph] = spliceUnquote
 glyphIndex[unquoteGlyph]       = unquote
 
-string? = startsWith? '"'
+string?    = startsWith? '"'
+identifer? = startsWith? ':'
 
 module.exports = parse

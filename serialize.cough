@@ -6,6 +6,7 @@ commentSignal        = require './commentSignal'
 { listStart }        = require './keyTokens'
 { malAtom? }         = require './mal-type-utilities'
 { malCoreFunction? } = require './mal-type-utilities'
+{ malIdentifier? }   = require './mal-type-utilities'
 { malIgnore? }       = require './mal-type-utilities'
 { malIndex? }        = require './mal-type-utilities'
 { malKeyword? }      = require './mal-type-utilities'
@@ -34,6 +35,7 @@ serialize = (malExpr, printReadably?) ->
     when malUserFunction? malExpr then \x -> userFunctionLabel
     when malMacro? malExpr        then \x -> macroLabel
     when malNil? malExpr          then \x -> nilLabel
+    when malIdentifier? malExpr   then serializeIdentifier
     when malString? malExpr       then serializeString
     when malAtom? malExpr         then serializeAtom
     when ? (malExpr.jsValue)      then extractJsValue
@@ -42,6 +44,9 @@ serialize = (malExpr, printReadably?) ->
 
 serializeAtom = (malAtom, printReadably?) ->
   "(atom #{serialize (malAtom.malValue, printReadably?)})"
+
+serializeIdentifier = (malString, printReadably?) ->
+  return extractJsValue malString
 
 serializeIndex = (malIndex, printReadably?) ->
   jsIndex = malIndex.jsValue

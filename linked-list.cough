@@ -1,5 +1,5 @@
 { malTypes } = require './mal-types'
-malListType = malTypes[4]
+malListType = malTypes[5]
 
 car = \malList ->
   if empty? malList
@@ -135,10 +135,9 @@ toArray = \list ->
   reduce ([], _reduce, list)
 
 fromArray = \array ->
-  list = createMalList ()
   _reduce = (list, value) ->
     createMalList (value, list)
-  reverse (array.reduce (_reduce, list))
+  array.reverse().reduce(_reduce, createMalList())
 
 toPartialArray = (nbr, list) ->
   result = []

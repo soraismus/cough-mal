@@ -33,6 +33,7 @@ extractJsValue = \malValue ->
 [
   [_createMalBoolean,      malBoolean?     ]
   [createMalCoreFunction,  malCoreFunction?]
+  [createMalIdentifier,    malIdentifier?   ]
   [createMalIndex,         malIndex?       ]
   [createMalKeyword,       malKeyword?     ]
   [_createMalList,         malList?        ]
@@ -58,6 +59,7 @@ module.exports = {
   createMalAtom
   createMalBoolean
   createMalCoreFunction
+  createMalIdentifier
   createMalIgnore
   createMalIndex
   createMalKeyword
@@ -75,6 +77,7 @@ module.exports = {
   malCoreFunction?
   malFalse
   malFalse?
+  malIdentifier?   
   malIgnore
   malIgnore?
   malIndex?
