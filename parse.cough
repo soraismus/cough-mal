@@ -1,3 +1,4 @@
+{ binaryGlyphTokens }   = require './keyTokens'
 comment                 = require './commentSignal'
 { createMalBoolean }    = require './mal-type-utilities'
 { createMalIdentifier } = require './mal-type-utilities'
@@ -14,6 +15,14 @@ comment                 = require './commentSignal'
 { _false }              = require './keyTokens'
 { glyphTokens }         = require './keyTokens'
 { ignore }              = require './keyTokens'
+
+{ ignore! }               = require './keyTokens'
+{ ignore!Glyph }          = require './keyTokens'
+{ ignoreIfTrue }          = require './keyTokens'
+{ ignoreIfTrueGlyph }     = require './keyTokens'
+{ ignoreUnlessTrue }      = require './keyTokens'
+{ ignoreUnlessTrueGlyph } = require './keyTokens'
+
 { indexEnd }            = require './keyTokens'
 { indexStart }          = require './keyTokens'
 { keyTokens }           = require './keyTokens'
@@ -49,6 +58,9 @@ boolean? = \token ->
 float? = \token ->
   /^(-|\+)?[1-9]\d*\.\d+$/.test token
 
+binaryGlyph? = \token ->
+  token in binaryGlyphTokens
+
 glyph? = \token ->
   token in glyphTokens
 
@@ -75,12 +87,27 @@ _parse = (token, tokens) ->
       parseIndex tokens
     when glyph? token
       parseGlyph (glyphIndex[token], tokens) 
+    when binaryGlyph? token
+      parseBinaryGlyph (binaryGlyphIndex[token], tokens)
     else
       atomize token
 
 parse = \tokens ->
   return comment if tokens == comment
   _parse (tokens.shift(), tokens)
+
+parseBinaryGlyph = (keyword, tokens) ->
+  createMalList (
+    createMalSymbol keyword
+    createMalList (
+      parse tokens
+      createMalList (parse tokens)))
+
+parseBoolean = \token ->
+  token == _true
+
+parseFloat10 = \token ->
+  parseFloat (token, 10)
 
 parseGlyph = (keyword, tokens) ->
   createMalList (
@@ -102,12 +129,6 @@ parseIndex = \tokens ->
 
   createMalIndex jsIndex
 
-parseBoolean = \token ->
-  token == _true
-
-parseFloat10 = \token ->
-  parseFloat (token, 10)
-
 parseInt10 = \token ->
   parseInt (token, 10)
 
@@ -124,10 +145,15 @@ startsWith? = \char \token ->
 
 glyphIndex = {}
 glyphIndex[derefGlyph]         = deref
+glyphIndex[ignore!Glyph]       = ignore!
 glyphIndex[quasiquoteGlyph]    = quasiquote
 glyphIndex[quoteGlyph]         = quote
 glyphIndex[spliceUnquoteGlyph] = spliceUnquote
 glyphIndex[unquoteGlyph]       = unquote
+
+binaryGlyphIndex = {}
+binaryGlyphIndex[ignoreIfTrueGlyph]     = ignoreIfTrue
+binaryGlyphIndex[ignoreUnlessTrueGlyph] = ignoreUnlessTrue
 
 string?    = startsWith? '"'
 identifer? = startsWith? ':'

@@ -2,6 +2,7 @@
 { car }                      = require './linked-list'
 { catch* }                   = require './keyTokens'
 { cdr }                      = require './linked-list'
+{ circumpendQuotes }         = require './js-utilities'
 commentSignal                = require './commentSignal'
 { createMalIndex }           = require './mal-type-utilities'
 { createMalKeyword }         = require './mal-type-utilities'
@@ -21,6 +22,7 @@ commentSignal                = require './commentSignal'
 { forEach }                  = require './linked-list'
 { fromArray }                = require './linked-list'
 { _if }                      = require './keyTokens'
+{ jsString? }                = require './js-utilities'
 { keyword? }                 = require './keyTokens'
 { let* }                     = require './keyTokens'
 { letrec* }                  = require './keyTokens'
@@ -51,9 +53,7 @@ commentSignal                = require './commentSignal'
 { undef! }                   = require './keyTokens'
 { unsetMainEnv }             = require './env-utilities'
 
-# WET.
-circumpendQuotes = \jsString ->
-  '"' + jsString + '"'
+serialize = require './serialize'
 
 createFn = (malList, envs) ->
   createMalUserFunction
@@ -127,7 +127,7 @@ _evaluate = (malExpr, envs) ->
         return malExpr
 
       else
-        malExpr = filter ((\x -> ! (malIgnore? x)), malExpr)
+        malExpr = filter ((\x -> ! (ignorable? (x, envs))), malExpr)
         [head, a1, remaining] = toPartialArray (2, malExpr)
         t1 = cdr malExpr
 
@@ -225,9 +225,12 @@ expandMacro = (malMacroSymbol, malArgs, envs) ->
   newEnvStack = addEnv (localEnvs, newEnv)
   _evaluate (malExpression, newEnvStack)
 
-# WET.
-jsString? = \jsVal ->
-  Object.prototype.toString.call jsVal == '[object String]'
+ignorable? = (malVal, envs) ->
+  malIgnore? malVal ||
+    (malList? malVal && malSymbol? (symbol = car malVal) && (
+      ((jsString = extractJsValue symbol) == 'ignore!') ||
+      ((jsString == 'ignoreIfTrue') && (extractJsValue (_evaluate ((next malVal), envs)))) ||
+      ((jsString == 'ignoreUnlessTrue') && ! (extractJsValue (_evaluate ((next malVal), envs))))))
 
 reduceLet* = (envs, list) ->
   newEnv = {}
