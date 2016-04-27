@@ -6,6 +6,7 @@
 { createMalBoolean }      = require './mal-type-utilities'
 { createMalCoreFunction } = require './mal-type-utilities'
 { createMalIdentifier }   = require './mal-type-utilities'
+{ createMalIgnore }       = require './mal-type-utilities'
 { createMalIndex }        = require './mal-type-utilities'
 { createMalList }         = require './mal-type-utilities'
 { createMalNumber }       = require './mal-type-utilities'
@@ -30,6 +31,7 @@ interpret                 = require './interpret'
 { malBoolean? }           = require './mal-type-utilities'
 { malFalse }              = require './mal-type-utilities'
 { malFalse? }             = require './mal-type-utilities'
+{ malIgnore }             = require './mal-type-utilities'
 { malIndex? }             = require './mal-type-utilities'
 { malList? }              = require './mal-type-utilities'
 { malNil }                = require './mal-type-utilities'
@@ -267,6 +269,13 @@ fix = \malArgs ->
 function? = \jsList ->
   malValue = jsList.value
   createMalBoolean (malCoreFunction? malValue || malUserFunction? malValue)
+ignore! = \malArgs -> malIgnore
+ignoreIfTrue = \malArgs ->
+  [malBool, malValue] = toPartialArray (2, malArgs)
+  if (extractJsValue malBool) then malIgnore else malValue
+ignoreUnlessTrue = \malArgs ->
+  [malBool, malValue] = toPartialArray (2, malArgs)
+  if (extractJsValue malBool) then malValue else malIgnore
 _interpret = \malArgs ->
   interpret (stripQuotes (extractJsValue (car malArgs)))
 _last = \malArgs ->
@@ -414,6 +423,9 @@ functionsOnMalValues = {
   'false?'             : false?
   'fix'                : fix
   'function?'          : function?
+  'ignore!'            : ignore!
+  'ignoreIfTrue'       : ignoreIfTrue
+  'ignoreUnlessTrue'   : ignoreUnlessTrue
   'last'               : _last
   'list'               : list
   'list?'              : list?

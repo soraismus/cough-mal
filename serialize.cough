@@ -80,7 +80,7 @@ coreFunctionLabel = '<core function>'
 ignoreLabel       = '<ignore>'
 keywordLabel      = '<keyword>'
 macroLabel        = '<macro>'
-nilLable          = 'nil'
+nilLabel          = 'nil'
 userFunctionLabel = '<user function>'
 
 module.exports = serialize

@@ -8,6 +8,9 @@ createTokenRegex = ->
     [\s,]*                   # Spaces and commas should be ignored.
     (
       ~@                   | # '~@' should be taken as one token.
+      \#\+                 | # '#+' should be taken as one token.
+      \#\-                 | # '#-' should be taken as one token.
+      \#\!                 | # '#!' should be taken as one token.
       [\[\](){}'`~@^]      | # The preceding are syntactic characters.
       "(?:\\.|[^\\"])*"    | # Characters between double quotes are strings.
       ;.*                  | # All characters following a semicolon constitute a comment.

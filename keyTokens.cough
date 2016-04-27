@@ -11,6 +11,14 @@ keyTokens = [
   _false             = 'false'
   fn*                = 'fn*'
   _if                = 'if'
+
+  ignore!               = 'ignore!'
+  ignore!Glyph          = '#!'
+  ignoreIfTrue          = 'ignoreIfTrue'
+  ignoreIfTrueGlyph     = '#-'
+  ignoreUnlessTrue      = 'ignoreUnlessTrue'
+  ignoreUnlessTrueGlyph = '#+'
+
   ignore             = 'ignore'
   indexEnd           = '}'
   indexStart         = '{'
@@ -67,13 +75,20 @@ macroTokens = [
 
 glyphTokens = [
   derefGlyph
+  ignore!Glyph
   quasiquoteGlyph
   quoteGlyph
   spliceUnquoteGlyph
   unquoteGlyph
 ]
 
+binaryGlyphTokens = [
+  ignoreIfTrueGlyph
+  ignoreUnlessTrueGlyph
+]
+
 module.exports = {
+  binaryGlyphTokens
   deref
   derefGlyph
   catch*
@@ -84,7 +99,13 @@ module.exports = {
   fn*
   glyphTokens
   _if
+  ignoreIfTrue
+  ignoreIfTrueGlyph
+  ignoreUnlessTrue
+  ignoreUnlessTrueGlyph
   ignore
+  ignore!
+  ignore!Glyph
   indexEnd
   indexStart
   keyTokens
