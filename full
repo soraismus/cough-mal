@@ -1,0 +1,1598 @@
+comment = {}
+
+module.exports = comment
+commentSignal = require './commentSignal'
+
+display = \serializedMalValue ->
+  return "\n" if serializedMalValue == commentSignal
+  log serializedMalValue
+
+log = console.log
+
+module.exports = display
+{ car }                   = require './linked-list'
+{ cdr }                   = require './linked-list'
+{ circumpendQuotes }      = require './js-utilities'
+{ concat }                = require './linked-list'
+{ createMalAtom }         = require './mal-type-utilities'
+{ createMalBoolean }      = require './mal-type-utilities'
+{ createMalCoreFunction } = require './mal-type-utilities'
+{ createMalIndex }        = require './mal-type-utilities'
+{ createMalList }         = require './mal-type-utilities'
+{ createMalNumber }       = require './mal-type-utilities'
+{ createMalString }       = require './mal-type-utilities'
+{ createMalSymbol }       = require './mal-type-utilities'
+display                   = require './display'
+{ drop }                  = require './linked-list'
+{ empty? }                = require './linked-list'
+{ equal? }                = require './linked-list'
+{ evaluate }              = require './evaluate'
+{ extractJsValue }        = require './mal-type-utilities'
+{ fromArray }             = require './linked-list'
+{ fromJsObject }          = require './index-utilities'
+{ fromMalIndex }          = require './index-utilities'
+interpret                 = require './interpret'
+{ jsNaN? }                = require './js-utilities'
+{ jsNumber? }             = require './js-utilities'
+{ jsString? }             = require './js-utilities'
+{ last }                  = require './linked-list'
+{ malAtom? }              = require './mal-type-utilities'
+{ malCoreFunction? }      = require './mal-type-utilities'
+{ malBoolean? }           = require './mal-type-utilities'
+{ malFalse }              = require './mal-type-utilities'
+{ malFalse? }             = require './mal-type-utilities'
+{ malIndex? }             = require './mal-type-utilities'
+{ malList? }              = require './mal-type-utilities'
+{ malNil }                = require './mal-type-utilities'
+{ malNil? }               = require './mal-type-utilities'
+{ malNumber? }            = require './mal-type-utilities'
+{ malString? }            = require './mal-type-utilities'
+{ malSymbol? }            = require './mal-type-utilities'
+{ malTrue }               = require './mal-type-utilities'
+{ malTrue? }              = require './mal-type-utilities'
+{ malUserFunction? }      = require './mal-type-utilities'
+{ next }                  = require './linked-list'
+_process_                 = require './process'
+{ recurse }               = require './linked-list'
+{ reduce }                = require './linked-list'
+{ reverse }               = require './linked-list'
+serialize                 = require './serialize'
+{ take }                  = require './linked-list'
+{ toArray }               = require './linked-list'
+{ toPartialArray }        = require './linked-list'
+
+lift = (fnOnJsValues) -> (malValueList) ->
+  fnOnJsValues (((toArray malValueList).map extractJsValue)...)
+
+setCoreFnsOnJsValues! = (env, fns) ->
+  for own fnName, fn of fns
+    env[fnName] = createMalCoreFunction (lift fn)
+
+add = (nbrs...) ->
+  createMalNumber (nbrs.reduce ((x, nbr) ->  x += nbr))
+assoc = (index, args...) ->
+  copy = {}
+  for own key, value of index
+    copy[key] = value
+  for k, i in args when i % 2 == 0
+    copy[k] = args[i + 1]
+  createMalIndex copy
+contains? = (index, key) -> createMalBoolean (key of index)
+dissoc = (index, keys...) ->
+  copy = {}
+  for own key, value of index
+    copy[key] = value
+  delete copy[key] for key in keys
+  createMalIndex copy
+divide = (nbrs...) ->
+  createMalNumber (nbrs.reduce ((x, nbr) -> x /= nbr))
+exponentiate = (nbrs...) ->
+  createMalNumber (nbrs.reduce ((x, nbr) -> Math.pow (x, nbr)))
+get = (jsIndex, jsKey) -> jsIndex[jsKey]
+greaterThanOrEqual = (nbrs...) ->
+  createMalBoolean (nbrs[0] >= nbrs[1])
+greaterThan = (nbrs...) ->
+  createMalBoolean (nbrs[0] > nbrs[1])
+_index = (args...) ->
+  index = {}
+  index[k] = args[i + 1] for k, i in args when i % 2 == 0
+  createMalIndex index
+keys = \index ->
+  _keys = []
+  for own key, value of index
+    _keys.unshift (
+      if jsNaN? (jsNbr = parseFloat (key, 10))
+        createMalString key
+      else
+        createMalNumber jsNbr)
+  fromArray _keys
+_length = \jsVal ->
+  return malNil unless jsString? jsVal
+  createMalNumber (jsVal.length - 2)
+lessThan = (nbrs...) ->
+  createMalBoolean (nbrs[0] < nbrs[1])
+lessThanOrEqual = (nbrs...) ->
+  createMalBoolean (nbrs[0] <= nbrs[1])
+mod = (nbr0, nbr1) ->
+  createMalNumber (nbr0 % nbr1)
+multiply = (nbrs...) ->
+  createMalNumber (nbrs.reduce ((x, nbr) -> x *= nbr))
+negate = \nbr ->
+  createMalNumber (-1 * nbr)
+parseNumber = \jsVal ->
+  return jsVal if jsNumber? jsVal
+  return malNil unless jsString? jsVal
+  jsNbr = parseFloat ((stripQuotes jsVal), 10)
+  if jsNaN? jsNbr then malNil else createMalNumber jsNbr
+subtract = (nbrs...) ->
+  createMalNumber (nbrs.reduce ((x, nbr) -> x -= nbr))
+vals = \index ->
+  values = []
+  for own key, value of index
+    values.unshift value
+  fromArray values
+
+functionsOnJsValues = {
+  '+'            : add
+  'assoc'        : assoc
+  'contains?'    : contains?
+  'dissoc'       : dissoc
+  '/'            : divide
+  '**'           : exponentiate
+  'get'          : get
+  '>'            : greaterThan
+  '>='           : greaterThanOrEqual
+  'index'        : _index
+  'keys'         : keys
+  'length'       : _length
+  '<'            : lessThan
+  '<='           : lessThanOrEqual
+  '%'            : mod
+  '*'            : multiply
+  'negate'       : negate
+  'parse-number' : parseNumber
+  '-'            : subtract
+  'vals'         : vals
+}
+
+createPredicate = \pred \jsList ->
+  malValue = jsList.value
+  createMalBoolean (pred malValue)
+
+__evaluate__ = \malVal ->
+  evaluate [environment] malVal
+__evaluate__2 = \malVal ->
+  __evaluate__ (__evaluate__ malVal)
+_evaluate_ = \jsString ->
+  _process_ [environment] jsString
+_evaluateString = \malArgs ->
+  _evaluate_ (stripQuotes (extractJsValue (car malArgs)))
+_evaluate = \malArgs ->
+  evaluate [environment] (car malArgs)
+
+_prStr = (malArgs, printReadably?) ->
+  ((toArray malArgs).map \malArg -> serialize (malArg, printReadably?))
+prStr = \malArgs ->
+  createMalString ('"' + (_prStr (malArgs, true)).join '' + '"')
+str = \malArgs ->
+  createMalString ('"' + (_prStr (malArgs, false)).join '' + '"')
+prn = \malArgs ->
+  display (_prStr (malArgs, true).join '')
+  malNil
+println = \malArgs ->
+  display (_prStr (malArgs, false).join '')
+  malNil
+
+_read = \malArgs ->
+  jsFileName = stripQuotes (extractJsValue (car malArgs))
+  require('fs').readFileSync(jsFileName).toString()
+
+setCoreFnsOnMalValues! = (env, fns) ->
+  for own fnName, fn of fns
+    env[fnName] = createMalCoreFunction fn 
+
+setMalValue = (malAtom, malValue) ->
+  malAtom.malValue = malValue
+  malAtom
+
+stripQuotes = \jsString ->
+  jsString[1 .. -2]
+
+append = \malArgs ->
+  [malList, malValues...] = toArray malArgs
+  concat (malList, (fromArray malValues))
+apply = \malArgs ->
+  [malFn, malArgList] = toArray malArgs
+  evaluate [] (createMalList (malFn, malArgList))
+areEqual = \malArgs ->
+  [malValue0, malValue1] = toPartialArray (2, malArgs)
+  _areEqual = (malValue0, malValue1) ->
+    if malList? malValue0 && malList? malValue1
+      equal? (malValue0, malValue1, _areEqual)
+    else if malIndex? malValue0 && malIndex? malValue1
+      jsIndex0 = malValue0.jsValue
+      jsIndex1 = malValue1.jsValue
+      (_areEqual ((keys jsIndex0), (keys jsIndex1))) &&
+        (_areEqual ((vals jsIndex0), (vals jsIndex1)))
+    else
+      malValue0.jsValue == malValue1.jsValue
+  createMalBoolean (_areEqual (malValue0, malValue1))
+atom = \malArgs -> createMalAtom (car malArgs)
+call = \malArgs ->
+  evaluate [] malArgs
+_car = \malArgs ->
+  arg = car malArgs
+  if malList? arg then car arg else malNil
+_cdr = \malArgs ->
+  arg = car malArgs
+  if malList? arg then cdr arg else malNil
+_concat = \malArgs ->
+  malLists = toArray malArgs
+  concat malLists...
+cons = \malArgs ->
+  createMalList (
+    car malArgs
+    next malArgs)
+count = \malArgs ->
+  malList = car malArgs
+  return malNil unless malList? malList
+  _reduce = (sum, value) -> sum + 1
+  createMalNumber (reduce (0, _reduce, (car malArgs)))
+deref = \malArgs ->
+  (car malArgs).malValue
+_drop = \malArgs ->
+  [malNumber, malList] = toPartialArray (2, malArgs)
+  drop ((extractJsValue malNumber), malList)
+_empty? = \malArgs ->
+  if empty? malArgs
+    malFalse
+  else
+    if empty? (car malArgs) then malTrue else malFalse
+evalWithBareEnv = \malArgs ->
+  [expr, localEnv] = toPartialArray (2, malArgs)
+  evaluate [(fromMalIndex localEnv)] expr
+evalWithEnv = \malArgs ->
+  [expr, localEnv] = toPartialArray (2, malArgs)
+  evaluate [(fromMalIndex localEnv), environment] expr
+first = \malArgs ->
+  car (car malArgs)
+fix = \malArgs ->
+  malFnF = car malArgs
+  jsFnX = \malArgs1 ->
+    malFnX = car malArgs1
+    jsFnY = \malArgs2 ->
+      malValY = car malArgs2
+      __evaluate__2 (createMalList (
+        createMalList (
+          malFnX
+          createMalList malFnX)
+        createMalList malValY))
+    malFnY = createMalCoreFunction jsFnY
+    __evaluate__2 (createMalList (
+      malFnF
+      createMalList malFnY))
+  malFnX = createMalCoreFunction jsFnX
+  __evaluate__2 (createMalList (
+    malFnX
+    createMalList malFnX))
+function? = \jsList ->
+  malValue = jsList.value
+  createMalBoolean (malCoreFunction? malValue || malUserFunction? malValue)
+_interpret = \malArgs ->
+  interpret (stripQuotes (extractJsValue (car malArgs)))
+_last = \malArgs ->
+  arg = car malArgs
+  if malList? arg then last arg else malNil
+list = \malArgs ->
+  malArgs
+load = \malArgs ->
+  _evaluate_ (_read malArgs)
+loadWithBareEnv = \malArgs ->
+  [malFileName, localEnv] = toPartialArray (2, malArgs)
+  jsFileName = stripQuotes (extractJsValue malFileName)
+  file = require('fs').readFileSync(jsFileName).toString()
+  _process_ [(fromMalIndex localEnv)] file
+loadWithEnv = \malArgs ->
+  [malFileName, localEnv] = toPartialArray (2, malArgs)
+  jsFileName = stripQuotes (extractJsValue malFileName)
+  file = require('fs').readFileSync(jsFileName, 'utf-8').toString()
+  _process_ [(fromMalIndex localEnv), environment] file
+malReduce = \malArgs ->
+  [malSeed, malFn, malArgList] = toArray malArgs
+  _malArgs = toArray malArgList
+  _reduce = (memo, item) ->
+    _memo = if malList? memo
+        createMalList (
+          createMalSymbol 'quote'
+          createMalList memo)
+      else
+        memo
+    evaluate [] (
+      createMalList (
+        malFn
+        createMalList (
+          _memo
+            createMalList item)))
+  _malArgs.reduce (_reduce, malSeed)
+map = \malArgs ->
+  [malFn, malArgList] = toArray malArgs
+  _malArgs = toArray malArgList
+  __malArgs = _malArgs.map \x -> createMalList (malFn, createMalList (x))
+  results = __malArgs.map (evaluate [])
+  fromArray results
+meta = \malArgs ->
+  malMeta = (car malArgs).meta
+  if ? malMeta then malMeta else malNil
+_not = \malArgs ->
+  malVal = car malArgs
+  if malNil? malVal || malFalse? malVal then malTrue else malFalse
+nth = \malArgs ->
+  [malNumber, malList] = toPartialArray (2, malArgs)
+  for i in [0 ... (extractJsValue malNumber)]
+    malList = cdr malList
+  car malList
+prepend = \malArgs ->
+  [malList, malValues...] = toArray malArgs
+  _reduce = (list, val) ->
+    createMalList (val, list)
+  malValues.reduce (_reduce, malList)
+_quit_ = ->
+  process.exit 0
+read = \jsList ->
+  createMalString (_read jsList)
+reset = \malArgs ->
+  [atom, value] = toPartialArray (2, malArgs)
+  setMalValue (atom, value)
+rest = \malArgs ->
+  arg = car malArgs
+  if malList? arg then cdr arg else malNil
+_reverse = \malArgs ->
+  arg = car malArgs
+  if malList? arg then reverse arg else malNil
+set = \malArgs ->
+  [index, key, val] = toPartialArray (3, malArgs)
+  (extractJsValue index)[extractJsValue key] = val
+  index
+slurp = \malArgs ->
+  jsFileName = stripQuotes (extractJsValue (car malArgs))
+  createMalString (
+    circumpendQuotes (
+      require('fs').readFileSync(jsFileName).toString()))
+symbol = \malArgs ->
+  malValue = car malArgs
+  if malString? malValue
+    jsStr = extractJsValue malValue
+    createMalSymbol jsStr[1 ... -1]
+  else
+    malNil
+_take = \malArgs ->
+  [malNumber, malList] = toPartialArray (2, malArgs)
+  take ((extractJsValue malNumber), malList)
+typeOf = \malArgs ->
+  malValue = car malArgs
+  createMalString (circumpendQuotes malValue.type)
+_throw = \malArgs ->
+  throw (car malArgs)
+time-ms = () ->
+  createMalNumber (new Date().getTime ())
+withMeta = \malArgs ->
+  [malVal, malMeta] = toPartialArray (2, malArgs)
+  if malAtom? malVal
+    { malValue, type } = malVal
+    { malValue, type, meta: malMeta }
+  else
+    { jsValue, type } = malVal
+    { jsValue, type, meta: malMeta }
+write = \malArgs ->
+  createMalString (serialize (car malArgs))
+
+[atom?, boolean?, coreFn?, false?, list?, nil?, number?, symbol?, string?, userFn?, true?] =
+  [ malAtom?
+    malBoolean?
+    malCoreFunction?
+    malFalse?
+    malList?
+    malNil?
+    malNumber?
+    malSymbol?
+    malString?
+    malUserFunction?
+    malTrue?
+  ].map createPredicate
+
+functionsOnMalValues = {
+  '='                  : areEqual
+  'append'             : append
+  'apply'              : apply
+  'atom'               : atom
+  'atom?'              : atom?
+  'boolean?'           : boolean?
+  'car'                : _car
+  'call'               : call
+  'cdr'                : _cdr
+  'cons'               : cons
+  'concat'             : _concat
+  'core-fn?'           : coreFn?
+  'count'              : count
+  'deref'              : deref
+  'drop'               : _drop
+  'empty?'             : _empty?
+  'eval'               : _evaluate
+  'evalStr'            : _evaluateString
+  'eval-with-env'      : evalWithEnv
+  'eval-with-bare-env' : evalWithBareEnv
+  'first'              : _car
+  'false?'             : false?
+  'fix'                : fix
+  'function?'          : function?
+  'last'               : _last
+  'list'               : list
+  'list?'              : list?
+  'load'               : load
+  'load-with-env'      : loadWithEnv
+  'load-with-bare-env' : loadWithBareEnv
+  'map'                : map
+  'meta'               : meta
+  'nil?'               : nil?
+  'not'                : _not
+  'nth'                : nth
+  'number?'            : number?
+  'parse'              : _interpret
+  'prepend'            : prepend
+  'println'            : println
+  'prn'                : prn
+  'pr-str'             : prStr
+  '-quit-'             : _quit_
+  'read'               : read
+  'reduce'             : malReduce
+  'reset!'             : reset
+  'rest'               : _cdr
+  'reverse'            : _reverse
+  'set!'               : set
+  'slurp'              : slurp
+  'str'                : str
+  'string?'            : string?
+  'symbol'             : symbol
+  'symbol?'            : symbol?
+  'take'               : _take
+  'throw'              : _throw
+  'time-ms'            : time-ms
+  'true?'              : true?
+  'typeof'             : typeOf
+  'user-fn?'           : userFn?
+  'with-meta'          : withMeta
+  'write'              : write
+}
+
+environment = {}
+
+setCoreFnsOnJsValues! (environment, functionsOnJsValues)
+setCoreFnsOnMalValues! (environment, functionsOnMalValues)
+  
+environment['*ARGV*'] = createMalList ()
+
+_environment_ = fromJsObject environment
+environment['*DEFAULT-ENV*'] = _environment_
+
+module.exports = {
+  environment
+  evalWithEnv
+  _evaluateString
+}
+addEnv = (envStack, newEnv) ->
+  copy = envStack.slice 0
+  copy.unshift newEnv
+  copy
+
+getLast = \array ->
+  array[array.length - 1]
+
+lookup = (envStack, key) ->
+  copy = envStack.slice 0
+  until copy.length == 0
+    env = copy[0]
+    value = env[key]
+    return value if ? value
+    copy.shift()
+  throw "VALUE CORRESPONDING TO \"#{key}\" DOES NOT EXIST IN ENV-STACK"
+
+set = (env, key, value) ->
+  env[key] = value
+  value
+
+setMainEnv = (envStack, key, value) ->
+  set ((getLast envStack), key, value)
+
+unset = (env, key) ->
+  value = env[key]
+  delete env[key]
+  value
+
+unsetMainEnv = (envStack, key) ->
+  unset ((getLast envStack), key)
+
+module.exports = { addEnv, lookup, setMainEnv, unsetMainEnv }
+{ addEnv }                   = require './env-utilities'
+{ car }                      = require './linked-list'
+{ catch* }                   = require './keyTokens'
+{ cdr }                      = require './linked-list'
+commentSignal                = require './commentSignal'
+{ createMalIndex }           = require './mal-type-utilities'
+{ createMalKeyword }         = require './mal-type-utilities'
+{ createMalList }            = require './mal-type-utilities'
+{ createMalMacro }           = require './mal-type-utilities'
+{ createMalNumber }          = require './mal-type-utilities'
+{ createMalString }          = require './mal-type-utilities'
+{ createMalSymbol }          = require './mal-type-utilities'
+{ createMalUserFunction }    = require './mal-type-utilities'
+{ def! }                     = require './keyTokens'
+{ _do }                      = require './keyTokens'
+{ empty? }                   = require './linked-list' 
+{ expand-macro }             = require './keyTokens'
+{ extractJsValue }           = require './mal-type-utilities'
+{ filter }                   = require './linked-list'
+{ fn* }                      = require './keyTokens'
+{ forEach }                  = require './linked-list'
+{ fromArray }                = require './linked-list'
+{ _if }                      = require './keyTokens'
+{ keyword? }                 = require './keyTokens'
+{ let* }                     = require './keyTokens'
+{ letrec* }                  = require './keyTokens'
+{ lookup }                   = require './env-utilities'
+{ macro* }                   = require './keyTokens'
+{ malCoreFunction? }         = require './mal-type-utilities'
+{ malIgnore? }               = require './mal-type-utilities'
+{ malIndex? }                = require './mal-type-utilities'
+{ malList? }                 = require './mal-type-utilities'
+{ malMacro? }                = require './mal-type-utilities'
+{ malNil }                   = require './mal-type-utilities'
+{ malSymbol? }               = require './mal-type-utilities'
+{ malUserFunction? }         = require './mal-type-utilities'
+{ map }                      = require './linked-list'
+{ next }                     = require './linked-list'
+{ quasiquote }               = require './keyTokens'
+{ quote }                    = require './keyTokens'
+{ spliceUnquote }            = require './keyTokens'
+{ unquote }                  = require './keyTokens'
+{ recurse }                  = require './linked-list'
+{ reduce }                   = require './linked-list'
+{ reduceBy2 }                = require './linked-list'
+{ reverse }                  = require './linked-list'
+{ setMainEnv }               = require './env-utilities'
+{ splat }                    = require './keyTokens'
+{ toPartialArray }           = require './linked-list'
+{ try* }                     = require './keyTokens'
+{ undef! }                   = require './keyTokens'
+{ unsetMainEnv }             = require './env-utilities'
+
+# WET.
+circumpendQuotes = \jsString ->
+  '"' + jsString + '"'
+
+createFn = (malList, envs) ->
+  createMalUserFunction
+    localEnvs     : (envs.slice 0)
+    malExpression : (next malList)
+    malParameters : (car malList)
+
+createLocalEnv = (malParams, malArgs) ->
+  env = {}
+  until empty? malParams
+    jsParam = extractJsValue (car malParams)
+    if jsParam == splat
+      env[extractJsValue (next malParams)] = malArgs
+      return env
+    else
+      env[jsParam] = car malArgs
+      malParams = cdr malParams
+      malArgs = cdr malArgs
+  env
+
+createMacro = (malList, envs) ->
+  createMalMacro
+    localEnvs     : (envs.slice 0)
+    malExpression : (next malList)
+    malParameters : (car malList)
+
+defineNewValue = (malList, envs) ->
+  jsKey = extractJsValue (car malList)
+  malValue = _evaluate ((next malList), envs)
+  setMainEnv (envs, jsKey, malValue)
+
+evalQuasiquotedExpr = (expr, envs) ->
+  return expr unless malList? expr
+  manageItem = (memo, item) ->
+    switch
+      when unquotedExpr? item
+        createMalList(_evaluate(next(item), envs), memo)
+      when spliceUnquotedExpr? item
+        _manageItem = (_memo, _item) ->
+          createMalList (_item, _memo)
+        reduce (memo, _manageItem, (_evaluate ((next item), envs)))
+      when malList? item
+        createMalList (evalQuasiquotedExpr (item, envs), memo)
+      else
+        createMalList (item, memo)
+  reverse(
+    reduce (
+      createMalList ()
+      manageItem
+      expr))
+
+_evaluate = (malExpr, envs) ->
+  loop
+    switch
+      when malSymbol? malExpr
+        jsString = extractJsValue malExpr
+        if keyword? jsString
+          return createMalKeyword jsString
+        else
+          return lookup (envs, jsString)
+
+      # NOTE: Happens over and over for every malIndex.
+      when malIndex? malExpr
+        index = extractJsValue malExpr
+        newIndex = {}
+        for own key, value of index
+          newIndex[key] = _evaluate (index[key], envs)
+        return createMalIndex newIndex
+
+      when ! (malList? malExpr)
+        return malExpr
+
+      else
+        malExpr = filter ((\x -> ! (malIgnore? x)), malExpr)
+        [head, a1, remaining] = toPartialArray (2, malExpr)
+        t1 = cdr malExpr
+
+        switch (extractJsValue head)
+          when def!
+            return defineNewValue (t1, envs) 
+
+          when undef!
+            return undefineValue (t1, envs) 
+
+          when let*
+            malExpr = (car remaining)
+            envs = addEnv (envs, reduceLet* (envs, a1))
+
+          when letrec*
+            malExpr = (car remaining)
+            envs = addEnv (envs, reduceLetrec* (envs, a1))
+
+          # How optimize tail calls?
+          when _do
+            return forEach ((evaluate envs), t1)
+
+          when _if
+            malExpr =
+              if extractJsValue (_evaluate (a1, envs))
+                (car remaining)
+              else
+                if (empty? (otherwise = (next remaining))) then malNil else otherwise
+
+          when fn*
+            return createFn (t1, envs)
+
+          when macro*
+            return createMacro (t1, envs)
+
+          when quote
+            return car t1
+
+          when quasiquote
+            return evalQuasiquotedExpr ((car t1), envs)
+
+          when expand-macro
+            return expandMacro ((car a1), (cdr a1), envs)
+
+          when try*
+            try
+              return _evaluate (a1, envs)
+            catch ex
+              if empty? remaining
+                throw ex
+              else
+                [_catch, _ex, catchExpr] = toPartialArray (3, (car remaining))
+                throw ex if (extractJsValue _catch) != "catch*"
+                if ex instanceof Error
+                  ex = createMalString (circumpendQuotes ex.message)
+                newEnv = {}
+                newEnv[extractJsValue _ex] = ex
+                return _evaluate (catchExpr, addEnv (envs, newEnv))
+
+          else
+            malSymbol = head
+            malExpr = t1
+
+            malInvokable = _evaluate (malSymbol, envs)
+
+            switch
+              when malMacro? malInvokable
+                malExpr = expandMacro (head, t1, envs)
+
+              when malCoreFunction? malInvokable
+                fn = extractJsValue malInvokable
+                malArgs = map ((evaluate envs), malExpr)
+                return fn malArgs
+
+              when malUserFunction? malInvokable
+                { localEnvs, malExpression, malParameters } =
+                  extractJsValue malInvokable
+
+                malArgs = map ((evaluate envs), malExpr)
+                malExpr = malExpression
+                newEnv = createLocalEnv (malParameters, malArgs)
+                envs = addEnv (localEnvs, newEnv)
+
+              else
+                throw 'Value is not a function'
+
+evaluate = \envs \malExpr ->
+  return commentSignal if malExpr == commentSignal
+  _evaluate (malExpr, envs)
+
+expandMacro = (malMacroSymbol, malArgs, envs) ->
+  malMacro = _evaluate (malMacroSymbol, envs)
+  { localEnvs, malExpression, malParameters } = extractJsValue malMacro
+  newEnv = createLocalEnv (malParameters, malArgs)
+  newEnvStack = addEnv (localEnvs, newEnv)
+  _evaluate (malExpression, newEnvStack)
+
+# WET.
+jsString? = \jsVal ->
+  Object.prototype.toString.call jsVal == '[object String]'
+
+reduceLet* = (envs, list) ->
+  newEnv = {}
+  _envs = addEnv (envs, newEnv)
+  until empty? list
+    jsKey = extractJsValue list.value
+    list = recurse list
+    envValue = _evaluate (list.value, _envs)
+    newEnv[jsKey] = envValue
+    list = recurse list
+  newEnv
+
+reduceLetrec* = (envs, list) ->
+  newEnv = {}
+  _envs = addEnv (envs, newEnv)
+  until empty? list
+    jsKey = extractJsValue list.value
+    list = recurse list
+
+    _malExpr = fromArray ([
+      createMalSymbol "fix"
+      fromArray ([
+        createMalSymbol "fn*"
+        fromArray ([jsKey])
+        list.value
+      ])
+    ])
+
+    envValue = _evaluate (_malExpr, _envs)
+    newEnv[jsKey] = envValue
+    list = recurse list
+  newEnv
+
+spliceUnquote? = \malValue ->
+  spliceUnquote == (extractJsValue malValue)
+
+spliceUnquotedExpr? = \malValue ->
+  malList? malValue && (spliceUnquote? (car malValue))
+
+undefineValue = (malList, envs) ->
+  jsKey = extractJsValue (car malList)
+  unsetMainEnv (envs, jsKey)
+
+unquote? = \malValue ->
+  unquote == (extractJsValue malValue)
+
+unquotedExpr? = \malValue ->
+  malList? malValue && (unquote? (car malValue))
+
+module.exports = { evaluate, expandMacro }
+{ createMalIndex } = require './mal-type-utilities'
+{ jsString? }      = require './js-utilities'
+
+fromJsObject = \jsObject ->
+  copy = {}
+  for own key, val of jsObject
+    if jsString? key
+      copy['"' + key + '"'] = val
+    else
+      copy[key] = val
+  createMalIndex copy
+
+fromMalIndex = \malIndex ->
+  localEnv = {}
+  for own key, value of malIndex.jsValue
+    if jsString? key
+      localEnv[stripQuotes key] = value
+    else
+      localEnv[key] = value
+  localEnv
+
+module.exports = {
+  fromJsObject
+  fromMalIndex
+}
+parse    = require './parse'
+tokenize = require './tokenize'
+
+interpret = \sourceCode ->
+  parse (tokenize sourceCode)
+
+module.exports = interpret
+circumpendQuotes = \jsString ->
+  '"' + jsString + '"'
+
+jsNaN? = \val -> jsNumber? val && val != val
+
+jsNumber? = \val -> {}.toString.call val == '[object Number]'
+
+jsString? = \jsVal ->
+  Object.prototype.toString.call jsVal == '[object String]'
+
+module.exports = {
+  circumpendQuotes
+  jsNaN?
+  jsNumber?
+  jsString?
+}
+keyword? = \jsString ->
+  jsString in keywords
+
+keyTokens = [
+  catch*             = 'catch*'
+  def!               = 'def!'
+  _do                = 'do'
+  expand-macro        = 'expand-macro'
+  _false             = 'false'
+  fn*                = 'fn*'
+  _if                = 'if'
+  ignore             = 'ignore'
+  indexEnd           = '}'
+  indexStart         = '{'
+  let*               = 'let*'
+  letrec*            = 'letrec*'
+  listEnd            = ')'
+  listStart          = '('
+  macro*             = 'macro*'
+  nil                = 'nil'
+  _process           = '-process-'
+  quasiquote         = 'quasiquote'
+  quasiquoteGlyph    = '`'
+  quote              = 'quote'
+  quoteGlyph         = '\''
+  splat              = '&'
+  spliceUnquote      = 'splice-unquote'
+  spliceUnquoteGlyph = '~@'
+  _true              = 'true'
+  try*               = 'try*'
+  undef!             = 'undef!'
+  unquote            = 'unquote'
+  unquoteGlyph       = '~'
+]
+
+keywords = [
+  catch*
+  def!
+  _do
+  expand-macro
+  _false
+  fn*
+  _if
+  ignore
+  let*
+  letrec*
+  macro*
+  nil
+  _process
+  quasiquote
+  quote
+  spliceUnquote
+  _true
+  try*
+  undef!
+  unquote
+]
+
+macroTokens = [
+  quasiquote
+  quote
+  spliceUnquote
+  unquote
+]
+
+glyphTokens = [
+  quasiquoteGlyph
+  quoteGlyph
+  spliceUnquoteGlyph
+  unquoteGlyph
+]
+
+module.exports = {
+  catch*
+  def!
+  _do
+  expand-macro
+  _false
+  fn*
+  glyphTokens
+  _if
+  ignore
+  indexEnd
+  indexStart
+  keyTokens
+  keyword?
+  let*
+  letrec*
+  listEnd
+  listStart
+  macro*
+  macroTokens
+  nil
+  _process
+  quasiquote
+  quasiquoteGlyph
+  quote
+  quoteGlyph
+  splat
+  spliceUnquote
+  spliceUnquoteGlyph
+  _true
+  try*
+  undef!
+  unquote
+  unquoteGlyph
+}
+{ malTypes } = require './mal-types'
+malListType = malTypes[4]
+
+car = \malList ->
+  if empty? malList
+    EOL
+  else
+    malList.value
+
+cdr = \malList ->
+  if empty? malList
+    EOL
+  else
+    malList.next
+
+concat = (malLists...) ->
+  return EOL if malLists.length == 0
+  result = copy malLists[0]
+  tail = lastTail result
+  for malList in malLists[1 .. ]
+    _copy = copy malList
+    if empty? tail
+      result = _copy
+      tail = lastTail result
+      continue
+    unless empty? _copy
+      tail.next = _copy
+      tail = lastTail _copy
+  result
+
+cons = \malArgs ->
+  createMalList (
+    car malArgs
+    next malArgs)
+
+copy = \malList ->
+  map ((\x -> x), malList)
+
+createMalList = (value, nextNode) ->
+  return EOL unless ? value
+  createNode (value, nextNode ?? EOL)
+
+createNode = (value, nextNode) ->
+  { type: malListType, value, next : nextNode }
+
+drop = (nbr, malList) ->
+  until nbr == 0
+    malList = cdr malList
+    nbr = nbr - 1
+  malList
+
+empty? = \value ->
+  value == EOL
+
+equal? = (list0, list1, equivalent?) ->
+  until empty? list0 || empty? list1
+    return false unless equivalent? (list0.value, list1.value)
+    list0 = cdr list0
+    list1 = cdr list1
+  empty? list0 && empty? list1
+
+filter = (predicate, list) ->
+  _reduce = (list, value) ->
+    if predicate value
+      createMalList (value, list)
+    else
+      list
+  reverse (reduce (EOL, _reduce, list))
+
+forEach = (fn, list) ->
+  result = list
+  until empty? list
+    result = fn list.value
+    list = recurse list
+  result
+
+last = \malList ->
+  car (lastTail malList)
+
+lastTail = \malList ->
+  return malList if empty? malList
+  prior = malList
+  current = cdr malList
+  until empty? current
+    prior = cdr prior
+    current = cdr current
+  prior
+
+map = (fn, list) ->
+  _reduce = (list, value) ->
+    createMalList ((fn value), list)
+  reverse (reduce (EOL, _reduce, list))
+
+next = \malList ->
+  car (cdr malList)
+
+recurse = \list ->
+  if empty? list then list else list.next
+
+reduce = (seed, fn, list) ->
+  until empty? list
+    seed = fn (seed, list.value)
+    list = recurse list
+  seed
+
+reduceBy2 = (seed, fn, list) ->
+  until empty? list
+    value0 = list.value
+    list = recurse list
+    value1 = list.value
+    seed = fn (seed, value0, value1)
+    list = recurse list
+  seed
+
+reverse = \list ->
+  result = EOL
+  until empty? list
+    result = createMalList (list.value, result)
+    list = list.next
+  result
+
+take = (nbr, malList) ->
+  result = createMalList ()
+  until nbr == 0
+    node = car malList
+    malList = cdr malList
+    result = createMalList (node, result)
+    nbr = nbr - 1
+  return reverse result
+
+toArray = \list ->
+  _reduce = (jsArray, value) ->
+    jsArray.push value
+    jsArray
+  reduce ([], _reduce, list)
+
+fromArray = \array ->
+  list = createMalList ()
+  _reduce = (list, value) ->
+    createMalList (value, list)
+  reverse (array.reduce (_reduce, list))
+
+toPartialArray = (nbr, list) ->
+  result = []
+  until nbr == 0
+    node = car list
+    list = cdr list
+    result.push node
+    nbr = nbr - 1
+  result.push list
+  result
+
+zip = (seed, fn, list0, list1) ->
+  until empty? list0 || empty? list1
+    value0 = car list0
+    list0 = cdr list0
+    value1 = car list1
+    list1 = cdr list1
+    seed = fn (seed, value0, value1)
+  seed
+
+_EOL = {}
+
+EOL = createNode (_EOL, _EOL)
+
+module.exports = {
+  car
+  cdr
+  concat
+  cons
+  copy
+  createMalList
+  drop
+  empty?
+  equal?
+  filter
+  forEach
+  fromArray
+  last
+  map
+  next
+  recurse
+  reduce
+  reduceBy2
+  reverse
+  take
+  toArray
+  toPartialArray
+}
+malTypes = [
+  malBooleanType      = 'malBooleanType'
+  malCoreFunctionType = 'malCoreFunctionType'
+  malIndexType        = 'malIndexType'
+  malKeywordType      = 'malKeywordType'
+  malListType         = 'malListType'
+  malMacroType        = 'malMacroType'
+  malNumberType       = 'malNumberType'
+  malSpecialFormType  = 'malSpecialFormType'
+  malStringType       = 'malStringType'
+  malSymbolType       = 'malSymbolType'
+  malUnitType         = 'malUnitType'
+  malUserFunctionType = 'malUserFunctionType'
+  malAtomType         = 'malAtomType'
+]
+
+module.exports = {
+  malAtomType
+  malBooleanType
+  malCoreFunctionType
+  malIndexType
+  malKeywordType
+  malListType
+  malMacroType
+  malNumberType
+  malSpecialFormType
+  malStringType
+  malSymbolType
+  malTypes
+  malUnitType
+  malUserFunctionType
+}
+{ createMalList } = require './linked-list'
+{ malAtomType }   = require './mal-types'
+{ malTypes }      = require './mal-types'
+
+create-factory-&-predicate = \malType ->
+  factory = \jsValue ->
+    createMalValue (jsValue, malType)
+  predicate = \malValue ->
+    malValue.type == malType
+  [factory, predicate]
+
+createMalAtom = \malValue ->
+  { malValue, type: malAtomType }
+
+createMalBoolean = \jsBoolean ->
+  if jsBoolean then malTrue else malFalse
+
+createMalIgnore = ->
+  malIgnore
+
+createMalNil = ->
+  malNil
+
+createMalValue = (jsValue, malType) ->
+  { jsValue, type: malType }
+
+createPredicate = \constant \value ->
+  value == constant
+
+extractJsValue = \malValue ->
+  malValue.jsValue
+
+[
+  [_createMalBoolean,      malBoolean?     ]
+  [createMalCoreFunction,  malCoreFunction?]
+  [createMalIndex,         malIndex?       ]
+  [createMalKeyword,       malKeyword?     ]
+  [_createMalList,         malList?        ]
+  [createMalMacro,         malMacro?       ]
+  [createMalNumber,        malNumber?      ]
+  [createMalSpecialForm,   malSpecialForm? ]
+  [createMalString,        malString?      ]
+  [createMalSymbol,        malSymbol?      ]
+  [_createMalUnit,         _malUnit?       ]
+  [createMalUserFunction,  malUserFunction?]
+  [_createMalAtom,         malAtom?        ]
+] = malTypes.map create-factory-&-predicate
+
+malIgnore = _createMalUnit null
+malNil = _createMalUnit null
+
+[malFalse, malTrue] = [false, true].map _createMalBoolean
+
+[malFalse?, malIgnore?, malNil?, malTrue?] =
+  [malFalse, malIgnore, malNil, malTrue].map createPredicate
+
+module.exports = {
+  createMalAtom
+  createMalBoolean
+  createMalCoreFunction
+  createMalIgnore
+  createMalIndex
+  createMalKeyword
+  createMalList
+  createMalMacro
+  createMalNil
+  createMalNumber
+  createMalSpecialForm
+  createMalString
+  createMalSymbol
+  createMalUserFunction
+  extractJsValue
+  malAtom?
+  malBoolean?
+  malCoreFunction?
+  malFalse
+  malFalse?
+  malIgnore
+  malIgnore?
+  malIndex?
+  malKeyword?
+  malList?
+  malMacro?
+  malNil
+  malNil?
+  malNumber?
+  malSpecialForm?
+  malString?
+  malSymbol?
+  malTrue
+  malTrue?
+  malUserFunction?
+}
+comment                = require './commentSignal'
+{ createMalBoolean }   = require './mal-type-utilities'
+{ createMalIgnore }    = require './mal-type-utilities'
+{ createMalIndex }     = require './mal-type-utilities'
+{ createMalList }      = require './mal-type-utilities'
+{ createMalNil }       = require './mal-type-utilities'
+{ createMalNumber }    = require './mal-type-utilities'
+{ createMalString }    = require './mal-type-utilities'
+{ createMalSymbol }    = require './mal-type-utilities'
+{ extractJsValue }     = require './mal-type-utilities'
+{ _false }             = require './keyTokens'
+{ glyphTokens }        = require './keyTokens'
+{ ignore }             = require './keyTokens'
+{ indexEnd }           = require './keyTokens'
+{ indexStart }         = require './keyTokens'
+{ keyTokens }          = require './keyTokens'
+{ listEnd }            = require './keyTokens'
+{ listStart }          = require './keyTokens'
+{ nil }                = require './keyTokens'
+{ quasiquote }         = require './keyTokens'
+{ quote }              = require './keyTokens'
+{ spliceUnquote }      = require './keyTokens'
+{ unquote }            = require './keyTokens'
+{ quasiquoteGlyph }    = require './keyTokens'
+{ quoteGlyph }         = require './keyTokens'
+{ spliceUnquoteGlyph } = require './keyTokens'
+{ unquoteGlyph }       = require './keyTokens'
+{ reverse }            = require './linked-list'
+{ _true }              = require './keyTokens'
+
+atomize = \token ->
+  createMalValue = switch
+    when nil? token      then createMalNil
+    when ignore? token   then createMalIgnore
+    when boolean? token  then ; createMalBoolean parseBoolean ;
+    when string? token   then createMalString
+    when integer? token  then ; createMalNumber parseInt10 ;
+    when float? token    then ; createMalNumber parseFloat10 ;
+    else                      createMalSymbol
+  createMalValue token
+
+boolean? = \token ->
+  token in [_false, _true]
+
+float? = \token ->
+  /^(-|\+)?[1-9]\d*\.\d+$/.test token
+
+glyph? = \token ->
+  token in glyphTokens
+
+ignore? = \token ->
+  token == ignore
+
+indexStart? = \token ->
+  token == indexStart
+
+integer? = \token ->
+  /^(?:0|(?:(-|\+)?[1-9]\d*$))/.test token
+
+listStart? = \token ->
+  token == listStart
+
+nil? = \token ->
+  token == nil
+
+_parse = (token, tokens) ->
+  switch
+    when listStart? token
+      parseList tokens
+    when indexStart? token
+      parseIndex tokens
+    when glyph? token
+      parseGlyph (glyphIndex[token], tokens) 
+    else
+      atomize token
+
+parse = \tokens ->
+  return comment if tokens == comment
+  _parse (tokens.shift(), tokens)
+
+parseGlyph = (keyword, tokens) ->
+  createMalList (
+    (createMalSymbol keyword),
+    (createMalList (parse tokens)))
+
+parseIndex = \tokens ->
+  jsIndex = {}
+  key = null
+  keyStep? = true
+
+  until (token = tokens.shift()) == indexEnd
+    if keyStep?
+      key = _parse (token, tokens)
+      keyStep? = false
+    else
+      jsIndex[extractJsValue key] = _parse (token, tokens)
+      keyStep? = true
+
+  createMalIndex jsIndex
+
+parseList = \tokens ->
+  malList = createMalList ()
+  until (token = tokens.shift()) == listEnd
+    malList = createMalList (
+      (_parse (token, tokens)),
+      malList)
+  reverse malList
+
+parseBoolean = \token ->
+  token == _true
+
+parseFloat10 = \token ->
+  parseFloat (token, 10)
+
+parseInt10 = \token ->
+  parseInt (token, 10)
+
+reserved? = \token ->
+  token in keyTokens
+
+startsWith? = \char \token ->
+  token[0] == char
+
+glyphIndex = {}
+glyphIndex[quasiquoteGlyph]    = quasiquote
+glyphIndex[quoteGlyph]         = quote
+glyphIndex[spliceUnquoteGlyph] = spliceUnquote
+glyphIndex[unquoteGlyph]       = unquote
+
+string? = startsWith? '"'
+
+module.exports = parse
+ffi  = require 'ffi'
+fs   = require 'fs'
+path = require 'path'
+
+addToHistory = \line ->
+  unless blank? line || recent? line
+    add_history line
+    addToRecentHistory line
+    try fs.appendFileSync (historyFilePath, line + '\n')
+  line
+
+addToRecentHistory = \line ->
+  recentHistory.push line
+  recentHistory.shift () if recentHistory.length > 10
+
+blank? = \line ->
+  /^\s*$/.test line
+
+cullHistory = (source, importNbr) ->
+  firstLine = Math.max (source.length - importNbr)
+  source[firstLine ..]
+
+getHistory = ->
+  if fs.existsSync historyFilePath
+    fs.readFileSync historyFilePath
+      .toString ()
+      .split '\n'
+  else
+    []
+
+readPrompt = ->
+  unless historyLoaded?
+    historyLoaded? = true
+    source = cullHistory (getHistory (), historyImportNbr)
+    for line in source
+      add_history line
+      addToRecentHistory line
+  addToHistory (readline prompt)
+
+recent? = \line ->
+  line in recentHistory
+
+historyFileName  = '.mal-history'
+historyFilePath  = path.join (process.env.HOME, historyFileName)
+historyLoaded?   = false
+int              = 'int'
+libreadline      = 'libreadline'
+historyImportNbr = 1000
+prompt           = 'mhlisp> '
+recentHistory    = []
+string           = 'string'
+
+readlineConfig =
+  readline    : [string, [string]]
+  add_history : [int,    [string]]
+
+{ add_history, readline } = ffi.Library (libreadline, readlineConfig)
+
+module.exports = readPrompt
+{ createMalString } = require './mal-type-utilities'
+display             = require './display'
+{ environment }     = require './environment'
+{ fromArray }       = require './linked-list'
+_process            = require './process'
+readPrompt          = require './readPrompt'
+serialize           = require './serialize'
+
+_createMalString = \jsString ->
+  createMalString('"' + jsString + '"')
+
+repl = (envs, jsString) ->
+  try display (serialize (_process envs jsString))
+  catch e
+    display ("repl error: (" + (serialize e) + ")")
+
+_repl = \jsString ->
+  repl ([environment], jsString)
+
+if ? process && process.argv.length > 2
+  _environments = [
+    { '*ARGV*' : fromArray(process.argv[3..].map _createMalString) }
+    environment
+  ]
+
+  fileName = process.argv[2]
+  file = require('fs').readFileSync(fileName).toString()
+  repl (_environments, file)
+  process.exit 0
+
+_repl '(load "standard")'
+
+loop
+  _repl (readPrompt ())
+commentSignal        = require './commentSignal'
+{ extractJsValue }   = require './mal-type-utilities'
+{ indexEnd }         = require './keyTokens'
+{ indexStart }       = require './keyTokens'
+{ listEnd }          = require './keyTokens'
+{ listStart }        = require './keyTokens'
+{ malAtom? }         = require './mal-type-utilities'
+{ malCoreFunction? } = require './mal-type-utilities'
+{ malIgnore? }       = require './mal-type-utilities'
+{ malIndex? }        = require './mal-type-utilities'
+{ malKeyword? }      = require './mal-type-utilities'
+{ malList? }         = require './mal-type-utilities'
+{ malMacro? }        = require './mal-type-utilities'
+{ malNil? }          = require './mal-type-utilities'
+{ malString? }       = require './mal-type-utilities'
+{ malUserFunction? } = require './mal-type-utilities'
+{ reduce }           = require './linked-list'
+
+adjoinMalValue = (printReadably?) -> (memo, malValue) ->
+  serialized = serialize (malValue, printReadably?)
+  if memo.length == 0
+    serialized
+  else
+    "#{memo} #{serialized}"
+
+serialize = (malExpr, printReadably?) ->
+  return commentSignal if malExpr == commentSignal
+  _serialize = switch
+    when malList? malExpr         then serializeList
+    when malIgnore? malExpr       then \x -> ignoreLabel
+    when malIndex? malExpr        then serializeIndex
+    when malKeyword? malExpr      then \x -> keywordLabel
+    when malCoreFunction? malExpr then \x -> coreFunctionLabel
+    when malUserFunction? malExpr then \x -> userFunctionLabel
+    when malMacro? malExpr        then \x -> macroLabel
+    when malNil? malExpr          then \x -> nilLabel
+    when malString? malExpr       then serializeString
+    when malAtom? malExpr         then serializeAtom
+    when ? (malExpr.jsValue)      then extractJsValue
+    else                               \x -> x
+  _serialize (malExpr, printReadably?)
+
+serializeAtom = (malAtom, printReadably?) ->
+  "(atom #{serialize (malAtom.malValue, printReadably?)})"
+
+serializeIndex = (malIndex, printReadably?) ->
+  jsIndex = malIndex.jsValue
+
+  memo = ''
+
+  for own key, malValue of jsIndex
+    memo = if memo == ''
+      "#{key} #{serialize (malValue, printReadably?)}"
+    else
+      "#{memo}, #{key} #{serialize (malValue, printReadably?)}"
+
+  indexStart + memo + indexEnd
+
+serializeList = (malList, printReadably?) ->
+  serializedList = reduce ("", (adjoinMalValue printReadably?), malList)
+  listStart + serializedList + listEnd
+
+serializeString = (malString, printReadably?) ->
+  jsString = stripQuotes (extractJsValue malString)
+  return jsString unless printReadably?
+  jsString.replace(/\\/g, '\\\\')
+          .replace(/"/g,  '\\"')
+          .replace(/\n/g, '\\n')
+
+# WET.
+stripQuotes = \jsString ->
+  jsString[1 .. -2]
+
+coreFunctionLabel = '<core function>'
+ignoreLabel       = '<ignore>'
+keywordLabel      = '<keyword>'
+macroLabel        = '<macro>'
+nilLable          = 'nil'
+userFunctionLabel = '<user function>'
+
+module.exports = serialize
+commentSignal = require './commentSignal'
+
+comment? = \match ->
+  match[0] == ';'
+
+createTokenRegex = ->
+  ///
+    [\s,]*                   # Spaces and commas should be ignored.
+    (
+      ~@                   | # '~@' should be taken as one token.
+      [\[\](){}'`~@^]      | # The preceding are syntactic characters.
+      "(?:\\.|[^\\"])*"    | # Characters between double quotes are strings.
+      ;.*                  | # All characters following a semicolon constitute a comment.
+      [^\s\[\](){}'"`,;]*    # Names may comprise any remaining character combinations.
+    )
+  ///g
+
+meaningful? = \match ->
+  match != ''
+
+tokenize = \sourceCode ->
+  tokenRegex = createTokenRegex ()
+  result = []
+  while meaningful? (match = tokenRegex.exec(sourceCode)[1])
+    continue if comment? match
+    result.push match
+  if result.length == 0 then commentSignal else result
+
+module.exports = tokenize 

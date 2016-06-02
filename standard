@@ -5,6 +5,8 @@
       ( (fn* (x) (f (fn* (& ys) (apply (x x) ys))))
         (fn* (x) (f (fn* (& ys) (apply (x x) ys)))))))
 
+  (def! y* (macro* (f x) `(~f (y* ~f) ~x)))
+
   (def! memfix*
     (fn* (f)
       (let* (cache {})

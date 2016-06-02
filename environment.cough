@@ -34,6 +34,7 @@ interpret                 = require './interpret'
 { malIgnore }             = require './mal-type-utilities'
 { malIndex? }             = require './mal-type-utilities'
 { malList? }              = require './mal-type-utilities'
+{ malMacro? }             = require './mal-type-utilities'
 { malNil }                = require './mal-type-utilities'
 { malNil? }               = require './mal-type-utilities'
 { malNumber? }            = require './mal-type-utilities'
@@ -384,12 +385,13 @@ withMeta = \malArgs ->
 write = \malArgs ->
   createMalString (serialize (car malArgs))
 
-[atom?, boolean?, coreFn?, false?, list?, nil?, number?, symbol?, string?, userFn?, true?] =
+[atom?, boolean?, coreFn?, false?, list?, macro?, nil?, number?, symbol?, string?, userFn?, true?] =
   [ malAtom?
     malBoolean?
     malCoreFunction?
     malFalse?
     malList?
+    malMacro?
     malNil?
     malNumber?
     malSymbol?
@@ -432,6 +434,7 @@ functionsOnMalValues = {
   'load'               : load
   'load-with-env'      : loadWithEnv
   'load-with-bare-env' : loadWithBareEnv
+  'macro?'             : macro?
   'map'                : map
   'meta'               : meta
   'nil?'               : nil?
