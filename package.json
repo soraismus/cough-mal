@@ -5,11 +5,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "devbundle": "browserify -t coughify --extension='.cough' -s ReactiveAspen _repl.cough | derequire > build/output.js",
+    "compile": "cough --no-header -o lib/ -bc src/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "ffi": "^2.0.0"
+  },
+  "devDependencies": {
+    "browserify": "^13.0.1",
+    "bundle-collapser": "^1.2.1",
+    "cough-syrup": "0.0.1",
+    "coughify": "0.0.0",
+    "derequire": "^2.0.3",
+    "uglify-js": "^2.6.2"
   }
 }

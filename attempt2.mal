@@ -1,1 +1,0 @@
-(apply + (map parse-number *ARGV*))
