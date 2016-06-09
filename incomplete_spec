@@ -1,3 +1,0 @@
-(do
-  (println a)
-  (println b))

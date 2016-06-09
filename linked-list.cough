@@ -1,4 +1,5 @@
 { malTypes } = require './mal-types'
+
 malListType = malTypes[5]
 
 car = \malList ->

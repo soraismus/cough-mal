@@ -1,194 +1,199 @@
-{ environment }     = require './environment'
+getEnvironment      = require './environment'
 _process            = require './process'
 serialize           = require './serialize'
 
-repl = (envs, jsString) ->
-  try serialize (_process envs jsString)
-  catch e
-    "repl error: (#{serialize e} + )"
+initializeRepl = \display ->
+  environment = getEnvironment display
 
-_repl = \jsString ->
-  repl ([environment], jsString)
+  repl = (envs, jsString) ->
+    try serialize (_process envs jsString)
+    catch e
+      "repl error: (#{serialize e} + )"
 
-standard = """
-(do
-  (def! fix*
-    (fn* (f)
-      ( (fn* (x) (f (fn* (& ys) (apply (x x) ys))))
-        (fn* (x) (f (fn* (& ys) (apply (x x) ys)))))))
+  _repl = \jsString ->
+    repl ([environment], jsString)
 
-  (def! y* (macro* (f x) `(~f (y* ~f) ~x)))
+  standard = """
+  (do
+    (def! fix*
+      (fn* (f)
+        ( (fn* (x) (f (fn* (& ys) (apply (x x) ys))))
+          (fn* (x) (f (fn* (& ys) (apply (x x) ys)))))))
 
-  (def! memfix*
-    (fn* (f)
-      (let* (cache {})
-        (
-          (fn* (x cache)
-            (f
-              (fn* (z)
-                (if (contains? cache z)
-                  (get cache z)
-                  (let* (result ((fn* (y) ((x x cache) y)) z))
-                    (do (set! cache z result) result))))
-              cache))
-          (fn* (x cache)
-            (f
-              (fn* (z)
-                (if (contains? cache z)
-                  (get cache z)
-                  (let* (result ((fn* (y) ((x x cache) y)) z))
-                    (do (set! cache z result) result))))
-              cache))
-          cache))))
+    (def! y* (macro* (f x) `(~f (y* ~f) ~x)))
 
-  (def! 1st car)
-  (def! 2nd (fn* (xs) (nth 1 xs)))
-  (def! 3rd (fn* (xs) (nth 2 xs)))
+    (def! memfix*
+      (fn* (f)
+        (let* (cache {})
+          (
+            (fn* (x cache)
+              (f
+                (fn* (z)
+                  (if (contains? cache z)
+                    (get cache z)
+                    (let* (result ((fn* (y) ((x x cache) y)) z))
+                      (do (set! cache z result) result))))
+                cache))
+            (fn* (x cache)
+              (f
+                (fn* (z)
+                  (if (contains? cache z)
+                    (get cache z)
+                    (let* (result ((fn* (y) ((x x cache) y)) z))
+                      (do (set! cache z result) result))))
+                cache))
+            cache))))
 
-  (def! swap! (macro* (atom & xs)
-    (if (empty? xs)
-      atom
-      `(let* (-atom- ~atom)
-        (do
-          (reset! -atom- (~(car xs) (deref -atom-) ~@(cdr xs)))
-          (deref -atom-))))))
+    (def! 1st car)
+    (def! 2nd (fn* (xs) (nth 1 xs)))
+    (def! 3rd (fn* (xs) (nth 2 xs)))
 
-  (def! *gensym-counter* (atom 0))
+    (def! swap! (macro* (atom & xs)
+      (if (empty? xs)
+        atom
+        `(let* (-atom- ~atom)
+          (do
+            (reset! -atom- (~(car xs) (deref -atom-) ~@(cdr xs)))
+            (deref -atom-))))))
 
-  (def! gensym (fn* ()
-    (symbol (str "G__" (swap! *gensym-counter* incr)))))
+    (def! *gensym-counter* (atom 0))
 
-  (def! or (macro* (& xs)
-    (if (empty? xs)
-      false
-      (let* (-query- (gensym))
-        `(let* (~-query- ~(car xs))
-          (if ~-query- 
-            ~-query-
-            (or ~@(cdr xs))))))))
+    (def! gensym (fn* ()
+      (symbol (str "G__" (swap! *gensym-counter* incr)))))
 
-  (def! and (macro* (& xs)
-    (if (empty? xs)
-      true
-      (let* (-query- (gensym))
-        `(let* (~-query- ~(car xs))
-          (if ~-query-
-            (and ~@(cdr xs))
-            false))))))
+    (def! or (macro* (& xs)
+      (if (empty? xs)
+        false
+        (let* (-query- (gensym))
+          `(let* (~-query- ~(car xs))
+            (if ~-query- 
+              ~-query-
+              (or ~@(cdr xs))))))))
 
-  (def! cond (macro* (& xs)
-    (if (empty? xs)
-      nil
-      (if (empty? (cdr xs))
-        (throw "`cond` requires an even number of forms.")
+    (def! and (macro* (& xs)
+      (if (empty? xs)
+        true
         (let* (-query- (gensym))
           `(let* (~-query- ~(car xs))
             (if ~-query-
-              ~(2nd xs)
-              (cond ~@(cdr (cdr xs))))))))))
+              (and ~@(cdr xs))
+              false))))))
 
-  (def! loop (macro* (form0 form1)
-    `(let* (loop (memfix* (fn* (loop) (fn* (~(1st form0)) ~form1)))) (loop ~(2nd form0)))))
+    (def! cond (macro* (& xs)
+      (if (empty? xs)
+        nil
+        (if (empty? (cdr xs))
+          (throw "`cond` requires an even number of forms.")
+          (let* (-query- (gensym))
+            `(let* (~-query- ~(car xs))
+              (if ~-query-
+                ~(2nd xs)
+                (cond ~@(cdr (cdr xs))))))))))
 
-  (def! -> (macro* (& xs)
-    (if (empty? xs)
-      nil
-      (let* (x  (car xs)
-             xs (cdr xs))
+    (def! loop (macro* (form0 form1)
+      `(let* (loop (memfix* (fn* (loop) (fn* (~(1st form0)) ~form1)))) (loop ~(2nd form0)))))
+
+    (def! -> (macro* (& xs)
+      (if (empty? xs)
+        nil
+        (let* (x  (car xs)
+              xs (cdr xs))
+          (if (empty? xs)
+            x
+            (let* (form  (car xs)
+                  forms (cdr xs))
+              (if (empty? forms)
+                (if (list? form)
+                  (if (= (symbol "fn*") (car form))
+                    `(~form ~x)
+                    `(~(car form) ~x ~@(cdr form)))
+                  (list form x))
+                `(-> (-> ~x ~form) ~@forms))))))))
+
+    (def! ->> (macro* (& xs)
+      (if (empty? xs)
+        nil
+        (let* (x  (car xs)
+              xs (cdr xs))
+          (if (empty? xs)
+            x
+            (let* (form  (car xs)
+                  forms (cdr xs))
+              (if (empty? forms)
+                (if (list? form)
+                  (if (= (symbol "fn*") (car form))
+                    `(~form ~x)
+                    `(~@form  ~x))
+                  (list form x))
+                `(->> (->> ~x ~form) ~@forms))))))))
+
+    (def! ->* (macro* (& xs) `(fn* (-x-) (-> -x- ~@xs))))
+
+    (def! ->>* (macro* (& xs) `(fn* (-x-) (->> -x- ~@xs))))
+
+    (def! not (fn* (x) (if x false true)))
+    (def! incr  (->* (+ 1)))
+    (def! decr  (->* (- 1)))
+    (def! zero? (->* (= 0)))
+
+    (def! identity (fn* (x) x))
+
+    (def! constant-fn (fn* (x) (fn* (y) x)))
+
+    (def! call-on (fn* (& xs) (fn* (fn) (apply fn xs))))
+
+    (def! reduce
+      (fn* (seed f xs)
         (if (empty? xs)
-          x
-          (let* (form  (car xs)
-                 forms (cdr xs))
-            (if (empty? forms)
-              (if (list? form)
-                (if (= (symbol "fn*") (car form))
-                  `(~form ~x)
-                  `(~(car form) ~x ~@(cdr form)))
-                (list form x))
-              `(-> (-> ~x ~form) ~@forms))))))))
+          seed
+          (reduce (f seed (car xs)) f (cdr xs)))))
 
-  (def! ->> (macro* (& xs)
-    (if (empty? xs)
-      nil
-      (let* (x  (car xs)
-             xs (cdr xs))
+    (def! every?
+      (fn* (pred xs)
         (if (empty? xs)
-          x
-          (let* (form  (car xs)
-                 forms (cdr xs))
-            (if (empty? forms)
-              (if (list? form)
-                (if (= (symbol "fn*") (car form))
-                  `(~form ~x)
-                  `(~@form  ~x))
-                (list form x))
-              `(->> (->> ~x ~form) ~@forms))))))))
-
-  (def! ->* (macro* (& xs) `(fn* (-x-) (-> -x- ~@xs))))
-
-  (def! ->>* (macro* (& xs) `(fn* (-x-) (->> -x- ~@xs))))
-
-  (def! not (fn* (x) (if x false true)))
-  (def! incr  (->* (+ 1)))
-  (def! decr  (->* (- 1)))
-  (def! zero? (->* (= 0)))
-
-  (def! identity (fn* (x) x))
-
-  (def! constant-fn (fn* (x) (fn* (y) x)))
-
-  (def! call-on (fn* (& xs) (fn* (fn) (apply fn xs))))
-
-  (def! reduce
-    (fn* (seed f xs)
-      (if (empty? xs)
-        seed
-        (reduce (f seed (car xs)) f (cdr xs)))))
-
-  (def! every?
-    (fn* (pred xs)
-      (if (empty? xs)
-        true
-        (if (pred (car xs))
-          (every? pred (cdr xs))
-          false))))
-
-  (def! some?
-    (fn* (pred xs)
-      (if (empty? xs)
-        false
-        (if (pred (car xs))
           true
-          (some? pred (cdr xs))))))
+          (if (pred (car xs))
+            (every? pred (cdr xs))
+            false))))
 
-  (def! letmemrec* (macro* (alias expr)
-    `(let* (~(car alias) (memfix* (fn* (~(car alias)) ~(2nd alias)))) ~expr)))
+    (def! some?
+      (fn* (pred xs)
+        (if (empty? xs)
+          false
+          (if (pred (car xs))
+            true
+            (some? pred (cdr xs))))))
 
-  (def! skip (fn* (nbr xs)
-    (letrec* (-skip- (fn* (ys)
-      (let* (nbr (car ys)
-             xs (2nd ys))
-        (cond
-          (= 0 nbr) xs
-          (= 1 nbr) (cdr xs)
-          "default" (-skip- (list (decr nbr) (cdr xs)))))))
-      (-skip- (list nbr xs)))))
+    (def! letmemrec* (macro* (alias expr)
+      `(let* (~(car alias) (memfix* (fn* (~(car alias)) ~(2nd alias)))) ~expr)))
 
-  (def! . (macro* (x key & xs)
-    `((get ~x ~key) ~@xs)))
+    (def! skip (fn* (nbr xs)
+      (letrec* (-skip- (fn* (ys)
+        (let* (nbr (car ys)
+              xs (2nd ys))
+          (cond
+            (= 0 nbr) xs
+            (= 1 nbr) (cdr xs)
+            "default" (-skip- (list (decr nbr) (cdr xs)))))))
+        (-skip- (list nbr xs)))))
 
-  (def! .. (fn* (lo hi)
-    (letrec* (-..- (fn* (ys)
-      (let* (lo     (1st ys)
-             hi     (2nd ys)
-             -list- (3rd ys))
-        (if (= lo hi)
-          (cons hi -list-)
-          (-..- (list lo (decr hi) (cons hi -list-)))))))
-      (-..- (list lo hi '())))))
-)
-"""
+    (def! . (macro* (x key & xs)
+      `((get ~x ~key) ~@xs)))
 
-_repl standard
+    (def! .. (fn* (lo hi)
+      (letrec* (-..- (fn* (ys)
+        (let* (lo     (1st ys)
+              hi     (2nd ys)
+              -list- (3rd ys))
+          (if (= lo hi)
+            (cons hi -list-)
+            (-..- (list lo (decr hi) (cons hi -list-)))))))
+        (-..- (list lo hi '())))))
+  )
+  """
 
-module.exports = _repl
+  _repl standard
+
+  return _repl
+
+module.exports = initializeRepl

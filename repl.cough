@@ -1,10 +1,12 @@
 { createMalString } = require './mal-type-utilities'
 display             = require './display'
-{ environment }     = require './environment'
+getEnvironment      = require './environment'
 { fromArray }       = require './linked-list'
 _process            = require './process'
 readPrompt          = require './readPrompt'
 serialize           = require './serialize'
+
+environment = getEnvironment display
 
 _createMalString = \jsString ->
   createMalString('"' + jsString + '"')

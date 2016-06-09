@@ -12,7 +12,6 @@
 { createMalNumber }       = require './mal-type-utilities'
 { createMalString }       = require './mal-type-utilities'
 { createMalSymbol }       = require './mal-type-utilities'
-display                   = require './display'
 { drop }                  = require './linked-list'
 { empty? }                = require './linked-list'
 { equal? }                = require './linked-list'
@@ -53,433 +52,432 @@ serialize                 = require './serialize'
 { toArray }               = require './linked-list'
 { toPartialArray }        = require './linked-list'
 
-lift = (fnOnJsValues) -> (malValueList) ->
-  fnOnJsValues (((toArray malValueList).map extractJsValue)...)
+getEnvironment = \display ->
+  lift = (fnOnJsValues) -> (malValueList) ->
+    fnOnJsValues (((toArray malValueList).map extractJsValue)...)
 
-setCoreFnsOnJsValues! = (env, fns) ->
-  for own fnName, fn of fns
-    env[fnName] = createMalCoreFunction (lift fn)
+  setCoreFnsOnJsValues! = (env, fns) ->
+    for own fnName, fn of fns
+      env[fnName] = createMalCoreFunction (lift fn)
 
-add = (nbrs...) ->
-  createMalNumber (nbrs.reduce ((x, nbr) ->  x += nbr))
-assoc = (index, args...) ->
-  copy = {}
-  for own key, value of index
-    copy[key] = value
-  for k, i in args when i % 2 == 0
-    copy[k] = args[i + 1]
-  createMalIndex copy
-contains? = (index, key) -> createMalBoolean (key of index)
-dissoc = (index, keys...) ->
-  copy = {}
-  for own key, value of index
-    copy[key] = value
-  delete copy[key] for key in keys
-  createMalIndex copy
-divide = (nbrs...) ->
-  createMalNumber (nbrs.reduce ((x, nbr) -> x /= nbr))
-exponentiate = (nbrs...) ->
-  createMalNumber (nbrs.reduce ((x, nbr) -> Math.pow (x, nbr)))
-get = (jsIndex, jsKey) -> jsIndex[jsKey]
-greaterThanOrEqual = (nbrs...) ->
-  createMalBoolean (nbrs[0] >= nbrs[1])
-greaterThan = (nbrs...) ->
-  createMalBoolean (nbrs[0] > nbrs[1])
-_index = (args...) ->
-  index = {}
-  index[k] = args[i + 1] for k, i in args when i % 2 == 0
-  createMalIndex index
-keys = \index ->
-  _keys = []
-  for own key, value of index
-    _keys.push (
-      if jsNaN? (jsNbr = parseFloat (key, 10))
-        (if key[0] == ':' then createMalIdentifier else createMalString) key
-      else
-        createMalNumber jsNbr)
-  fromArray _keys
-_length = \jsVal ->
-  return malNil unless jsString? jsVal
-  createMalNumber (jsVal.length - 2)
-lessThan = (nbrs...) ->
-  createMalBoolean (nbrs[0] < nbrs[1])
-lessThanOrEqual = (nbrs...) ->
-  createMalBoolean (nbrs[0] <= nbrs[1])
-mod = (nbr0, nbr1) ->
-  createMalNumber (nbr0 % nbr1)
-multiply = (nbrs...) ->
-  createMalNumber (nbrs.reduce ((x, nbr) -> x *= nbr))
-negate = \nbr ->
-  createMalNumber (-1 * nbr)
-parseNumber = \jsVal ->
-  return jsVal if jsNumber? jsVal
-  return malNil unless jsString? jsVal
-  jsNbr = parseFloat ((stripQuotes jsVal), 10)
-  if jsNaN? jsNbr then malNil else createMalNumber jsNbr
-subtract = (nbrs...) ->
-  createMalNumber (nbrs.reduce ((x, nbr) -> x -= nbr))
-vals = \index ->
-  values = []
-  for own key, value of index
-    values.push value
-  fromArray values
+  add = (nbrs...) ->
+    createMalNumber (nbrs.reduce ((x, nbr) ->  x += nbr))
+  assoc = (index, args...) ->
+    copy = {}
+    for own key, value of index
+      copy[key] = value
+    for k, i in args when i % 2 == 0
+      copy[k] = args[i + 1]
+    createMalIndex copy
+  contains? = (index, key) -> createMalBoolean (key of index)
+  dissoc = (index, keys...) ->
+    copy = {}
+    for own key, value of index
+      copy[key] = value
+    delete copy[key] for key in keys
+    createMalIndex copy
+  divide = (nbrs...) ->
+    createMalNumber (nbrs.reduce ((x, nbr) -> x /= nbr))
+  exponentiate = (nbrs...) ->
+    createMalNumber (nbrs.reduce ((x, nbr) -> Math.pow (x, nbr)))
+  get = (jsIndex, jsKey) -> jsIndex[jsKey]
+  greaterThanOrEqual = (nbrs...) ->
+    createMalBoolean (nbrs[0] >= nbrs[1])
+  greaterThan = (nbrs...) ->
+    createMalBoolean (nbrs[0] > nbrs[1])
+  _index = (args...) ->
+    index = {}
+    index[k] = args[i + 1] for k, i in args when i % 2 == 0
+    createMalIndex index
+  keys = \index ->
+    _keys = []
+    for own key, value of index
+      _keys.push (
+        if jsNaN? (jsNbr = parseFloat (key, 10))
+          (if key[0] == ':' then createMalIdentifier else createMalString) key
+        else
+          createMalNumber jsNbr)
+    fromArray _keys
+  _length = \jsVal ->
+    return malNil unless jsString? jsVal
+    createMalNumber (jsVal.length - 2)
+  lessThan = (nbrs...) ->
+    createMalBoolean (nbrs[0] < nbrs[1])
+  lessThanOrEqual = (nbrs...) ->
+    createMalBoolean (nbrs[0] <= nbrs[1])
+  mod = (nbr0, nbr1) ->
+    createMalNumber (nbr0 % nbr1)
+  multiply = (nbrs...) ->
+    createMalNumber (nbrs.reduce ((x, nbr) -> x *= nbr))
+  negate = \nbr ->
+    createMalNumber (-1 * nbr)
+  parseNumber = \jsVal ->
+    return jsVal if jsNumber? jsVal
+    return malNil unless jsString? jsVal
+    jsNbr = parseFloat ((stripQuotes jsVal), 10)
+    if jsNaN? jsNbr then malNil else createMalNumber jsNbr
+  subtract = (nbrs...) ->
+    createMalNumber (nbrs.reduce ((x, nbr) -> x -= nbr))
+  vals = \index ->
+    values = []
+    for own key, value of index
+      values.push value
+    fromArray values
 
-functionsOnJsValues = {
-  '+'            : add
-  'assoc'        : assoc
-  'contains?'    : contains?
-  'dissoc'       : dissoc
-  '/'            : divide
-  '**'           : exponentiate
-  'get'          : get
-  '>'            : greaterThan
-  '>='           : greaterThanOrEqual
-  'index'        : _index
-  'keys'         : keys
-  'length'       : _length
-  '<'            : lessThan
-  '<='           : lessThanOrEqual
-  '%'            : mod
-  '*'            : multiply
-  'negate'       : negate
-  'parse-number' : parseNumber
-  '-'            : subtract
-  'vals'         : vals
-}
+  functionsOnJsValues = {
+    '+'            : add
+    'assoc'        : assoc
+    'contains?'    : contains?
+    'dissoc'       : dissoc
+    '/'            : divide
+    '**'           : exponentiate
+    'get'          : get
+    '>'            : greaterThan
+    '>='           : greaterThanOrEqual
+    'index'        : _index
+    'keys'         : keys
+    'length'       : _length
+    '<'            : lessThan
+    '<='           : lessThanOrEqual
+    '%'            : mod
+    '*'            : multiply
+    'negate'       : negate
+    'parse-number' : parseNumber
+    '-'            : subtract
+    'vals'         : vals
+  }
 
-createPredicate = \pred \jsList ->
-  malValue = jsList.value
-  createMalBoolean (pred malValue)
+  createPredicate = \pred \jsList ->
+    malValue = jsList.value
+    createMalBoolean (pred malValue)
 
-__evaluate__ = \malVal ->
-  evaluate [environment] malVal
-__evaluate__2 = \malVal ->
-  __evaluate__ (__evaluate__ malVal)
-_evaluate_ = \jsString ->
-  _process_ [environment] jsString
-_evaluateString = \malArgs ->
-  _evaluate_ (stripQuotes (extractJsValue (car malArgs)))
-_evaluate = \malArgs ->
-  evaluate [environment] (car malArgs)
+  __evaluate__ = \malVal ->
+    evaluate [environment] malVal
+  __evaluate__2 = \malVal ->
+    __evaluate__ (__evaluate__ malVal)
+  _evaluate_ = \jsString ->
+    _process_ [environment] jsString
+  _evaluateString = \malArgs ->
+    _evaluate_ (stripQuotes (extractJsValue (car malArgs)))
+  _evaluate = \malArgs ->
+    evaluate [environment] (car malArgs)
 
-_prStr = (malArgs, printReadably?) ->
-  ((toArray malArgs).map \malArg -> serialize (malArg, printReadably?))
-prStr = \malArgs ->
-  createMalString ('"' + (_prStr (malArgs, true)).join '' + '"')
-str = \malArgs ->
-  createMalString ('"' + (_prStr (malArgs, false)).join '' + '"')
-prn = \malArgs ->
-  display (_prStr (malArgs, true).join '')
-  malNil
-println = \malArgs ->
-  display (_prStr (malArgs, false).join '')
-  malNil
-
-_read = \malArgs ->
-  jsFileName = stripQuotes (extractJsValue (car malArgs))
-  require('fs').readFileSync(jsFileName).toString()
-
-setCoreFnsOnMalValues! = (env, fns) ->
-  for own fnName, fn of fns
-    env[fnName] = createMalCoreFunction fn 
-
-setMalValue = (malAtom, malValue) ->
-  malAtom.malValue = malValue
-  malAtom
-
-stripQuotes = \jsString ->
-  jsString[1 .. -2]
-
-append = \malArgs ->
-  [malList, malValues...] = toArray malArgs
-  concat (malList, (fromArray malValues))
-apply = \malArgs ->
-  [malFn, malArgList] = toArray malArgs
-  evaluate [] (createMalList (malFn, malArgList))
-areEqual = \malArgs ->
-  [malValue0, malValue1] = toPartialArray (2, malArgs)
-  _areEqual = (malValue0, malValue1) ->
-    if malList? malValue0 && malList? malValue1
-      equal? (malValue0, malValue1, _areEqual)
-    else if malIndex? malValue0 && malIndex? malValue1
-      jsIndex0 = malValue0.jsValue
-      jsIndex1 = malValue1.jsValue
-      (_areEqual ((keys jsIndex0), (keys jsIndex1))) &&
-        (_areEqual ((vals jsIndex0), (vals jsIndex1)))
-    else
-      malValue0.jsValue == malValue1.jsValue
-  createMalBoolean (_areEqual (malValue0, malValue1))
-atom = \malArgs -> createMalAtom (car malArgs)
-call = \malArgs ->
-  evaluate [] malArgs
-_car = \malArgs ->
-  arg = car malArgs
-  if malList? arg then car arg else malNil
-_cdr = \malArgs ->
-  arg = car malArgs
-  if malList? arg then cdr arg else malNil
-_concat = \malArgs ->
-  malLists = toArray malArgs
-  concat malLists...
-cons = \malArgs ->
-  createMalList (
-    car malArgs
-    next malArgs)
-count = \malArgs ->
-  malList = car malArgs
-  return malNil unless malList? malList
-  _reduce = (sum, value) -> sum + 1
-  createMalNumber (reduce (0, _reduce, (car malArgs)))
-deref = \malArgs ->
-  (car malArgs).malValue
-_drop = \malArgs ->
-  [malNumber, malList] = toPartialArray (2, malArgs)
-  drop ((extractJsValue malNumber), malList)
-_empty? = \malArgs ->
-  if empty? malArgs
-    malFalse
-  else
-    if empty? (car malArgs) then malTrue else malFalse
-evalWithBareEnv = \malArgs ->
-  [expr, localEnv] = toPartialArray (2, malArgs)
-  evaluate [(fromMalIndex localEnv)] expr
-evalWithEnv = \malArgs ->
-  [expr, localEnv] = toPartialArray (2, malArgs)
-  evaluate [(fromMalIndex localEnv), environment] expr
-first = \malArgs ->
-  car (car malArgs)
-fix = \malArgs ->
-  malFnF = car malArgs
-  jsFnX = \malArgs1 ->
-    malFnX = car malArgs1
-    jsFnY = \malArgs2 ->
-      malValY = car malArgs2
-      __evaluate__2 (createMalList (
-        createMalList (
-          malFnX
-          createMalList malFnX)
-        createMalList malValY))
-    malFnY = createMalCoreFunction jsFnY
-    __evaluate__2 (createMalList (
-      malFnF
-      createMalList malFnY))
-  malFnX = createMalCoreFunction jsFnX
-  __evaluate__2 (createMalList (
-    malFnX
-    createMalList malFnX))
-function? = \jsList ->
-  malValue = jsList.value
-  createMalBoolean (malCoreFunction? malValue || malUserFunction? malValue)
-ignore! = \malArgs -> malIgnore
-ignoreIfTrue = \malArgs ->
-  [malBool, malValue] = toPartialArray (2, malArgs)
-  if (extractJsValue malBool) then malIgnore else malValue
-ignoreUnlessTrue = \malArgs ->
-  [malBool, malValue] = toPartialArray (2, malArgs)
-  if (extractJsValue malBool) then malValue else malIgnore
-_interpret = \malArgs ->
-  interpret (stripQuotes (extractJsValue (car malArgs)))
-_last = \malArgs ->
-  arg = car malArgs
-  if malList? arg then last arg else malNil
-list = \malArgs ->
-  malArgs
-load = \malArgs ->
-  _evaluate_ (_read malArgs)
-loadWithBareEnv = \malArgs ->
-  [malFileName, localEnv] = toPartialArray (2, malArgs)
-  jsFileName = stripQuotes (extractJsValue malFileName)
-  file = require('fs').readFileSync(jsFileName).toString()
-  _process_ [(fromMalIndex localEnv)] file
-loadWithEnv = \malArgs ->
-  [malFileName, localEnv] = toPartialArray (2, malArgs)
-  jsFileName = stripQuotes (extractJsValue malFileName)
-  file = require('fs').readFileSync(jsFileName, 'utf-8').toString()
-  _process_ [(fromMalIndex localEnv), environment] file
-malReduce = \malArgs ->
-  [malSeed, malFn, malArgList] = toArray malArgs
-  _malArgs = toArray malArgList
-  _reduce = (memo, item) ->
-    _memo = if malList? memo
-        createMalList (
-          createMalSymbol 'quote'
-          createMalList memo)
-      else
-        memo
-    evaluate [] (
-      createMalList (
-        malFn
-        createMalList (
-          _memo
-            createMalList item)))
-  _malArgs.reduce (_reduce, malSeed)
-map = \malArgs ->
-  [malFn, malArgList] = toArray malArgs
-  _malArgs = toArray malArgList
-  __malArgs = _malArgs.map \x -> createMalList (malFn, createMalList (x))
-  results = __malArgs.map (evaluate [])
-  fromArray results
-meta = \malArgs ->
-  malMeta = (car malArgs).meta
-  if ? malMeta then malMeta else malNil
-_not = \malArgs ->
-  malVal = car malArgs
-  if malNil? malVal || malFalse? malVal then malTrue else malFalse
-nth = \malArgs ->
-  [malNumber, malList] = toPartialArray (2, malArgs)
-  for i in [0 ... (extractJsValue malNumber)]
-    malList = cdr malList
-  car malList
-prepend = \malArgs ->
-  [malList, malValues...] = toArray malArgs
-  _reduce = (list, val) ->
-    createMalList (val, list)
-  malValues.reduce (_reduce, malList)
-_quit_ = ->
-  process.exit 0
-read = \jsList ->
-  createMalString (_read jsList)
-reset = \malArgs ->
-  [atom, value] = toPartialArray (2, malArgs)
-  setMalValue (atom, value)
-rest = \malArgs ->
-  arg = car malArgs
-  if malList? arg then cdr arg else malNil
-_reverse = \malArgs ->
-  arg = car malArgs
-  if malList? arg then reverse arg else malNil
-set = \malArgs ->
-  [index, key, val] = toPartialArray (3, malArgs)
-  (extractJsValue index)[extractJsValue key] = val
-  index
-slurp = \malArgs ->
-  jsFileName = stripQuotes (extractJsValue (car malArgs))
-  createMalString (
-    circumpendQuotes (
-      require('fs').readFileSync(jsFileName).toString()))
-symbol = \malArgs ->
-  malValue = car malArgs
-  if malString? malValue
-    jsStr = extractJsValue malValue
-    createMalSymbol jsStr[1 ... -1]
-  else
+  _prStr = (malArgs, printReadably?) ->
+    ((toArray malArgs).map \malArg -> serialize (malArg, printReadably?))
+  prStr = \malArgs ->
+    createMalString ('"' + (_prStr (malArgs, true)).join '' + '"')
+  str = \malArgs ->
+    createMalString ('"' + (_prStr (malArgs, false)).join '' + '"')
+  prn = \display \malArgs ->
+    display (_prStr (malArgs, true).join '')
     malNil
-_take = \malArgs ->
-  [malNumber, malList] = toPartialArray (2, malArgs)
-  take ((extractJsValue malNumber), malList)
-typeOf = \malArgs ->
-  malValue = car malArgs
-  createMalString (circumpendQuotes malValue.type)
-_throw = \malArgs ->
-  throw (car malArgs)
-time-ms = () ->
-  createMalNumber (new Date().getTime ())
-withMeta = \malArgs ->
-  [malVal, malMeta] = toPartialArray (2, malArgs)
-  if malAtom? malVal
-    { malValue, type } = malVal
-    { malValue, type, meta: malMeta }
-  else
-    { jsValue, type } = malVal
-    { jsValue, type, meta: malMeta }
-write = \malArgs ->
-  createMalString (serialize (car malArgs))
+  println = \display \malArgs ->
+    display (_prStr (malArgs, false).join '')
+    malNil
 
-[atom?, boolean?, coreFn?, false?, list?, macro?, nil?, number?, symbol?, string?, userFn?, true?] =
-  [ malAtom?
-    malBoolean?
-    malCoreFunction?
-    malFalse?
-    malList?
-    malMacro?
-    malNil?
-    malNumber?
-    malSymbol?
-    malString?
-    malUserFunction?
-    malTrue?
-  ].map createPredicate
+  _read = \malArgs ->
+    jsFileName = stripQuotes (extractJsValue (car malArgs))
+    require('fs').readFileSync(jsFileName).toString()
 
-functionsOnMalValues = {
-  '='                  : areEqual
-  'append'             : append
-  'apply'              : apply
-  'atom'               : atom
-  'atom?'              : atom?
-  'boolean?'           : boolean?
-  'car'                : _car
-  'call'               : call
-  'cdr'                : _cdr
-  'cons'               : cons
-  'concat'             : _concat
-  'core-fn?'           : coreFn?
-  'count'              : count
-  'deref'              : deref
-  'drop'               : _drop
-  'empty?'             : _empty?
-  'eval'               : _evaluate
-  'evalStr'            : _evaluateString
-  'eval-with-env'      : evalWithEnv
-  'eval-with-bare-env' : evalWithBareEnv
-  'first'              : _car
-  'false?'             : false?
-  'fix'                : fix
-  'function?'          : function?
-  'ignore!'            : ignore!
-  'ignoreIfTrue'       : ignoreIfTrue
-  'ignoreUnlessTrue'   : ignoreUnlessTrue
-  'last'               : _last
-  'list'               : list
-  'list?'              : list?
-  'load'               : load
-  'load-with-env'      : loadWithEnv
-  'load-with-bare-env' : loadWithBareEnv
-  'macro?'             : macro?
-  'map'                : map
-  'meta'               : meta
-  'nil?'               : nil?
-  'not'                : _not
-  'nth'                : nth
-  'number?'            : number?
-  'parse'              : _interpret
-  'prepend'            : prepend
-  'println'            : println
-  'prn'                : prn
-  'pr-str'             : prStr
-  '-quit-'             : _quit_
-  'read'               : read
-  'reduce'             : malReduce
-  'reset!'             : reset
-  'rest'               : _cdr
-  'reverse'            : _reverse
-  'set!'               : set
-  'slurp'              : slurp
-  'str'                : str
-  'string?'            : string?
-  'symbol'             : symbol
-  'symbol?'            : symbol?
-  'take'               : _take
-  'throw'              : _throw
-  'time-ms'            : time-ms
-  'true?'              : true?
-  'typeof'             : typeOf
-  'user-fn?'           : userFn?
-  'with-meta'          : withMeta
-  'write'              : write
-}
+  setCoreFnsOnMalValues! = (env, fns) ->
+    for own fnName, fn of fns
+      env[fnName] = createMalCoreFunction fn 
 
-environment = {}
+  setMalValue = (malAtom, malValue) ->
+    malAtom.malValue = malValue
+    malAtom
 
-setCoreFnsOnJsValues! (environment, functionsOnJsValues)
-setCoreFnsOnMalValues! (environment, functionsOnMalValues)
-  
-environment['*ARGV*'] = createMalList ()
+  stripQuotes = \jsString ->
+    jsString[1 .. -2]
 
-_environment_ = fromJsObject environment
-environment['*DEFAULT-ENV*'] = _environment_
+  append = \malArgs ->
+    [malList, malValues...] = toArray malArgs
+    concat (malList, (fromArray malValues))
+  apply = \malArgs ->
+    [malFn, malArgList] = toArray malArgs
+    evaluate [] (createMalList (malFn, malArgList))
+  areEqual = \malArgs ->
+    [malValue0, malValue1] = toPartialArray (2, malArgs)
+    _areEqual = (malValue0, malValue1) ->
+      if malList? malValue0 && malList? malValue1
+        equal? (malValue0, malValue1, _areEqual)
+      else if malIndex? malValue0 && malIndex? malValue1
+        jsIndex0 = malValue0.jsValue
+        jsIndex1 = malValue1.jsValue
+        (_areEqual ((keys jsIndex0), (keys jsIndex1))) &&
+          (_areEqual ((vals jsIndex0), (vals jsIndex1)))
+      else
+        malValue0.jsValue == malValue1.jsValue
+    createMalBoolean (_areEqual (malValue0, malValue1))
+  atom = \malArgs -> createMalAtom (car malArgs)
+  call = \malArgs ->
+    evaluate [] malArgs
+  _car = \malArgs ->
+    arg = car malArgs
+    if malList? arg then car arg else malNil
+  _cdr = \malArgs ->
+    arg = car malArgs
+    if malList? arg then cdr arg else malNil
+  _concat = \malArgs ->
+    malLists = toArray malArgs
+    concat malLists...
+  cons = \malArgs ->
+    createMalList (
+      car malArgs
+      next malArgs)
+  count = \malArgs ->
+    malList = car malArgs
+    return malNil unless malList? malList
+    _reduce = (sum, value) -> sum + 1
+    createMalNumber (reduce (0, _reduce, (car malArgs)))
+  deref = \malArgs ->
+    (car malArgs).malValue
+  _drop = \malArgs ->
+    [malNumber, malList] = toPartialArray (2, malArgs)
+    drop ((extractJsValue malNumber), malList)
+  _empty? = \malArgs ->
+    if empty? malArgs
+      malFalse
+    else
+      if empty? (car malArgs) then malTrue else malFalse
+  evalWithBareEnv = \malArgs ->
+    [expr, localEnv] = toPartialArray (2, malArgs)
+    evaluate [(fromMalIndex localEnv)] expr
+  evalWithEnv = \malArgs ->
+    [expr, localEnv] = toPartialArray (2, malArgs)
+    evaluate [(fromMalIndex localEnv), environment] expr
+  first = \malArgs ->
+    car (car malArgs)
+  fix = \malArgs ->
+    malFnF = car malArgs
+    jsFnX = \malArgs1 ->
+      malFnX = car malArgs1
+      jsFnY = \malArgs2 ->
+        malValY = car malArgs2
+        __evaluate__2 (createMalList (
+          createMalList (
+            malFnX
+            createMalList malFnX)
+          createMalList malValY))
+      malFnY = createMalCoreFunction jsFnY
+      __evaluate__2 (createMalList (
+        malFnF
+        createMalList malFnY))
+    malFnX = createMalCoreFunction jsFnX
+    __evaluate__2 (createMalList (
+      malFnX
+      createMalList malFnX))
+  function? = \jsList ->
+    malValue = jsList.value
+    createMalBoolean (malCoreFunction? malValue || malUserFunction? malValue)
+  ignore! = \malArgs -> malIgnore
+  ignoreIfTrue = \malArgs ->
+    [malBool, malValue] = toPartialArray (2, malArgs)
+    if (extractJsValue malBool) then malIgnore else malValue
+  ignoreUnlessTrue = \malArgs ->
+    [malBool, malValue] = toPartialArray (2, malArgs)
+    if (extractJsValue malBool) then malValue else malIgnore
+  _interpret = \malArgs ->
+    interpret (stripQuotes (extractJsValue (car malArgs)))
+  _last = \malArgs ->
+    arg = car malArgs
+    if malList? arg then last arg else malNil
+  list = \malArgs ->
+    malArgs
+  load = \malArgs ->
+    _evaluate_ (_read malArgs)
+  loadWithBareEnv = \malArgs ->
+    [malFileName, localEnv] = toPartialArray (2, malArgs)
+    jsFileName = stripQuotes (extractJsValue malFileName)
+    file = require('fs').readFileSync(jsFileName).toString()
+    _process_ [(fromMalIndex localEnv)] file
+  loadWithEnv = \malArgs ->
+    [malFileName, localEnv] = toPartialArray (2, malArgs)
+    jsFileName = stripQuotes (extractJsValue malFileName)
+    file = require('fs').readFileSync(jsFileName, 'utf-8').toString()
+    _process_ [(fromMalIndex localEnv), environment] file
+  malReduce = \malArgs ->
+    [malSeed, malFn, malArgList] = toArray malArgs
+    _malArgs = toArray malArgList
+    _reduce = (memo, item) ->
+      _memo = if malList? memo
+          createMalList (
+            createMalSymbol 'quote'
+            createMalList memo)
+        else
+          memo
+      evaluate [] (
+        createMalList (
+          malFn
+          createMalList (
+            _memo
+              createMalList item)))
+    _malArgs.reduce (_reduce, malSeed)
+  map = \malArgs ->
+    [malFn, malArgList] = toArray malArgs
+    _malArgs = toArray malArgList
+    __malArgs = _malArgs.map \x -> createMalList (malFn, createMalList (x))
+    results = __malArgs.map (evaluate [])
+    fromArray results
+  meta = \malArgs ->
+    malMeta = (car malArgs).meta
+    if ? malMeta then malMeta else malNil
+  _not = \malArgs ->
+    malVal = car malArgs
+    if malNil? malVal || malFalse? malVal then malTrue else malFalse
+  nth = \malArgs ->
+    [malNumber, malList] = toPartialArray (2, malArgs)
+    for i in [0 ... (extractJsValue malNumber)]
+      malList = cdr malList
+    car malList
+  prepend = \malArgs ->
+    [malList, malValues...] = toArray malArgs
+    _reduce = (list, val) ->
+      createMalList (val, list)
+    malValues.reduce (_reduce, malList)
+  _quit_ = ->
+    process.exit 0
+  read = \jsList ->
+    createMalString (_read jsList)
+  reset = \malArgs ->
+    [atom, value] = toPartialArray (2, malArgs)
+    setMalValue (atom, value)
+  rest = \malArgs ->
+    arg = car malArgs
+    if malList? arg then cdr arg else malNil
+  _reverse = \malArgs ->
+    arg = car malArgs
+    if malList? arg then reverse arg else malNil
+  set = \malArgs ->
+    [index, key, val] = toPartialArray (3, malArgs)
+    (extractJsValue index)[extractJsValue key] = val
+    index
+  slurp = \malArgs ->
+    jsFileName = stripQuotes (extractJsValue (car malArgs))
+    createMalString (
+      circumpendQuotes (
+        require('fs').readFileSync(jsFileName).toString()))
+  symbol = \malArgs ->
+    malValue = car malArgs
+    if malString? malValue
+      jsStr = extractJsValue malValue
+      createMalSymbol jsStr[1 ... -1]
+    else
+      malNil
+  _take = \malArgs ->
+    [malNumber, malList] = toPartialArray (2, malArgs)
+    take ((extractJsValue malNumber), malList)
+  typeOf = \malArgs ->
+    malValue = car malArgs
+    createMalString (circumpendQuotes malValue.type)
+  _throw = \malArgs ->
+    throw (car malArgs)
+  time-ms = () ->
+    createMalNumber (new Date().getTime ())
+  withMeta = \malArgs ->
+    [malVal, malMeta] = toPartialArray (2, malArgs)
+    if malAtom? malVal
+      { malValue, type } = malVal
+      { malValue, type, meta: malMeta }
+    else
+      { jsValue, type } = malVal
+      { jsValue, type, meta: malMeta }
+  write = \malArgs ->
+    createMalString (serialize (car malArgs))
 
-module.exports = {
-  environment
-  evalWithEnv
-  _evaluateString
-}
+  [atom?, boolean?, coreFn?, false?, list?, macro?, nil?, number?, symbol?, string?, userFn?, true?] =
+    [ malAtom?
+      malBoolean?
+      malCoreFunction?
+      malFalse?
+      malList?
+      malMacro?
+      malNil?
+      malNumber?
+      malSymbol?
+      malString?
+      malUserFunction?
+      malTrue?
+    ].map createPredicate
+
+  functionsOnMalValues = {
+    '='                  : areEqual
+    'append'             : append
+    'apply'              : apply
+    'atom'               : atom
+    'atom?'              : atom?
+    'boolean?'           : boolean?
+    'car'                : _car
+    'call'               : call
+    'cdr'                : _cdr
+    'cons'               : cons
+    'concat'             : _concat
+    'core-fn?'           : coreFn?
+    'count'              : count
+    'deref'              : deref
+    'drop'               : _drop
+    'empty?'             : _empty?
+    'eval'               : _evaluate
+    'evalStr'            : _evaluateString
+    'eval-with-env'      : evalWithEnv
+    'eval-with-bare-env' : evalWithBareEnv
+    'first'              : _car
+    'false?'             : false?
+    'fix'                : fix
+    'function?'          : function?
+    'ignore!'            : ignore!
+    'ignoreIfTrue'       : ignoreIfTrue
+    'ignoreUnlessTrue'   : ignoreUnlessTrue
+    'last'               : _last
+    'list'               : list
+    'list?'              : list?
+    'load'               : load
+    'load-with-env'      : loadWithEnv
+    'load-with-bare-env' : loadWithBareEnv
+    'macro?'             : macro?
+    'map'                : map
+    'meta'               : meta
+    'nil?'               : nil?
+    'not'                : _not
+    'nth'                : nth
+    'number?'            : number?
+    'parse'              : _interpret
+    'prepend'            : prepend
+    'println'            : println(display)
+    'prn'                : prn(display)
+    'pr-str'             : prStr
+    '-quit-'             : _quit_
+    'read'               : read
+    'reduce'             : malReduce
+    'reset!'             : reset
+    'rest'               : _cdr
+    'reverse'            : _reverse
+    'set!'               : set
+    'slurp'              : slurp
+    'str'                : str
+    'string?'            : string?
+    'symbol'             : symbol
+    'symbol?'            : symbol?
+    'take'               : _take
+    'throw'              : _throw
+    'time-ms'            : time-ms
+    'true?'              : true?
+    'typeof'             : typeOf
+    'user-fn?'           : userFn?
+    'with-meta'          : withMeta
+    'write'              : write
+  }
+
+  environment = {}
+
+  setCoreFnsOnJsValues! (environment, functionsOnJsValues)
+  setCoreFnsOnMalValues! (environment, functionsOnMalValues)
+    
+  environment['*ARGV*'] = createMalList ()
+
+  _environment_ = fromJsObject environment
+  environment['*DEFAULT-ENV*'] = _environment_
+
+  return environment
+
+module.exports = getEnvironment
