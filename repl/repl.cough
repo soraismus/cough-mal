@@ -1,12 +1,15 @@
-{ createMalString } = require './mal-type-utilities'
-display             = require './display'
-getEnvironment      = require './environment'
-{ fromArray }       = require './linked-list'
-_process            = require './process'
-readPrompt          = require './readPrompt'
-serialize           = require './serialize'
+{ createMalString } = require '../src/mal-type-utilities'
+display             = require '../src/display'
+getEnvironment      = require '../src/environment'
+{ fromArray }       = require '../src/linked-list'
+_process            = require '../src/process'
+readPrompt          = require '../src/readPrompt'
+serialize           = require '../src/serialize'
 
-environment = getEnvironment display
+_display = \malValue ->
+  { effect: { type: 'display' }, value: malValue }
+
+environment = getEnvironment _display
 
 _createMalString = \jsString ->
   createMalString('"' + jsString + '"')
@@ -29,8 +32,6 @@ if ? process && process.argv.length > 2
   file = require('fs').readFileSync(fileName).toString()
   repl (_environments, file)
   process.exit 0
-
-_repl '(load "standard")'
 
 loop
   _repl (readPrompt ())

@@ -1,0 +1,4 @@
+(do
+  (def! fact (letrec* (fact (fn* (x) (if (= 0 x) 1 (do (prn x) (* x (fact (- x 1))))))) fact))
+  (prn *ARGV*)
+  (fact (parse-number (nth 3 *ARGV*))))

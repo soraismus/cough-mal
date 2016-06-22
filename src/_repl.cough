@@ -1,5 +1,47 @@
-(do
+{ createMalString } = require '../src/mal-type-utilities'
+{ fromArray }       = require '../src/linked-list'
+getEnvironment      = require './environment'
+_process            = require './process'
+_serialize          = require './serialize'
 
+_createMalString = \jsString ->
+  createMalString('"' + jsString + '"')
+
+display = \malValue ->
+  { effect: { type: 'display' }, value: malValue }
+
+_fromArray = \array ->
+  index = {}
+  for i in [0 .. array.length]
+    index[array[i]] = array[i + 1]
+  index
+
+repl = (envs, jsString) ->
+  try serialize (_process envs jsString)
+  catch e
+    "repl error: (#{serialize e} + )"
+
+_repl = (jsString, userEnv) ->
+  if ? userEnv
+    _userEnv = { '*ARGV*' : fromArray(userEnv.map _createMalString) }
+    repl ([_userEnv, environment], jsString)
+  else
+    repl ([environment], jsString)
+
+serialize = \results ->
+  results.map \result ->
+    _result = {}
+    for own key, value of result
+      if key == 'effect'
+        _result[key] = value
+      else
+        _result[key] = _serialize value
+    _result
+
+environment = getEnvironment display
+
+standard = """
+(do
   (def! fix*
     (fn* (f)
       ( (fn* (x) (f (fn* (& ys) (apply (x x) ys))))
@@ -82,11 +124,11 @@
     (if (empty? xs)
       nil
       (let* (x  (car xs)
-             xs (cdr xs))
+            xs (cdr xs))
         (if (empty? xs)
           x
           (let* (form  (car xs)
-                 forms (cdr xs))
+                forms (cdr xs))
             (if (empty? forms)
               (if (list? form)
                 (if (= (symbol "fn*") (car form))
@@ -99,11 +141,11 @@
     (if (empty? xs)
       nil
       (let* (x  (car xs)
-             xs (cdr xs))
+            xs (cdr xs))
         (if (empty? xs)
           x
           (let* (form  (car xs)
-                 forms (cdr xs))
+                forms (cdr xs))
             (if (empty? forms)
               (if (list? form)
                 (if (= (symbol "fn*") (car form))
@@ -155,7 +197,7 @@
   (def! skip (fn* (nbr xs)
     (letrec* (-skip- (fn* (ys)
       (let* (nbr (car ys)
-             xs (2nd ys))
+            xs (2nd ys))
         (cond
           (= 0 nbr) xs
           (= 1 nbr) (cdr xs)
@@ -168,11 +210,15 @@
   (def! .. (fn* (lo hi)
     (letrec* (-..- (fn* (ys)
       (let* (lo     (1st ys)
-             hi     (2nd ys)
-             -list- (3rd ys))
+            hi     (2nd ys)
+            -list- (3rd ys))
         (if (= lo hi)
           (cons hi -list-)
           (-..- (list lo (decr hi) (cons hi -list-)))))))
       (-..- (list lo hi '())))))
-
 )
+"""
+
+_repl standard
+
+module.exports = _repl
