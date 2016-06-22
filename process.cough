@@ -1,7 +1,17 @@
-{ evaluate } = require './evaluate'
-interpret    = require './interpret'
+commentSignal = require './commentSignal'
+{ evaluate }  = require './evaluate'
+interpret     = require './interpret'
 
 process = \envs \sourceCode ->
-  evaluate envs (interpret sourceCode)
+  results = []
+  addResult = \result ->
+    results.push result
+  value = evaluate (envs, addResult) (interpret sourceCode)
+  result = if value == commentSignal
+      { effect: { type: 'comment' } }
+    else
+      { effect: false, value }
+  addResult result
+  return results
 
 module.exports = process

@@ -11,7 +11,7 @@ commentSignal                = require './commentSignal'
 { createMalNumber }          = require './mal-type-utilities'
 { createMalString }          = require './mal-type-utilities'
 { createMalSymbol }          = require './mal-type-utilities'
-{ createMalUserFunction }    = require './mal-type-utilities'
+{ createMalUserPureFunction }    = require './mal-type-utilities'
 { def! }                     = require './keyTokens'
 { _do }                      = require './keyTokens'
 { empty? }                   = require './linked-list' 
@@ -28,14 +28,15 @@ commentSignal                = require './commentSignal'
 { letrec* }                  = require './keyTokens'
 { lookup }                   = require './env-utilities'
 { macro* }                   = require './keyTokens'
-{ malCoreFunction? }         = require './mal-type-utilities'
+{ malCoreEffectfulFunction? }         = require './mal-type-utilities'
+{ malCorePureFunction? }         = require './mal-type-utilities'
 { malIgnore? }               = require './mal-type-utilities'
 { malIndex? }                = require './mal-type-utilities'
 { malList? }                 = require './mal-type-utilities'
 { malMacro? }                = require './mal-type-utilities'
 { malNil }                   = require './mal-type-utilities'
 { malSymbol? }               = require './mal-type-utilities'
-{ malUserFunction? }         = require './mal-type-utilities'
+{ malUserPureFunction? }         = require './mal-type-utilities'
 { map }                      = require './linked-list'
 { next }                     = require './linked-list'
 { quasiquote }               = require './keyTokens'
@@ -56,7 +57,7 @@ commentSignal                = require './commentSignal'
 serialize = require './serialize'
 
 createFn = (malList, envs) ->
-  createMalUserFunction
+  createMalUserPureFunction
     localEnvs     : (envs.slice 0)
     malExpression : (next malList)
     malParameters : (car malList)
@@ -80,23 +81,23 @@ createMacro = (malList, envs) ->
     malExpression : (next malList)
     malParameters : (car malList)
 
-defineNewValue = (malList, envs) ->
+defineNewValue = (malList, envs, addResult) ->
   jsKey = extractJsValue (car malList)
-  malValue = _evaluate ((next malList), envs)
+  malValue = _evaluate ((next malList), envs, addResult)
   setMainEnv (envs, jsKey, malValue)
 
-evalQuasiquotedExpr = (expr, envs) ->
+evalQuasiquotedExpr = (expr, envs, addResult) ->
   return expr unless malList? expr
   manageItem = (memo, item) ->
     switch
       when unquotedExpr? item
-        createMalList(_evaluate(next(item), envs), memo)
+        createMalList(_evaluate(next(item), envs, addResult), memo)
       when spliceUnquotedExpr? item
         _manageItem = (_memo, _item) ->
           createMalList (_item, _memo)
-        reduce (memo, _manageItem, (_evaluate ((next item), envs)))
+        reduce (memo, _manageItem, (_evaluate ((next item), envs, addResult)))
       when malList? item
-        createMalList (evalQuasiquotedExpr (item, envs), memo)
+        createMalList (evalQuasiquotedExpr (item, envs, addResult), memo)
       else
         createMalList (item, memo)
   reverse(
@@ -105,7 +106,7 @@ evalQuasiquotedExpr = (expr, envs) ->
       manageItem
       expr))
 
-_evaluate = (malExpr, envs) ->
+_evaluate = (malExpr, envs, addResult) ->
   loop
     switch
       when malSymbol? malExpr
@@ -120,39 +121,39 @@ _evaluate = (malExpr, envs) ->
         index = extractJsValue malExpr
         newIndex = {}
         for own key, value of index
-          newIndex[key] = _evaluate (index[key], envs)
+          newIndex[key] = _evaluate (index[key], envs, addResult)
         return createMalIndex newIndex
 
       when ! (malList? malExpr)
         return malExpr
 
       else
-        malExpr = filter ((\x -> ! (ignorable? (x, envs))), malExpr)
+        malExpr = filter ((\x -> ! (ignorable? (x, envs, addResult))), malExpr)
         [head, a1, remaining] = toPartialArray (2, malExpr)
         t1 = cdr malExpr
 
         switch (extractJsValue head)
           when def!
-            return defineNewValue (t1, envs) 
+            return defineNewValue (t1, envs, addResult) 
 
           when undef!
             return undefineValue (t1, envs) 
 
           when let*
             malExpr = (car remaining)
-            envs = addEnv (envs, reduceLet* (envs, a1))
+            envs = addEnv (envs, reduceLet* (envs, a1, addResult))
 
           when letrec*
             malExpr = (car remaining)
-            envs = addEnv (envs, reduceLetrec* (envs, a1))
+            envs = addEnv (envs, reduceLetrec* (envs, a1, addResult))
 
           # How optimize tail calls?
           when _do
-            return forEach ((evaluate envs), t1)
+            return forEach ((evaluate (envs, addResult)), t1)
 
           when _if
             malExpr =
-              if extractJsValue (_evaluate (a1, envs))
+              if extractJsValue (_evaluate (a1, envs, addResult))
                 (car remaining)
               else
                 if (empty? (otherwise = (next remaining))) then malNil else otherwise
@@ -167,14 +168,14 @@ _evaluate = (malExpr, envs) ->
             return car t1
 
           when quasiquote
-            return evalQuasiquotedExpr ((car t1), envs)
+            return evalQuasiquotedExpr ((car t1), envs, addResult)
 
           when expand-macro
-            return expandMacro ((car a1), (cdr a1), envs)
+            return expandMacro ((car a1), (cdr a1), envs, addResult)
 
           when try*
             try
-              return _evaluate (a1, envs)
+              return _evaluate (a1, envs, addResult)
             catch ex
               if empty? remaining
                 throw ex
@@ -185,28 +186,34 @@ _evaluate = (malExpr, envs) ->
                   ex = createMalString (circumpendQuotes ex.message)
                 newEnv = {}
                 newEnv[extractJsValue _ex] = ex
-                return _evaluate (catchExpr, addEnv (envs, newEnv))
+                return _evaluate (catchExpr, addEnv (envs, newEnv), addResult)
 
           else
             malSymbol = head
             malExpr = t1
 
-            malInvokable = _evaluate (malSymbol, envs)
+            malInvokable = _evaluate (malSymbol, envs, addResult)
 
             switch
               when malMacro? malInvokable
-                malExpr = expandMacro (head, t1, envs)
+                malExpr = expandMacro (head, t1, envs, addResult)
 
-              when malCoreFunction? malInvokable
+              when malCorePureFunction? malInvokable
                 fn = extractJsValue malInvokable
-                malArgs = map ((evaluate envs), malExpr)
+                malArgs = map ((evaluate (envs, addResult)), malExpr)
                 return fn malArgs
 
-              when malUserFunction? malInvokable
+              when malCoreEffectfulFunction? malInvokable
+                fn = extractJsValue malInvokable
+                malArgs = map ((evaluate (envs, addResult)), malExpr)
+                addResult (fn malArgs)
+                return malNil
+
+              when malUserPureFunction? malInvokable
                 { localEnvs, malExpression, malParameters } =
                   extractJsValue malInvokable
 
-                malArgs = map ((evaluate envs), malExpr)
+                malArgs = map ((evaluate (envs, addResult)), malExpr)
                 malExpr = malExpression
                 newEnv = createLocalEnv (malParameters, malArgs)
                 envs = addEnv (localEnvs, newEnv)
@@ -214,36 +221,36 @@ _evaluate = (malExpr, envs) ->
               else
                 throw 'Value is not a function'
 
-evaluate = \envs \malExpr ->
+evaluate = (envs, addResult) -> (malExpr) ->
   return commentSignal if malExpr == commentSignal
-  _evaluate (malExpr, envs)
+  _evaluate (malExpr, envs, addResult)
 
-expandMacro = (malMacroSymbol, malArgs, envs) ->
-  malMacro = _evaluate (malMacroSymbol, envs)
+expandMacro = (malMacroSymbol, malArgs, envs, addResult) ->
+  malMacro = _evaluate (malMacroSymbol, envs, addResult)
   { localEnvs, malExpression, malParameters } = extractJsValue malMacro
   newEnv = createLocalEnv (malParameters, malArgs)
   newEnvStack = addEnv (localEnvs, newEnv)
-  _evaluate (malExpression, newEnvStack)
+  _evaluate (malExpression, newEnvStack, addResult)
 
-ignorable? = (malVal, envs) ->
+ignorable? = (malVal, envs, addResult) ->
   malIgnore? malVal ||
     (malList? malVal && malSymbol? (symbol = car malVal) && (
       ((jsString = extractJsValue symbol) == 'ignore!') ||
-      ((jsString == 'ignoreIfTrue') && (extractJsValue (_evaluate ((next malVal), envs)))) ||
-      ((jsString == 'ignoreUnlessTrue') && ! (extractJsValue (_evaluate ((next malVal), envs))))))
+      ((jsString == 'ignoreIfTrue') && (extractJsValue (_evaluate ((next malVal), envs, addResult)))) ||
+      ((jsString == 'ignoreUnlessTrue') && ! (extractJsValue (_evaluate ((next malVal), envs, addResult))))))
 
-reduceLet* = (envs, list) ->
+reduceLet* = (envs, list, addResult) ->
   newEnv = {}
   _envs = addEnv (envs, newEnv)
   until empty? list
     jsKey = extractJsValue list.value
     list = recurse list
-    envValue = _evaluate (list.value, _envs)
+    envValue = _evaluate (list.value, _envs, addResult)
     newEnv[jsKey] = envValue
     list = recurse list
   newEnv
 
-reduceLetrec* = (envs, list) ->
+reduceLetrec* = (envs, list, addResult) ->
   newEnv = {}
   _envs = addEnv (envs, newEnv)
   until empty? list
@@ -259,7 +266,7 @@ reduceLetrec* = (envs, list) ->
       ])
     ])
 
-    envValue = _evaluate (_malExpr, _envs)
+    envValue = _evaluate (_malExpr, _envs, addResult)
     newEnv[jsKey] = envValue
     list = recurse list
   newEnv

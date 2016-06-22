@@ -1,6 +1,6 @@
 { malTypes } = require './mal-types'
 
-malListType = malTypes[5]
+malListType = malTypes[6]
 
 car = \malList ->
   if empty? malList

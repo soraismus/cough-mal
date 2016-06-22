@@ -1,56 +1,59 @@
-{ car }                   = require './linked-list'
-{ cdr }                   = require './linked-list'
-{ circumpendQuotes }      = require './js-utilities'
-{ concat }                = require './linked-list'
-{ createMalAtom }         = require './mal-type-utilities'
-{ createMalBoolean }      = require './mal-type-utilities'
-{ createMalCoreFunction } = require './mal-type-utilities'
-{ createMalIdentifier }   = require './mal-type-utilities'
-{ createMalIgnore }       = require './mal-type-utilities'
-{ createMalIndex }        = require './mal-type-utilities'
-{ createMalList }         = require './mal-type-utilities'
-{ createMalNumber }       = require './mal-type-utilities'
-{ createMalString }       = require './mal-type-utilities'
-{ createMalSymbol }       = require './mal-type-utilities'
-{ drop }                  = require './linked-list'
-{ empty? }                = require './linked-list'
-{ equal? }                = require './linked-list'
-{ evaluate }              = require './evaluate'
-{ extractJsValue }        = require './mal-type-utilities'
-{ fromArray }             = require './linked-list'
-{ fromJsObject }          = require './index-utilities'
-{ fromMalIndex }          = require './index-utilities'
-interpret                 = require './interpret'
-{ jsNaN? }                = require './js-utilities'
-{ jsNumber? }             = require './js-utilities'
-{ jsString? }             = require './js-utilities'
-{ last }                  = require './linked-list'
-{ malAtom? }              = require './mal-type-utilities'
-{ malCoreFunction? }      = require './mal-type-utilities'
-{ malBoolean? }           = require './mal-type-utilities'
-{ malFalse }              = require './mal-type-utilities'
-{ malFalse? }             = require './mal-type-utilities'
-{ malIgnore }             = require './mal-type-utilities'
-{ malIndex? }             = require './mal-type-utilities'
-{ malList? }              = require './mal-type-utilities'
-{ malMacro? }             = require './mal-type-utilities'
-{ malNil }                = require './mal-type-utilities'
-{ malNil? }               = require './mal-type-utilities'
-{ malNumber? }            = require './mal-type-utilities'
-{ malString? }            = require './mal-type-utilities'
-{ malSymbol? }            = require './mal-type-utilities'
-{ malTrue }               = require './mal-type-utilities'
-{ malTrue? }              = require './mal-type-utilities'
-{ malUserFunction? }      = require './mal-type-utilities'
-{ next }                  = require './linked-list'
-_process_                 = require './process'
-{ recurse }               = require './linked-list'
-{ reduce }                = require './linked-list'
-{ reverse }               = require './linked-list'
-serialize                 = require './serialize'
-{ take }                  = require './linked-list'
-{ toArray }               = require './linked-list'
-{ toPartialArray }        = require './linked-list'
+{ car }                            = require './linked-list'
+{ cdr }                            = require './linked-list'
+{ circumpendQuotes }               = require './js-utilities'
+{ concat }                         = require './linked-list'
+{ createMalAtom }                  = require './mal-type-utilities'
+{ createMalBoolean }               = require './mal-type-utilities'
+{ createMalCoreEffectfulFunction } = require './mal-type-utilities'
+{ createMalCorePureFunction }      = require './mal-type-utilities'
+{ createMalIdentifier }            = require './mal-type-utilities'
+{ createMalIgnore }                = require './mal-type-utilities'
+{ createMalIndex }                 = require './mal-type-utilities'
+{ createMalList }                  = require './mal-type-utilities'
+{ createMalNumber }                = require './mal-type-utilities'
+{ createMalString }                = require './mal-type-utilities'
+{ createMalSymbol }                = require './mal-type-utilities'
+{ drop }                           = require './linked-list'
+{ empty? }                         = require './linked-list'
+{ equal? }                         = require './linked-list'
+{ evaluate }                       = require './evaluate'
+{ extractJsValue }                 = require './mal-type-utilities'
+{ fromArray }                      = require './linked-list'
+{ fromJsObject }                   = require './index-utilities'
+{ fromMalIndex }                   = require './index-utilities'
+interpret                          = require './interpret'
+{ jsNaN? }                         = require './js-utilities'
+{ jsNumber? }                      = require './js-utilities'
+{ jsString? }                      = require './js-utilities'
+{ last }                           = require './linked-list'
+{ malAtom? }                       = require './mal-type-utilities'
+{ malCoreEffectfulFunction? }      = require './mal-type-utilities'
+{ malCorePureFunction? }           = require './mal-type-utilities'
+{ malBoolean? }                    = require './mal-type-utilities'
+{ malFalse }                       = require './mal-type-utilities'
+{ malFalse? }                      = require './mal-type-utilities'
+{ malIgnore }                      = require './mal-type-utilities'
+{ malIndex? }                      = require './mal-type-utilities'
+{ malList? }                       = require './mal-type-utilities'
+{ malMacro? }                      = require './mal-type-utilities'
+{ malNil }                         = require './mal-type-utilities'
+{ malNil? }                        = require './mal-type-utilities'
+{ malNumber? }                     = require './mal-type-utilities'
+{ malString? }                     = require './mal-type-utilities'
+{ malSymbol? }                     = require './mal-type-utilities'
+{ malTrue }                        = require './mal-type-utilities'
+{ malTrue? }                       = require './mal-type-utilities'
+{ malUserEffectfulFunction? }      = require './mal-type-utilities'
+{ malUserPureFunction? }           = require './mal-type-utilities'
+{ next }                           = require './linked-list'
+_process_                          = require './process'
+{ recurse }                        = require './linked-list'
+{ reduce }                         = require './linked-list'
+{ reverse }                        = require './linked-list'
+serialize                          = require './serialize'
+{ take }                           = require './linked-list'
+{ toArray }                        = require './linked-list'
+{ toPartialArray }                 = require './linked-list'
 
 getEnvironment = \display ->
   lift = (fnOnJsValues) -> (malValueList) ->
@@ -58,7 +61,7 @@ getEnvironment = \display ->
 
   setCoreFnsOnJsValues! = (env, fns) ->
     for own fnName, fn of fns
-      env[fnName] = createMalCoreFunction (lift fn)
+      env[fnName] = createMalCorePureFunction (lift fn)
 
   add = (nbrs...) ->
     createMalNumber (nbrs.reduce ((x, nbr) ->  x += nbr))
@@ -94,7 +97,7 @@ getEnvironment = \display ->
     for own key, value of index
       _keys.push (
         if jsNaN? (jsNbr = parseFloat (key, 10))
-          (if key[0] == ':' then createMalIdentifier else createMalString) key
+          (if key[0] == ':'           then createMalIdentifier else createMalString) key
         else
           createMalNumber jsNbr)
     fromArray _keys
@@ -115,7 +118,7 @@ getEnvironment = \display ->
     return jsVal if jsNumber? jsVal
     return malNil unless jsString? jsVal
     jsNbr = parseFloat ((stripQuotes jsVal), 10)
-    if jsNaN? jsNbr then malNil else createMalNumber jsNbr
+    if jsNaN? jsNbr           then malNil else createMalNumber jsNbr
   subtract = (nbrs...) ->
     createMalNumber (nbrs.reduce ((x, nbr) -> x -= nbr))
   vals = \index ->
@@ -168,12 +171,6 @@ getEnvironment = \display ->
     createMalString ('"' + (_prStr (malArgs, true)).join '' + '"')
   str = \malArgs ->
     createMalString ('"' + (_prStr (malArgs, false)).join '' + '"')
-  prn = \display \malArgs ->
-    display (_prStr (malArgs, true).join '')
-    malNil
-  println = \display \malArgs ->
-    display (_prStr (malArgs, false).join '')
-    malNil
 
   _read = \malArgs ->
     jsFileName = stripQuotes (extractJsValue (car malArgs))
@@ -181,7 +178,7 @@ getEnvironment = \display ->
 
   setCoreFnsOnMalValues! = (env, fns) ->
     for own fnName, fn of fns
-      env[fnName] = createMalCoreFunction fn 
+      env[fnName] = createMalCorePureFunction fn 
 
   setMalValue = (malAtom, malValue) ->
     malAtom.malValue = malValue
@@ -214,10 +211,10 @@ getEnvironment = \display ->
     evaluate [] malArgs
   _car = \malArgs ->
     arg = car malArgs
-    if malList? arg then car arg else malNil
+    if malList? arg           then car arg else malNil
   _cdr = \malArgs ->
     arg = car malArgs
-    if malList? arg then cdr arg else malNil
+    if malList? arg           then cdr arg else malNil
   _concat = \malArgs ->
     malLists = toArray malArgs
     concat malLists...
@@ -239,7 +236,7 @@ getEnvironment = \display ->
     if empty? malArgs
       malFalse
     else
-      if empty? (car malArgs) then malTrue else malFalse
+      if empty? (car malArgs)           then malTrue else malFalse
   evalWithBareEnv = \malArgs ->
     [expr, localEnv] = toPartialArray (2, malArgs)
     evaluate [(fromMalIndex localEnv)] expr
@@ -259,17 +256,17 @@ getEnvironment = \display ->
             malFnX
             createMalList malFnX)
           createMalList malValY))
-      malFnY = createMalCoreFunction jsFnY
+      malFnY = createMalCorePureFunction jsFnY
       __evaluate__2 (createMalList (
         malFnF
         createMalList malFnY))
-    malFnX = createMalCoreFunction jsFnX
+    malFnX = createMalCorePureFunction jsFnX
     __evaluate__2 (createMalList (
       malFnX
       createMalList malFnX))
   function? = \jsList ->
     malValue = jsList.value
-    createMalBoolean (malCoreFunction? malValue || malUserFunction? malValue)
+    createMalBoolean (malCorePureFunction? malValue || malUserPureFunction? malValue)
   ignore! = \malArgs -> malIgnore
   ignoreIfTrue = \malArgs ->
     [malBool, malValue] = toPartialArray (2, malArgs)
@@ -388,7 +385,7 @@ getEnvironment = \display ->
   [atom?, boolean?, coreFn?, false?, list?, macro?, nil?, number?, symbol?, string?, userFn?, true?] =
     [ malAtom?
       malBoolean?
-      malCoreFunction?
+      malCorePureFunction?
       malFalse?
       malList?
       malMacro?
@@ -396,7 +393,7 @@ getEnvironment = \display ->
       malNumber?
       malSymbol?
       malString?
-      malUserFunction?
+      malUserPureFunction?
       malTrue?
     ].map createPredicate
 
@@ -443,10 +440,8 @@ getEnvironment = \display ->
     'number?'            : number?
     'parse'              : _interpret
     'prepend'            : prepend
-    'println'            : println(display)
-    'prn'                : prn(display)
     'pr-str'             : prStr
-    '-quit-'             : _quit_
+    '-quit-'             : _quit_              # Effect
     'read'               : read
     'reduce'             : malReduce
     'reset!'             : reset
@@ -468,10 +463,21 @@ getEnvironment = \display ->
     'write'              : write
   }
 
+  setCoreEffectfulFnsOnMalValues! = (represent) -> (env, fns) ->
+    for own fnName, fn of fns
+      env[fnName] = createMalCoreEffectfulFunction \malArgs ->
+        represent (fn malArgs)
+
+  displayEffectsOnMalValues = {
+    'prn'     : \malArgs -> _prStr (malArgs, true).join ''
+    'println' : \malArgs -> _prStr (malArgs, false).join ''
+  }
+
   environment = {}
 
-  setCoreFnsOnJsValues! (environment, functionsOnJsValues)
-  setCoreFnsOnMalValues! (environment, functionsOnMalValues)
+  setCoreFnsOnJsValues!                   (environment, functionsOnJsValues)
+  setCoreFnsOnMalValues!                  (environment, functionsOnMalValues)
+  setCoreEffectfulFnsOnMalValues! display (environment, displayEffectsOnMalValues)
     
   environment['*ARGV*'] = createMalList ()
 

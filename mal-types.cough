@@ -1,24 +1,26 @@
 malTypes = [
-  malBooleanType      = 'malBooleanType'
-  malCoreFunctionType = 'malCoreFunctionType'
-  malIdentifierType   = 'malIdentifierType'
-  malIndexType        = 'malIndexType'
-  malKeywordType      = 'malKeywordType'
-  malListType         = 'malListType'
-  malMacroType        = 'malMacroType'
-  malNumberType       = 'malNumberType'
-  malSpecialFormType  = 'malSpecialFormType'
-  malStringType       = 'malStringType'
-  malSymbolType       = 'malSymbolType'
-  malUnitType         = 'malUnitType'
-  malUserFunctionType = 'malUserFunctionType'
-  malAtomType         = 'malAtomType'
+  malBooleanType               = 'malBooleanType'
+  malCoreEffectfulFunctionType = 'malCoreEffectfulFunctionType'
+  malCorePureFunctionType      = 'malCorePureFunctionType'
+  malIdentifierType            = 'malIdentifierType'
+  malIndexType                 = 'malIndexType'
+  malKeywordType               = 'malKeywordType'
+  malListType                  = 'malListType'
+  malMacroType                 = 'malMacroType'
+  malNumberType                = 'malNumberType'
+  malSpecialFormType           = 'malSpecialFormType'
+  malStringType                = 'malStringType'
+  malSymbolType                = 'malSymbolType'
+  malUnitType                  = 'malUnitType'
+  malUserPureFunctionType      = 'malUserPureFunctionType'
+  malAtomType                  = 'malAtomType'
 ]
 
 module.exports = {
   malAtomType
   malBooleanType
-  malCoreFunctionType
+  malCoreEffectfulFunctionType
+  malCorePureFunctionType
   malIdentifierType
   malIndexType
   malKeywordType
@@ -30,5 +32,5 @@ module.exports = {
   malSymbolType
   malTypes
   malUnitType
-  malUserFunctionType
+  malUserPureFunctionType
 }

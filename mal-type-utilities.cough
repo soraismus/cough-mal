@@ -31,20 +31,21 @@ extractJsValue = \malValue ->
   malValue.jsValue
 
 [
-  [_createMalBoolean,      malBoolean?     ]
-  [createMalCoreFunction,  malCoreFunction?]
-  [createMalIdentifier,    malIdentifier?   ]
-  [createMalIndex,         malIndex?       ]
-  [createMalKeyword,       malKeyword?     ]
-  [_createMalList,         malList?        ]
-  [createMalMacro,         malMacro?       ]
-  [createMalNumber,        malNumber?      ]
-  [createMalSpecialForm,   malSpecialForm? ]
-  [createMalString,        malString?      ]
-  [createMalSymbol,        malSymbol?      ]
-  [_createMalUnit,         _malUnit?       ]
-  [createMalUserFunction,  malUserFunction?]
-  [_createMalAtom,         malAtom?        ]
+  [_createMalBoolean,               malBoolean?              ]
+  [createMalCoreEffectfulFunction,  malCoreEffectfulFunction?]
+  [createMalCorePureFunction,       malCorePureFunction?     ]
+  [createMalIdentifier,             malIdentifier?           ]
+  [createMalIndex,                  malIndex?                ]
+  [createMalKeyword,                malKeyword?              ]
+  [_createMalList,                  malList?                 ]
+  [createMalMacro,                  malMacro?                ]
+  [createMalNumber,                 malNumber?               ]
+  [createMalSpecialForm,            malSpecialForm?          ]
+  [createMalString,                 malString?               ]
+  [createMalSymbol,                 malSymbol?               ]
+  [_createMalUnit,                  _malUnit?                ]
+  [createMalUserPureFunction,       malUserPureFunction?     ]
+  [_createMalAtom,                  malAtom?                 ]
 ] = malTypes.map create-factory-&-predicate
 
 malIgnore = _createMalUnit null
@@ -58,7 +59,8 @@ malNil = _createMalUnit null
 module.exports = {
   createMalAtom
   createMalBoolean
-  createMalCoreFunction
+  createMalCoreEffectfulFunction
+  createMalCorePureFunction
   createMalIdentifier
   createMalIgnore
   createMalIndex
@@ -70,11 +72,12 @@ module.exports = {
   createMalSpecialForm
   createMalString
   createMalSymbol
-  createMalUserFunction
+  createMalUserPureFunction
   extractJsValue
   malAtom?
   malBoolean?
-  malCoreFunction?
+  malCoreEffectfulFunction?
+  malCorePureFunction?
   malFalse
   malFalse?
   malIdentifier?   
@@ -92,5 +95,5 @@ module.exports = {
   malSymbol?
   malTrue
   malTrue?
-  malUserFunction?
+  malUserPureFunction?
 }
