@@ -1,9 +1,0 @@
-commentSignal = require './commentSignal'
-
-display = \serializedMalValue ->
-  return "\n" if serializedMalValue == commentSignal
-  log serializedMalValue
-
-log = console.log
-
-module.exports = display

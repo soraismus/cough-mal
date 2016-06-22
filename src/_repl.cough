@@ -1,5 +1,5 @@
-{ createMalString } = require '../src/mal-type-utilities'
-{ fromArray }       = require '../src/linked-list'
+{ createMalString } = require './mal-type-utilities'
+{ fromArray }       = require './linked-list'
 getEnvironment      = require './environment'
 _process            = require './process'
 _serialize          = require './serialize'
