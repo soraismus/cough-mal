@@ -91,7 +91,7 @@ evalQuasiquotedExpr = (expr, envs, addResult) ->
   manageItem = (memo, item) ->
     switch
       when unquotedExpr? item
-        createMalList(_evaluate(next(item), envs, addResult), memo)
+        createMalList (_evaluate ((next item), envs, addResult), memo)
       when spliceUnquotedExpr? item
         _manageItem = (_memo, _item) ->
           createMalList (_item, _memo)
@@ -116,7 +116,6 @@ _evaluate = (malExpr, envs, addResult) ->
         else
           return lookup (envs, jsString)
 
-      # NOTE: Happens over and over for every malIndex.
       when malIndex? malExpr
         index = extractJsValue malExpr
         newIndex = {}
@@ -129,58 +128,57 @@ _evaluate = (malExpr, envs, addResult) ->
 
       else
         malExpr = filter ((\x -> ! (ignorable? (x, envs, addResult))), malExpr)
-        [head, a1, remaining] = toPartialArray (2, malExpr)
-        t1 = cdr malExpr
+        [head, arg1, remainingArgs] = toPartialArray (2, malExpr)
+        tailList = cdr malExpr
 
         switch (extractJsValue head)
           when def!
-            return defineNewValue (t1, envs, addResult) 
+            return defineNewValue (tailList, envs, addResult) 
 
           when undef!
-            return undefineValue (t1, envs) 
+            return undefineValue (tailList, envs) 
 
           when let*
-            malExpr = (car remaining)
-            envs = addEnv (envs, reduceLet* (envs, a1, addResult))
+            malExpr = (car remainingArgs)
+            envs = addEnv (envs, reduceLet* (envs, arg1, addResult))
 
           when letrec*
-            malExpr = (car remaining)
-            envs = addEnv (envs, reduceLetrec* (envs, a1, addResult))
+            malExpr = (car remainingArgs)
+            envs = addEnv (envs, reduceLetrec* (envs, arg1, addResult))
 
-          # How optimize tail calls?
           when _do
-            return forEach ((evaluate (envs, addResult)), t1)
+            return forEach ((evaluate (envs, addResult)), tailList)
 
           when _if
             malExpr =
-              if extractJsValue (_evaluate (a1, envs, addResult))
-                (car remaining)
+              if extractJsValue (_evaluate (arg1, envs, addResult))
+                (car remainingArgs)
               else
-                if (empty? (otherwise = (next remaining))) then malNil else otherwise
+                if (empty? (otherwise = (next remainingArgs))) then malNil else otherwise
 
           when fn*
-            return createFn (t1, envs)
+            return createFn (tailList, envs)
 
           when macro*
-            return createMacro (t1, envs)
+            return createMacro (tailList, envs)
 
           when quote
-            return car t1
+            return car tailList
 
           when quasiquote
-            return evalQuasiquotedExpr ((car t1), envs, addResult)
+            return evalQuasiquotedExpr ((car tailList), envs, addResult)
 
           when expand-macro
-            return expandMacro ((car a1), (cdr a1), envs, addResult)
+            return expandMacro ((car arg1), (cdr arg1), envs, addResult)
 
           when try*
             try
-              return _evaluate (a1, envs, addResult)
+              return _evaluate (arg1, envs, addResult)
             catch ex
-              if empty? remaining
+              if empty? remainingArgs
                 throw ex
               else
-                [_catch, _ex, catchExpr] = toPartialArray (3, (car remaining))
+                [_catch, _ex, catchExpr] = toPartialArray (3, (car remainingArgs))
                 throw ex if (extractJsValue _catch) != "catch*"
                 if ex instanceof Error
                   ex = createMalString (circumpendQuotes ex.message)
@@ -190,13 +188,13 @@ _evaluate = (malExpr, envs, addResult) ->
 
           else
             malSymbol = head
-            malExpr = t1
+            malExpr = tailList
 
             malInvokable = _evaluate (malSymbol, envs, addResult)
 
             switch
               when malMacro? malInvokable
-                malExpr = expandMacro (head, t1, envs, addResult)
+                malExpr = expandMacro (head, tailList, envs, addResult)
 
               when malCorePureFunction? malInvokable
                 fn = extractJsValue malInvokable

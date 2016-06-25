@@ -1,30 +1,25 @@
-{ createMalString } = require './type-utilities'
-{ fromArray }       = require './linked-list'
-getEnvironment      = require './environment'
-_process            = require './process'
-_serialize          = require './serialize'
+{ circumpendQuotes } = require './js-utilities'
+{ createMalString }  = require './type-utilities'
+{ fromArray }        = require './linked-list'
+getLispEnvironment   = require './getLispEnvironment'
+_process             = require './process'
+_serialize           = require './serialize'
 
 _createMalString = \jsString ->
-  createMalString('"' + jsString + '"')
+  createMalString (circumpendQuotes jsString)
 
 display = \malValue ->
   { effect: { type: 'display' }, value: malValue }
-
-_fromArray = \array ->
-  index = {}
-  for i in [0 .. array.length]
-    index[array[i]] = array[i + 1]
-  index
 
 _interpret = (envs, jsString) ->
   try serialize (_process envs jsString)
   catch e
     "repl error: (#{serialize e} + )"
 
-interpret = (jsString, userEnv) ->
-  if ? userEnv
-    _userEnv = { '*ARGV*' : fromArray(userEnv.map _createMalString) }
-    _interpret ([_userEnv, environment], jsString)
+interpret = (jsString, userJsArray) ->
+  if ? userJsArray
+    userEnv = { '*ARGV*' : fromArray (userJsArray.map _createMalString) }
+    _interpret ([userEnv, environment], jsString)
   else
     _interpret ([environment], jsString)
 
@@ -38,7 +33,7 @@ serialize = \results ->
         _result[key] = _serialize value
     _result
 
-environment = getEnvironment display
+environment = getLispEnvironment display
 
 standard = """
 (do
@@ -219,6 +214,6 @@ standard = """
 )
 """
 
-interpret standard
+#interpret standard
 
 module.exports = interpret
