@@ -54,8 +54,6 @@ commentSignal                 = require './commentSignal'
 { undef! }                    = require './keyTokens'
 { unsetMainEnv }              = require './env-utilities'
 
-serialize = require './serialize'
-
 createFn = (malList, envs) ->
   createMalUserPureFunction
     localEnvs     : (envs.slice 0)
