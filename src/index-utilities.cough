@@ -1,4 +1,4 @@
-{ createMalIndex } = require './mal-type-utilities'
+{ createMalIndex } = require './type-utilities'
 { jsString? }      = require './js-utilities'
 
 fromJsObject = \jsObject ->

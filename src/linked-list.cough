@@ -1,4 +1,4 @@
-{ malTypes } = require './mal-types'
+{ malTypes } = require './types'
 
 malListType = malTypes[6]
 

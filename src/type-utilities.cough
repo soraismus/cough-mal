@@ -1,6 +1,6 @@
 { createMalList } = require './linked-list'
-{ malAtomType }   = require './mal-types'
-{ malTypes }      = require './mal-types'
+{ malAtomType }   = require './types'
+{ malTypes }      = require './types'
 
 create-factory-&-predicate = \malType ->
   factory = \jsValue ->

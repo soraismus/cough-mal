@@ -1,12 +1,12 @@
-commentSignal = require './commentSignal'
-{ evaluate }  = require './evaluate'
-interpret     = require './interpret'
+commentSignal    = require './commentSignal'
+{ evaluate }     = require './evaluate'
+tokenizeAndParse = require './tokenizeAndParse'
 
 process = \envs \sourceCode ->
   results = []
   addResult = \result ->
     results.push result
-  value = evaluate (envs, addResult) (interpret sourceCode)
+  value = evaluate (envs, addResult) (tokenizeAndParse sourceCode)
   result = if value == commentSignal
       { effect: { type: 'comment' } }
     else

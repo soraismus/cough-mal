@@ -1,0 +1,5 @@
+parse    = require './parse'
+tokenize = require './tokenize'
+
+module.exports = \sourceCode ->
+  parse (tokenize sourceCode)
