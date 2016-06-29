@@ -1,7 +1,7 @@
 var EOL, car, cdr, concat, cons, copy, createMalList, createNode, drop, empty_question_, equal_question_, filter, forEach, fromArray, last, lastTail, malListType, malTypes, map, next, recurse, reduce, reduceBy2, reverse, take, toArray, toPartialArray, zip, _EOL,
   __slice = [].slice;
 
-malTypes = require('./mal-types').malTypes;
+malTypes = require('./types').malTypes;
 
 malListType = malTypes[6];
 

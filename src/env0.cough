@@ -1,0 +1,116 @@
+{ createMalBoolean }          = require './type-utilities'
+{ createMalCorePureFunction } = require './type-utilities'
+{ createMalIdentifier }       = require './type-utilities'
+{ createMalIndex }            = require './type-utilities'
+{ createMalNumber }           = require './type-utilities'
+{ createMalString }           = require './type-utilities'
+{ extractJsValue }            = require './type-utilities'
+{ fromArray }                 = require './linked-list'
+{ jsNaN? }                    = require './js-utilities'
+{ jsNumber? }                 = require './js-utilities'
+{ jsString? }                 = require './js-utilities'
+{ malNil }                    = require './type-utilities'
+{ reduce }                    = require './linked-list'
+{ toArray }                   = require './linked-list'
+
+lift = (fnOnJsValues) -> (malValueList) ->
+  fnOnJsValues (((toArray malValueList).map extractJsValue)...)
+
+setCoreFnsOnJsValues! = (env, fns) ->
+  for own fnName, fn of fns
+    env[fnName] = createMalCorePureFunction (lift fn)
+
+getEnvironment = \config ->
+  { environment } = config
+
+  add = (nbrs...) ->
+    createMalNumber (nbrs.reduce ((x, nbr) ->  x += nbr))
+  assoc = (index, args...) ->
+    copy = {}
+    for own key, value of index
+      copy[key] = value
+    for k, i in args when i % 2 == 0
+      copy[k] = args[i + 1]
+    createMalIndex copy
+  contains? = (index, key) -> createMalBoolean (key of index)
+  dissoc = (index, keys...) ->
+    copy = {}
+    for own key, value of index
+      copy[key] = value
+    delete copy[key] for key in keys
+    createMalIndex copy
+  divide = (nbrs...) ->
+    createMalNumber (nbrs.reduce ((x, nbr) -> x /= nbr))
+  exponentiate = (nbrs...) ->
+    createMalNumber (nbrs.reduce ((x, nbr) -> Math.pow (x, nbr)))
+  get = (jsIndex, jsKey) -> jsIndex[jsKey]
+  greaterThanOrEqual = (nbrs...) ->
+    createMalBoolean (nbrs[0] >= nbrs[1])
+  greaterThan = (nbrs...) ->
+    createMalBoolean (nbrs[0] > nbrs[1])
+  index = (args...) ->
+    index = {}
+    index[k] = args[i + 1] for k, i in args when i % 2 == 0
+    createMalIndex index
+  keys = \index ->
+    _keys = []
+    for own key, value of index
+      _keys.push (
+        if jsNaN? (jsNbr = parseFloat (key, 10))
+          (if key[0] == ':'           then createMalIdentifier else createMalString) key
+        else
+          createMalNumber jsNbr)
+    fromArray _keys
+  length = \jsVal ->
+    return malNil unless jsString? jsVal
+    createMalNumber (jsVal.length - 2)
+  lessThan = (nbrs...) ->
+    createMalBoolean (nbrs[0] < nbrs[1])
+  lessThanOrEqual = (nbrs...) ->
+    createMalBoolean (nbrs[0] <= nbrs[1])
+  mod = (nbr0, nbr1) ->
+    createMalNumber (nbr0 % nbr1)
+  multiply = (nbrs...) ->
+    createMalNumber (nbrs.reduce ((x, nbr) -> x *= nbr))
+  negate = \nbr ->
+    createMalNumber (-1 * nbr)
+  parseNumber = \jsVal ->
+    return jsVal if jsNumber? jsVal
+    return malNil unless jsString? jsVal
+    jsNbr = parseFloat ((stripQuotes jsVal), 10)
+    if jsNaN? jsNbr           then malNil else createMalNumber jsNbr
+  subtract = (nbrs...) ->
+    createMalNumber (nbrs.reduce ((x, nbr) -> x -= nbr))
+  vals = \index ->
+    values = []
+    for own key, value of index
+      values.push value
+    fromArray values
+
+  functionsOnJsValues = {
+    '+'            : add
+    'assoc'        : assoc
+    'contains?'    : contains?
+    'dissoc'       : dissoc
+    '/'            : divide
+    '**'           : exponentiate
+    'get'          : get
+    '>'            : greaterThan
+    '>='           : greaterThanOrEqual
+    'index'        : index
+    'keys'         : keys
+    'length'       : length
+    '<'            : lessThan
+    '<='           : lessThanOrEqual
+    '%'            : mod
+    '*'            : multiply
+    'negate'       : negate
+    'parse-number' : parseNumber
+    '-'            : subtract
+    'vals'         : vals
+  }
+
+  setCoreFnsOnJsValues! (environment, functionsOnJsValues)
+  return environment
+
+module.exports = getEnvironment

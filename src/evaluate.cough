@@ -254,7 +254,7 @@ reduceLetrec* = (envs, list, addResult) ->
     list = recurse list
 
     _malExpr = fromArray ([
-      createMalSymbol "fix"
+      createMalSymbol "fix*"
       fromArray ([
         createMalSymbol "fn*"
         fromArray ([jsKey])
@@ -283,4 +283,4 @@ unquote? = \malValue ->
 unquotedExpr? = \malValue ->
   malList? malValue && (unquote? (car malValue))
 
-module.exports = { evaluate, expandMacro }
+module.exports = evaluate

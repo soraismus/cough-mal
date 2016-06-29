@@ -1,0 +1,27 @@
+{ createMalCoreEffectfulFunction } = require './type-utilities'
+serialize                          = require './serialize'
+{ toArray }                        = require './linked-list'
+
+getEnvironment = \config ->
+  { display, environment } = config
+
+  # WET.
+  _prStr = (malArgs, printReadably?) ->
+    ((toArray malArgs).map \malArg -> serialize (malArg, printReadably?))
+
+  setCoreEffectfulFnsOnMalValues! = (represent) -> (env, fns) ->
+    for own fnName, fn of fns
+      env[fnName] = createMalCoreEffectfulFunction \malArgs ->
+        represent (fn malArgs)
+
+  displayEffectsOnMalValues = {
+    'prn'     : \malArgs -> _prStr (malArgs, true).join ''
+    'println' : \malArgs -> _prStr (malArgs, false).join ''
+  }
+
+  setCoreEffectfulFnsOnMalValues! display (
+    environment, displayEffectsOnMalValues)
+
+  return environment
+
+module.exports = getEnvironment

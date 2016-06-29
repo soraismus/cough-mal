@@ -54,7 +54,7 @@ boolean? = \token ->
   token in [_false, _true]
 
 float? = \token ->
-  /^(-|\+)?[1-9]\d*\.\d+$/.test token
+  /^(-|\+)?[0-9](_|\d)*\.(\d|(\d(_|\d)*\d))$/.test token
 
 binaryGlyph? = \token ->
   token in binaryGlyphTokens
@@ -69,7 +69,7 @@ indexStart? = \token ->
   token == indexStart
 
 integer? = \token ->
-  /^(?:0|(?:(-|\+)?[1-9]\d*$))/.test token
+  /^(0(?!\.)|((-|\+)?[1-9](_|\d)*$))/.test token
 
 listStart? = \token ->
   token == listStart
@@ -105,7 +105,7 @@ parseBoolean = \token ->
   token == _true
 
 parseFloat10 = \token ->
-  parseFloat (token, 10)
+  parseFloat ((stripUnderscores token), 10)
 
 parseGlyph = (keyword, tokens) ->
   createMalList (
@@ -128,7 +128,7 @@ parseIndex = \tokens ->
   createMalIndex jsIndex
 
 parseInt10 = \token ->
-  parseInt (token, 10)
+  parseInt ((stripUnderscores token), 10)
 
 parseList = \tokens ->
   malList = createMalList ()
@@ -140,6 +140,9 @@ parseList = \tokens ->
 
 startsWith? = \char \token ->
   token[0] == char
+
+stripUnderscores = \token ->
+  token.replace (/_/g, '')
 
 glyphIndex = {}
 glyphIndex[derefGlyph]         = deref

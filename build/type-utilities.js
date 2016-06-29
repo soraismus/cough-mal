@@ -2,9 +2,9 @@ var createMalAtom, createMalBoolean, createMalCoreEffectfulFunction, createMalCo
 
 createMalList = require('./linked-list').createMalList;
 
-malAtomType = require('./mal-types').malAtomType;
+malAtomType = require('./types').malAtomType;
 
-malTypes = require('./mal-types').malTypes;
+malTypes = require('./types').malTypes;
 
 create_hyphen_factory_hyphen__ampersand__hyphen_predicate = function(malType) {
   var factory, predicate;

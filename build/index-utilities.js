@@ -1,7 +1,7 @@
-var createMalIndex, fromJsObject, fromMalIndex, jsString_question_,
+var createMalIndex, fromJsObject, fromMalIndex, jsString_question_, stripQuotes,
   __hasProp = {}.hasOwnProperty;
 
-createMalIndex = require('./mal-type-utilities').createMalIndex;
+createMalIndex = require('./type-utilities').createMalIndex;
 
 jsString_question_ = require('./js-utilities').jsString_question_;
 
@@ -28,12 +28,17 @@ fromMalIndex = function(malIndex) {
     if (!__hasProp.call(_ref, key)) continue;
     value = _ref[key];
     if (jsString_question_(key)) {
+      stripQuotes(key);
       localEnv[stripQuotes(key)] = value;
     } else {
       localEnv[key] = value;
     }
   }
   return localEnv;
+};
+
+stripQuotes = function(jsString) {
+  return jsString.slice(1, -1);
 };
 
 module.exports = {

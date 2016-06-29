@@ -1,0 +1,62 @@
+{ createMalCorePureFunction } = require './type-utilities'
+{ extractJsValue }            = require './type-utilities'
+{ fromMalIndex }              = require './index-utilities'
+_process                      = require './_process'
+{ toPartialArray }            = require './linked-list'
+
+getEnvironment = \config ->
+  { environment } = config
+
+  get_jsFileName_and_localEnv = \malArgs ->
+    [malFileName, localEnv] = toPartialArray (2, malArgs)
+    jsFileName = stripQuotes (extractJsValue malFileName)
+    [jsFileName, localEnv]
+
+  _process_ = \jsString ->
+    _process [environment] jsString
+
+  _processFileAndEnv = (file, envStack) ->
+    _process envStack file
+
+  # WET.
+  _read = \malArgs ->
+    [jsFileName] = get_jsFileName_and_localEnv malArgs
+    readFile jsFileName
+
+  readFile = \jsFileName ->
+    require('fs').readFileSync(jsFileName).toString()
+
+  # WET.
+  setCoreFnsOnMalValues! = (env, fns) ->
+    for own fnName, fn of fns
+      env[fnName] = createMalCorePureFunction fn 
+
+  # WET.
+  stripQuotes = \jsString ->
+    jsString[1 .. -2]
+
+  # -----------------------------------------------------------------------
+
+  load = \malArgs ->
+    _process_ (_read malArgs)
+  loadWithBareEnv = \malArgs ->
+    [jsFileName, localEnv] = get_jsFileName_and_localEnv malArgs
+    _processFileAndEnv (
+      readFile jsFileName
+      [(fromMalIndex localEnv)])
+  loadWithEnv = \malArgs ->
+    [jsFileName, localEnv] = get_jsFileName_and_localEnv malArgs
+    _processFileAndEnv (
+      readFile jsFileName
+      [(fromMalIndex localEnv), environment])
+
+  functionsOnMalValues = {
+    'load'               : load
+    'load-with-env'      : loadWithEnv
+    'load-with-bare-env' : loadWithBareEnv
+  }
+
+  setCoreFnsOnMalValues! (environment, functionsOnMalValues)
+  return environment
+
+module.exports = getEnvironment

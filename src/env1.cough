@@ -1,0 +1,272 @@
+{ car }                            = require './linked-list'
+{ cdr }                            = require './linked-list'
+{ circumpendQuotes }               = require './js-utilities'
+{ concat }                         = require './linked-list'
+{ createMalAtom }                  = require './type-utilities'
+{ createMalBoolean }               = require './type-utilities'
+{ createMalCoreEffectfulFunction } = require './type-utilities'
+{ createMalCorePureFunction }      = require './type-utilities'
+{ createMalList }                  = require './type-utilities'
+{ createMalNumber }                = require './type-utilities'
+{ createMalString }                = require './type-utilities'
+{ createMalSymbol }                = require './type-utilities'
+{ drop }                           = require './linked-list'
+{ empty? }                         = require './linked-list'
+{ equal? }                         = require './linked-list'
+{ extractJsValue }                 = require './type-utilities'
+{ fromArray }                      = require './linked-list'
+interpret                          = require './interpret'
+{ last }                           = require './linked-list'
+{ malAtom? }                       = require './type-utilities'
+{ malCorePureFunction? }           = require './type-utilities'
+{ malBoolean? }                    = require './type-utilities'
+{ malFalse }                       = require './type-utilities'
+{ malFalse? }                      = require './type-utilities'
+{ malIgnore }                      = require './type-utilities'
+{ malIndex? }                      = require './type-utilities'
+{ malList? }                       = require './type-utilities'
+{ malMacro? }                      = require './type-utilities'
+{ malNil }                         = require './type-utilities'
+{ malNil? }                        = require './type-utilities'
+{ malNumber? }                     = require './type-utilities'
+{ malString? }                     = require './type-utilities'
+{ malSymbol? }                     = require './type-utilities'
+{ malTrue }                        = require './type-utilities'
+{ malTrue? }                       = require './type-utilities'
+{ malUserPureFunction? }           = require './type-utilities'
+{ next }                           = require './linked-list'
+{ reduce }                         = require './linked-list'
+{ reverse }                        = require './linked-list'
+serialize                          = require './serialize'
+{ take }                           = require './linked-list'
+{ toArray }                        = require './linked-list'
+{ toPartialArray }                 = require './linked-list'
+
+getEnvironment = \config ->
+  { environment } = config
+
+  createPredicate = \pred \jsList ->
+    malValue = jsList.value
+    createMalBoolean (pred malValue)
+
+  _prStr = (malArgs, printReadably?) ->
+    ((toArray malArgs).map \malArg -> serialize (malArg, printReadably?))
+
+  setCoreFnsOnMalValues! = (env, fns) ->
+    for own fnName, fn of fns
+      env[fnName] = createMalCorePureFunction fn 
+
+  stripQuotes = \jsString ->
+    jsString[1 .. -2]
+
+  append = \malArgs ->
+    [malList, malValues...] = toArray malArgs
+    concat (malList, (fromArray malValues))
+  areEqual = \malArgs ->
+    [malValue0, malValue1] = toPartialArray (2, malArgs)
+    _areEqual = (malValue0, malValue1) ->
+      if malList? malValue0 && malList? malValue1
+        equal? (malValue0, malValue1, _areEqual)
+      else if malIndex? malValue0 && malIndex? malValue1
+        jsIndex0 = malValue0.jsValue
+        jsIndex1 = malValue1.jsValue
+        (_areEqual ((keys jsIndex0), (keys jsIndex1))) &&
+          (_areEqual ((vals jsIndex0), (vals jsIndex1)))
+      else
+        malValue0.jsValue == malValue1.jsValue
+    createMalBoolean (_areEqual (malValue0, malValue1))
+  atom = \malArgs -> createMalAtom (car malArgs)
+  _car = \malArgs ->
+    arg = car malArgs
+    if malList? arg then car arg else malNil
+  _cdr = \malArgs ->
+    arg = car malArgs
+    if malList? arg then cdr arg else malNil
+  _concat = \malArgs ->
+    malLists = toArray malArgs
+    concat malLists...
+  cons = \malArgs ->
+    createMalList (
+      car malArgs
+      next malArgs)
+  count = \malArgs ->
+    malList = car malArgs
+    return malNil unless malList? malList
+    _reduce = (sum, value) -> sum + 1
+    createMalNumber (reduce (0, _reduce, (car malArgs)))
+  deref = \malArgs ->
+    (car malArgs).malValue
+  _drop = \malArgs ->
+    [malNumber, malList] = toPartialArray (2, malArgs)
+    drop ((extractJsValue malNumber), malList)
+  _empty? = \malArgs ->
+    if empty? malArgs
+      malFalse
+    else
+      if empty? (car malArgs) then malTrue else malFalse
+  first = \malArgs ->
+    car (car malArgs)
+  function? = \jsList ->
+    malValue = jsList.value
+    createMalBoolean (malCorePureFunction? malValue || malUserPureFunction? malValue)
+  ignore! = \malArgs -> malIgnore
+  ignoreIfTrue = \malArgs ->
+    [malBool, malValue] = toPartialArray (2, malArgs)
+    if (extractJsValue malBool) then malIgnore else malValue
+  ignoreUnlessTrue = \malArgs ->
+    [malBool, malValue] = toPartialArray (2, malArgs)
+    if (extractJsValue malBool) then malValue else malIgnore
+  _interpret = \malArgs ->
+    interpret (stripQuotes (extractJsValue (car malArgs)))
+  _last = \malArgs ->
+    arg = car malArgs
+    if malList? arg then last arg else malNil
+  list = \malArgs ->
+    malArgs
+  meta = \malArgs ->
+    malMeta = (car malArgs).meta
+    if ? malMeta then malMeta else malNil
+  _not = \malArgs ->
+    malVal = car malArgs
+    if malNil? malVal || malFalse? malVal then malTrue else malFalse
+  nth = \malArgs ->
+    [malNumber, malList] = toPartialArray (2, malArgs)
+    for i in [0 ... (extractJsValue malNumber)]
+      malList = cdr malList
+    car malList
+  prepend = \malArgs ->
+    [malList, malValues...] = toArray malArgs
+    _reduce = (list, val) ->
+      createMalList (val, list)
+    malValues.reduce (_reduce, malList)
+  prStr = \malArgs ->
+    createMalString ('"' + (_prStr (malArgs, true)).join '' + '"')
+  _quit_ = ->
+    process.exit 0
+  read = \jsList ->
+    _read = \malArgs ->
+      jsFileName = stripQuotes (extractJsValue (car malArgs))
+      require('fs').readFileSync(jsFileName).toString()
+    createMalString (_read jsList)
+  reset = \malArgs ->
+    [atom, value] = toPartialArray (2, malArgs)
+    atom.malValue = value
+    atom
+  rest = \malArgs ->
+    arg = car malArgs
+    if malList? arg then cdr arg else malNil
+  _reverse = \malArgs ->
+    arg = car malArgs
+    if malList? arg then reverse arg else malNil
+  set = \malArgs ->
+    [index, key, val] = toPartialArray (3, malArgs)
+    (extractJsValue index)[extractJsValue key] = val
+    index
+  slurp = \malArgs ->
+    jsFileName = stripQuotes (extractJsValue (car malArgs))
+    createMalString (
+      circumpendQuotes (
+        require('fs').readFileSync(jsFileName).toString()))
+  str = \malArgs ->
+    createMalString ('"' + (_prStr (malArgs, false)).join '' + '"')
+  symbol = \malArgs ->
+    malValue = car malArgs
+    if malString? malValue
+      jsStr = extractJsValue malValue
+      createMalSymbol jsStr[1 ... -1]
+    else
+      malNil
+  _take = \malArgs ->
+    [malNumber, malList] = toPartialArray (2, malArgs)
+    take ((extractJsValue malNumber), malList)
+  typeOf = \malArgs ->
+    malValue = car malArgs
+    createMalString (circumpendQuotes malValue.type)
+  _throw = \malArgs ->
+    throw (car malArgs)
+  time-ms = () ->
+    createMalNumber (new Date().getTime ())
+  withMeta = \malArgs ->
+    [malVal, malMeta] = toPartialArray (2, malArgs)
+    if malAtom? malVal
+      { malValue, type } = malVal
+      { malValue, type, meta: malMeta }
+    else
+      { jsValue, type } = malVal
+      { jsValue, type, meta: malMeta }
+  write = \malArgs ->
+    createMalString (serialize (car malArgs))
+
+  [atom?, boolean?, coreFn?, false?, list?, macro?, nil?, number?, symbol?, string?, userFn?, true?] =
+    [ malAtom?
+      malBoolean?
+      malCorePureFunction?
+      malFalse?
+      malList?
+      malMacro?
+      malNil?
+      malNumber?
+      malSymbol?
+      malString?
+      malUserPureFunction?
+      malTrue?
+    ].map createPredicate
+
+  functionsOnMalValues = {
+    '='                  : areEqual
+    'append'             : append
+    'atom'               : atom
+    'atom?'              : atom?
+    'boolean?'           : boolean?
+    'car'                : _car
+    'cdr'                : _cdr
+    'cons'               : cons
+    'concat'             : _concat
+    'core-fn?'           : coreFn?
+    'count'              : count
+    'deref'              : deref
+    'drop'               : _drop
+    'empty?'             : _empty?
+    'first'              : _car
+    'false?'             : false?
+    'function?'          : function?
+    'ignore!'            : ignore!
+    'ignoreIfTrue'       : ignoreIfTrue
+    'ignoreUnlessTrue'   : ignoreUnlessTrue
+    'last'               : _last
+    'list'               : list
+    'list?'              : list?
+    'macro?'             : macro?
+    'meta'               : meta
+    'nil?'               : nil?
+    'not'                : _not
+    'nth'                : nth
+    'number?'            : number?
+    'parse'              : _interpret
+    'prepend'            : prepend
+    'pr-str'             : prStr
+    '-quit-'             : _quit_              # Effect
+    'read'               : read
+    'reset!'             : reset
+    'rest'               : _cdr
+    'reverse'            : _reverse
+    'set!'               : set
+    'slurp'              : slurp
+    'str'                : str
+    'string?'            : string?
+    'symbol'             : symbol
+    'symbol?'            : symbol?
+    'take'               : _take
+    'throw'              : _throw
+    'time-ms'            : time-ms
+    'true?'              : true?
+    'typeof'             : typeOf
+    'user-fn?'           : userFn?
+    'with-meta'          : withMeta
+    'write'              : write
+  }
+
+  setCoreFnsOnMalValues! (environment, functionsOnMalValues)
+  return environment
+
+module.exports = getEnvironment

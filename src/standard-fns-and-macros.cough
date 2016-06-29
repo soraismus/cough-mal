@@ -133,6 +133,10 @@ module.exports = """
         seed
         (reduce (f seed (car xs)) f (cdr xs)))))
 
+  (def! map
+    (fn* (fn xs)
+      (reverse (reduce '() (fn* (memo x) (cons (fn x) memo)) xs))))
+
   (def! every?
     (fn* (pred xs)
       (if (empty? xs)
@@ -174,5 +178,9 @@ module.exports = """
           (cons hi -list-)
           (-..- (list lo (decr hi) (cons hi -list-)))))))
       (-..- (list lo hi '())))))
+
+  (def! defrec! (macro* (fn-name fn-body)
+    `(def! ~fn-name (letrec* (~fn-name ~fn-body) ~fn-name))))
+
 )
 """

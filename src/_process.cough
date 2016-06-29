@@ -1,0 +1,16 @@
+commentSignal = require './commentSignal'
+evaluate      = require './evaluate'
+
+_process = \transform \envs \sourceCode ->
+  results = []
+  addResult = \result ->
+    results.push result
+  value = evaluate (envs, addResult) (transform sourceCode)
+  result = if value == commentSignal
+      { effect: { type: 'comment' } }
+    else
+      { effect: false, value }
+  addResult result
+  return results
+
+module.exports = _process

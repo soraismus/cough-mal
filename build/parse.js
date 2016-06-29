@@ -1,33 +1,33 @@
-var atomize, binaryGlyphIndex, binaryGlyphTokens, binaryGlyph_question_, boolean_question_, comment, createMalBoolean, createMalIdentifier, createMalIgnore, createMalIndex, createMalList, createMalNil, createMalNumber, createMalString, createMalSymbol, deref, derefGlyph, extractJsValue, float_question_, glyphIndex, glyphTokens, glyph_question_, identifer_question_, ignore, ignoreIfTrue, ignoreIfTrueGlyph, ignoreUnlessTrue, ignoreUnlessTrueGlyph, ignore_bang_, ignore_bang_Glyph, ignore_question_, indexEnd, indexStart, indexStart_question_, integer_question_, keyTokens, listEnd, listStart, listStart_question_, nil, nil_question_, parse, parseBinaryGlyph, parseBoolean, parseFloat10, parseGlyph, parseIndex, parseInt10, parseList, quasiquote, quasiquoteGlyph, quote, quoteGlyph, reverse, spliceUnquote, spliceUnquoteGlyph, startsWith_question_, string_question_, unquote, unquoteGlyph, _false, _parse, _true,
+var atomize, binaryGlyphIndex, binaryGlyphTokens, binaryGlyph_question_, boolean_question_, comment, createMalBoolean, createMalIdentifier, createMalIgnore, createMalIndex, createMalList, createMalNil, createMalNumber, createMalString, createMalSymbol, deref, derefGlyph, extractJsValue, float_question_, glyphIndex, glyphTokens, glyph_question_, identifer_question_, ignore, ignoreIfTrue, ignoreIfTrueGlyph, ignoreUnlessTrue, ignoreUnlessTrueGlyph, ignore_bang_, ignore_bang_Glyph, ignore_question_, indexEnd, indexStart, indexStart_question_, integer_question_, keyTokens, listEnd, listStart, listStart_question_, nil, nil_question_, parse, parseBinaryGlyph, parseBoolean, parseFloat10, parseGlyph, parseIndex, parseInt10, parseList, quasiquote, quasiquoteGlyph, quote, quoteGlyph, reverse, spliceUnquote, spliceUnquoteGlyph, startsWith_question_, string_question_, stripUnderscores, unquote, unquoteGlyph, _false, _parse, _true,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 binaryGlyphTokens = require('./keyTokens').binaryGlyphTokens;
 
 comment = require('./commentSignal');
 
-createMalBoolean = require('./mal-type-utilities').createMalBoolean;
+createMalBoolean = require('./type-utilities').createMalBoolean;
 
-createMalIdentifier = require('./mal-type-utilities').createMalIdentifier;
+createMalIdentifier = require('./type-utilities').createMalIdentifier;
 
-createMalIgnore = require('./mal-type-utilities').createMalIgnore;
+createMalIgnore = require('./type-utilities').createMalIgnore;
 
-createMalIndex = require('./mal-type-utilities').createMalIndex;
+createMalIndex = require('./type-utilities').createMalIndex;
 
-createMalList = require('./mal-type-utilities').createMalList;
+createMalList = require('./type-utilities').createMalList;
 
-createMalNil = require('./mal-type-utilities').createMalNil;
+createMalNil = require('./type-utilities').createMalNil;
 
-createMalNumber = require('./mal-type-utilities').createMalNumber;
+createMalNumber = require('./type-utilities').createMalNumber;
 
-createMalString = require('./mal-type-utilities').createMalString;
+createMalString = require('./type-utilities').createMalString;
 
-createMalSymbol = require('./mal-type-utilities').createMalSymbol;
+createMalSymbol = require('./type-utilities').createMalSymbol;
 
 deref = require('./keyTokens').deref;
 
 derefGlyph = require('./keyTokens').derefGlyph;
 
-extractJsValue = require('./mal-type-utilities').extractJsValue;
+extractJsValue = require('./type-utilities').extractJsValue;
 
 _false = require('./keyTokens')._false;
 
@@ -115,7 +115,7 @@ boolean_question_ = function(token) {
 };
 
 float_question_ = function(token) {
-  return /^(-|\+)?[1-9]\d*\.\d+$/.test(token);
+  return /^(-|\+)?[0-9](_|\d)*\.(\d|(\d(_|\d)*\d))$/.test(token);
 };
 
 binaryGlyph_question_ = function(token) {
@@ -135,7 +135,7 @@ indexStart_question_ = function(token) {
 };
 
 integer_question_ = function(token) {
-  return /^(?:0|(?:(-|\+)?[1-9]\d*$))/.test(token);
+  return /^(0(?!\.)|((-|\+)?[1-9](_|\d)*$))/.test(token);
 };
 
 listStart_question_ = function(token) {
@@ -177,7 +177,7 @@ parseBoolean = function(token) {
 };
 
 parseFloat10 = function(token) {
-  return parseFloat(token, 10);
+  return parseFloat(stripUnderscores(token), 10);
 };
 
 parseGlyph = function(keyword, tokens) {
@@ -202,7 +202,7 @@ parseIndex = function(tokens) {
 };
 
 parseInt10 = function(token) {
-  return parseInt(token, 10);
+  return parseInt(stripUnderscores(token), 10);
 };
 
 parseList = function(tokens) {
@@ -218,6 +218,10 @@ startsWith_question_ = function(char) {
   return function(token) {
     return token[0] === char;
   };
+};
+
+stripUnderscores = function(token) {
+  return token.replace(/_/g, '');
 };
 
 glyphIndex = {};

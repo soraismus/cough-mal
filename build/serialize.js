@@ -3,7 +3,7 @@ var adjoinMalValue, commentSignal, coreEffectfulFunctionLabel, corePureFunctionL
 
 commentSignal = require('./commentSignal');
 
-extractJsValue = require('./mal-type-utilities').extractJsValue;
+extractJsValue = require('./type-utilities').extractJsValue;
 
 indexEnd = require('./keyTokens').indexEnd;
 
@@ -13,29 +13,29 @@ listEnd = require('./keyTokens').listEnd;
 
 listStart = require('./keyTokens').listStart;
 
-malAtom_question_ = require('./mal-type-utilities').malAtom_question_;
+malAtom_question_ = require('./type-utilities').malAtom_question_;
 
-malCoreEffectfulFunction_question_ = require('./mal-type-utilities').malCoreEffectfulFunction_question_;
+malCoreEffectfulFunction_question_ = require('./type-utilities').malCoreEffectfulFunction_question_;
 
-malCorePureFunction_question_ = require('./mal-type-utilities').malCorePureFunction_question_;
+malCorePureFunction_question_ = require('./type-utilities').malCorePureFunction_question_;
 
-malIdentifier_question_ = require('./mal-type-utilities').malIdentifier_question_;
+malIdentifier_question_ = require('./type-utilities').malIdentifier_question_;
 
-malIgnore_question_ = require('./mal-type-utilities').malIgnore_question_;
+malIgnore_question_ = require('./type-utilities').malIgnore_question_;
 
-malIndex_question_ = require('./mal-type-utilities').malIndex_question_;
+malIndex_question_ = require('./type-utilities').malIndex_question_;
 
-malKeyword_question_ = require('./mal-type-utilities').malKeyword_question_;
+malKeyword_question_ = require('./type-utilities').malKeyword_question_;
 
-malList_question_ = require('./mal-type-utilities').malList_question_;
+malList_question_ = require('./type-utilities').malList_question_;
 
-malMacro_question_ = require('./mal-type-utilities').malMacro_question_;
+malMacro_question_ = require('./type-utilities').malMacro_question_;
 
-malNil_question_ = require('./mal-type-utilities').malNil_question_;
+malNil_question_ = require('./type-utilities').malNil_question_;
 
-malString_question_ = require('./mal-type-utilities').malString_question_;
+malString_question_ = require('./type-utilities').malString_question_;
 
-malUserPureFunction_question_ = require('./mal-type-utilities').malUserPureFunction_question_;
+malUserPureFunction_question_ = require('./type-utilities').malUserPureFunction_question_;
 
 reduce = require('./linked-list').reduce;
 

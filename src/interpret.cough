@@ -2,9 +2,10 @@
 { createMalString }  = require './type-utilities'
 { fromArray }        = require './linked-list'
 getLispEnvironment   = require './getLispEnvironment'
-_process             = require './process'
+_process             = require './_process'
 _serialize           = require './serialize'
 standardFnsAndMacros = require './standard-fns-and-macros'
+tokenizeAndParse     = require './tokenizeAndParse'
 
 _createMalString = \jsString ->
   createMalString (circumpendQuotes jsString)
@@ -12,8 +13,14 @@ _createMalString = \jsString ->
 display = \malValue ->
   { effect: { type: 'display' }, value: malValue }
 
+flattenIfNecessary = \effects ->
+  result = effects
+  while result.length == 1 && Array.isArray (value = result[0].value)
+    result = flattenIfNecessary value
+  result
+
 _interpret = (envs, jsString) ->
-  try serialize (_process envs jsString)
+  try serialize (flattenIfNecessary (_process tokenizeAndParse envs jsString))
   catch e
     "repl error: (#{serialize e} + )"
 
@@ -34,7 +41,7 @@ serialize = \results ->
         _result[key] = _serialize value
     _result
 
-environment = getLispEnvironment display
+environment = getLispEnvironment { display }
 
 interpret standardFnsAndMacros
 

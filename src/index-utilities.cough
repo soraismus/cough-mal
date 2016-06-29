@@ -14,10 +14,15 @@ fromMalIndex = \malIndex ->
   localEnv = {}
   for own key, value of malIndex.jsValue
     if jsString? key
+      stripQuotes key
       localEnv[stripQuotes key] = value
     else
       localEnv[key] = value
   localEnv
+
+# WET.
+stripQuotes = \jsString ->
+  jsString[1 .. -2]
 
 module.exports = {
   fromJsObject
