@@ -20,6 +20,19 @@ getEnvironment = function(config) {
     jsFileName = stripQuotes(extractJsValue(malFileName));
     return [jsFileName, localEnv];
   };
+  load = function(malArgs) {
+    return _process_(_read(malArgs));
+  };
+  loadWithBareEnv = function(malArgs) {
+    var jsFileName, localEnv, _ref;
+    _ref = get_jsFileName_and_localEnv(malArgs), jsFileName = _ref[0], localEnv = _ref[1];
+    return _processFileAndEnv(readFile(jsFileName), [fromMalIndex(localEnv)]);
+  };
+  loadWithEnv = function(malArgs) {
+    var jsFileName, localEnv, _ref;
+    _ref = get_jsFileName_and_localEnv(malArgs), jsFileName = _ref[0], localEnv = _ref[1];
+    return _processFileAndEnv(readFile(jsFileName), [fromMalIndex(localEnv), environment]);
+  };
   _process_ = function(jsString) {
     return _process([environment])(jsString);
   };
@@ -46,19 +59,6 @@ getEnvironment = function(config) {
   };
   stripQuotes = function(jsString) {
     return jsString.slice(1, -1);
-  };
-  load = function(malArgs) {
-    return _process_(_read(malArgs));
-  };
-  loadWithBareEnv = function(malArgs) {
-    var jsFileName, localEnv, _ref;
-    _ref = get_jsFileName_and_localEnv(malArgs), jsFileName = _ref[0], localEnv = _ref[1];
-    return _processFileAndEnv(readFile(jsFileName), [fromMalIndex(localEnv)]);
-  };
-  loadWithEnv = function(malArgs) {
-    var jsFileName, localEnv, _ref;
-    _ref = get_jsFileName_and_localEnv(malArgs), jsFileName = _ref[0], localEnv = _ref[1];
-    return _processFileAndEnv(readFile(jsFileName), [fromMalIndex(localEnv), environment]);
   };
   functionsOnMalValues = {
     'load': load,

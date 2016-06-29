@@ -1,15 +1,17 @@
-var getLispEnvironment, setEnv0, setEnv1, setEnv2, setEnv3;
+var fromJsObject, getLispEnvironment, setEnv0_bang_, setEnv1_bang_, setEnv2_bang_, setEnv3_bang_;
 
-setEnv0 = require('./env0');
+fromJsObject = require('./index-utilities').fromJsObject;
 
-setEnv1 = require('./env1');
+setEnv0_bang_ = require('./env0');
 
-setEnv2 = require('./env2');
+setEnv1_bang_ = require('./env1');
 
-setEnv3 = require('./env3');
+setEnv2_bang_ = require('./env2');
+
+setEnv3_bang_ = require('./env3');
 
 getLispEnvironment = function(config) {
-  var display, environment;
+  var display, envCopy, environment;
   console.log('getLispEnvironment');
   display = config.display;
   environment = {};
@@ -17,10 +19,13 @@ getLispEnvironment = function(config) {
     display: display,
     environment: environment
   };
-  setEnv0(config);
-  setEnv1(config);
-  setEnv2(config);
-  return setEnv3(config);
+  setEnv0_bang_(config);
+  setEnv1_bang_(config);
+  setEnv2_bang_(config);
+  setEnv3_bang_(config);
+  envCopy = fromJsObject(environment);
+  environment['*DEFAULT-ENV*'] = envCopy;
+  return environment;
 };
 
 module.exports = getLispEnvironment;

@@ -1,4 +1,4 @@
-var car, createMalCorePureFunction, createMalList, createMalSymbol, extractJsValue, fromArray, fromMalIndex, getEnvironment, malList_question_, toArray, toPartialArray, tokenizeAndParse, _process,
+var car, createMalCorePureFunction, createMalList, createMalSymbol, extractJsValue, fromArray, fromMalIndex, getEnvironment, identity, malList_question_, setCoreFnsOnMalValues_bang_, stripQuotes, toArray, toPartialArray, tokenizeAndParse, _process, _process_,
   __hasProp = {}.hasOwnProperty;
 
 car = require('./linked-list').car;
@@ -26,32 +26,8 @@ tokenizeAndParse = require('./tokenizeAndParse');
 toPartialArray = require('./linked-list').toPartialArray;
 
 getEnvironment = function(config) {
-  var apply, call, environment, evalString, evalWithBareEnv, evalWithEnv, functionsOnMalValues, identity, setCoreFnsOnMalValues_bang_, stripQuotes, _eval, _evalListHead, _process_;
+  var apply, call, environment, evalString, evalWithBareEnv, evalWithEnv, functionsOnMalValues, _eval, _evalListHead;
   environment = config.environment;
-  _eval = function(malVal) {
-    return _process_([environment])(malVal);
-  };
-  identity = function(malVal) {
-    return malVal;
-  };
-  _process_ = function(envs) {
-    return function(malVal) {
-      return _process(identity)(envs)(malVal);
-    };
-  };
-  setCoreFnsOnMalValues_bang_ = function(env, fns) {
-    var fn, fnName, _results;
-    _results = [];
-    for (fnName in fns) {
-      if (!__hasProp.call(fns, fnName)) continue;
-      fn = fns[fnName];
-      _results.push(env[fnName] = createMalCorePureFunction(fn));
-    }
-    return _results;
-  };
-  stripQuotes = function(jsString) {
-    return jsString.slice(1, -1);
-  };
   apply = function(malArgs) {
     var malArgList, malFn, _ref;
     _ref = toArray(malArgs), malFn = _ref[0], malArgList = _ref[1];
@@ -59,6 +35,9 @@ getEnvironment = function(config) {
   };
   call = function(malArgs) {
     return _eval(malArgs);
+  };
+  _eval = function(malVal) {
+    return _process_([environment])(malVal);
   };
   _evalListHead = function(malArgs) {
     return _eval(car(malArgs));
@@ -88,6 +67,31 @@ getEnvironment = function(config) {
   };
   setCoreFnsOnMalValues_bang_(environment, functionsOnMalValues);
   return environment;
+};
+
+identity = function(malVal) {
+  return malVal;
+};
+
+_process_ = function(envs) {
+  return function(malVal) {
+    return _process(identity)(envs)(malVal);
+  };
+};
+
+setCoreFnsOnMalValues_bang_ = function(env, fns) {
+  var fn, fnName, _results;
+  _results = [];
+  for (fnName in fns) {
+    if (!__hasProp.call(fns, fnName)) continue;
+    fn = fns[fnName];
+    _results.push(env[fnName] = createMalCorePureFunction(fn));
+  }
+  return _results;
+};
+
+stripQuotes = function(jsString) {
+  return jsString.slice(1, -1);
 };
 
 module.exports = getEnvironment;

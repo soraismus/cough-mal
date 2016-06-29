@@ -12,6 +12,21 @@ getEnvironment = \config ->
     jsFileName = stripQuotes (extractJsValue malFileName)
     [jsFileName, localEnv]
 
+  load = \malArgs ->
+    _process_ (_read malArgs)
+
+  loadWithBareEnv = \malArgs ->
+    [jsFileName, localEnv] = get_jsFileName_and_localEnv malArgs
+    _processFileAndEnv (
+      readFile jsFileName
+      [(fromMalIndex localEnv)])
+
+  loadWithEnv = \malArgs ->
+    [jsFileName, localEnv] = get_jsFileName_and_localEnv malArgs
+    _processFileAndEnv (
+      readFile jsFileName
+      [(fromMalIndex localEnv), environment])
+
   _process_ = \jsString ->
     _process [environment] jsString
 
@@ -34,21 +49,6 @@ getEnvironment = \config ->
   # WET.
   stripQuotes = \jsString ->
     jsString[1 .. -2]
-
-  # -----------------------------------------------------------------------
-
-  load = \malArgs ->
-    _process_ (_read malArgs)
-  loadWithBareEnv = \malArgs ->
-    [jsFileName, localEnv] = get_jsFileName_and_localEnv malArgs
-    _processFileAndEnv (
-      readFile jsFileName
-      [(fromMalIndex localEnv)])
-  loadWithEnv = \malArgs ->
-    [jsFileName, localEnv] = get_jsFileName_and_localEnv malArgs
-    _processFileAndEnv (
-      readFile jsFileName
-      [(fromMalIndex localEnv), environment])
 
   functionsOnMalValues = {
     'load'               : load

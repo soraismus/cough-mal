@@ -14,36 +14,26 @@ tokenizeAndParse              = require './tokenizeAndParse'
 getEnvironment = \config ->
   { environment } = config
 
-  _eval = \malVal ->
-    _process_ [environment] malVal
-
-  identity = \malVal ->
-    malVal
-
-  _process_ = \envs \malVal ->
-    _process identity envs malVal
-
-  # WET.
-  setCoreFnsOnMalValues! = (env, fns) ->
-    for own fnName, fn of fns
-      env[fnName] = createMalCorePureFunction fn 
-
-  # WET.
-  stripQuotes = \jsString ->
-    jsString[1 .. -2]
-
   apply = \malArgs ->
     [malFn, malArgList] = toArray malArgs
     _eval (createMalList (malFn, malArgList))
+
   call = \malArgs ->
     _eval malArgs
+
+  _eval = \malVal ->
+    _process_ [environment] malVal
+
   _evalListHead = \malArgs ->
     _eval (car malArgs)
+
   evalString = \malArgs ->
     ; _eval tokenizeAndParse stripQuotes extractJsValue car ; malArgs
+
   evalWithBareEnv = \malArgs ->
     [expr, localEnv] = toPartialArray (2, malArgs)
     _process_ [(fromMalIndex localEnv)] expr
+
   evalWithEnv = \malArgs ->
     [expr, localEnv] = toPartialArray (2, malArgs)
     _process_ [(fromMalIndex localEnv), environment] expr
@@ -59,5 +49,20 @@ getEnvironment = \config ->
 
   setCoreFnsOnMalValues! (environment, functionsOnMalValues)
   return environment
+
+identity = \malVal ->
+  malVal
+
+_process_ = \envs \malVal ->
+  _process identity envs malVal
+
+# WET.
+setCoreFnsOnMalValues! = (env, fns) ->
+  for own fnName, fn of fns
+    env[fnName] = createMalCorePureFunction fn 
+
+# WET.
+stripQuotes = \jsString ->
+  jsString[1 .. -2]
 
 module.exports = getEnvironment
