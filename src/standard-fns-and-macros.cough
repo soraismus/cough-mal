@@ -127,26 +127,22 @@ module.exports = """
 
   (def! call-on (fn* (& xs) (fn* (fn) (apply fn xs))))
 
-  (def! reduce
-    (fn* (seed f xs)
+  (def! reduce (fn* (f seed xs)
       (if (empty? xs)
         seed
-        (reduce (f seed (car xs)) f (cdr xs)))))
+        (reduce f (f seed (car xs)) (cdr xs)))))
 
-  (def! map
-    (fn* (fn xs)
-      (reverse (reduce '() (fn* (memo x) (cons (fn x) memo)) xs))))
+  (def! map (fn* (fn xs)
+      (reverse (reduce (fn* (memo x) (cons (fn x) memo)) '() xs))))
 
-  (def! every?
-    (fn* (pred xs)
+  (def! every?  (fn* (pred xs)
       (if (empty? xs)
         true
         (if (pred (car xs))
           (every? pred (cdr xs))
           false))))
 
-  (def! some?
-    (fn* (pred xs)
+  (def! some?  (fn* (pred xs)
       (if (empty? xs)
         false
         (if (pred (car xs))
@@ -181,6 +177,25 @@ module.exports = """
 
   (def! defrec! (macro* (fn-name fn-body)
     `(def! ~fn-name (letrec* (~fn-name ~fn-body) ~fn-name))))
+
+  (def! for* (macro* (loop-parameters body)
+    `(loop
+      ~(1st loop-parameters)
+      (if ~(2nd loop-parameters)
+        nil
+        (do ~body (loop ~(3rd loop-parameters)))))))
+
+  (def! for-each (fn* (f xs)
+    (reduce
+      (fn* (memo x) (do (f x) memo))
+      nil
+      xs)))
+
+  (def! n-times (fn* (n f)
+    (loop (i 0)
+      (if (= i n)
+        nil
+        (do (f i) (loop (+ i 1)))))))
 
 )
 """

@@ -10,8 +10,11 @@ tokenizeAndParse     = require './tokenizeAndParse'
 _createMalString = \jsString ->
   createMalString (circumpendQuotes jsString)
 
-display = \malValue ->
-  { effect: { type: 'display' }, value: malValue }
+encapsulate = \type \malValue ->
+  { effect: { type }, value: malValue }
+
+error = \errorMessage ->
+  [encapsulate 'error' "repl error: (#{errorMessage})"]
 
 flattenIfNecessary = \effects ->
   result = effects
@@ -22,7 +25,7 @@ flattenIfNecessary = \effects ->
 _interpret = (envs, jsString) ->
   try serialize (flattenIfNecessary (_process tokenizeAndParse envs jsString))
   catch e
-    "repl error: (#{serialize e} + )"
+    error e
 
 interpret = (jsString, userJsArray) ->
   if ? userJsArray
@@ -41,7 +44,7 @@ serialize = \results ->
         _result[key] = _serialize value
     _result
 
-environment = getLispEnvironment { display }
+environment = getLispEnvironment { display: encapsulate 'display' }
 
 interpret standardFnsAndMacros
 

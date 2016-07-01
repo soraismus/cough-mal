@@ -1,4 +1,4 @@
-var circumpendQuotes, createMalString, display, environment, flattenIfNecessary, fromArray, getLispEnvironment, interpret, serialize, standardFnsAndMacros, tokenizeAndParse, _createMalString, _interpret, _process, _serialize,
+var circumpendQuotes, createMalString, encapsulate, environment, error, flattenIfNecessary, fromArray, getLispEnvironment, interpret, serialize, standardFnsAndMacros, tokenizeAndParse, _createMalString, _interpret, _process, _serialize,
   __hasProp = {}.hasOwnProperty;
 
 circumpendQuotes = require('./js-utilities').circumpendQuotes;
@@ -21,13 +21,19 @@ _createMalString = function(jsString) {
   return createMalString(circumpendQuotes(jsString));
 };
 
-display = function(malValue) {
-  return {
-    effect: {
-      type: 'display'
-    },
-    value: malValue
+encapsulate = function(type) {
+  return function(malValue) {
+    return {
+      effect: {
+        type: type
+      },
+      value: malValue
+    };
   };
+};
+
+error = function(errorMessage) {
+  return [encapsulate('error')("repl error: (" + errorMessage + ")")];
 };
 
 flattenIfNecessary = function(effects) {
@@ -45,7 +51,7 @@ _interpret = function(envs, jsString) {
     return serialize(flattenIfNecessary(_process(tokenizeAndParse)(envs)(jsString)));
   } catch (_error) {
     e = _error;
-    return "repl error: (" + (serialize(e)) + " + )";
+    return error(e);
   }
 };
 
@@ -79,7 +85,7 @@ serialize = function(results) {
 };
 
 environment = getLispEnvironment({
-  display: display
+  display: encapsulate('display')
 });
 
 interpret(standardFnsAndMacros);
