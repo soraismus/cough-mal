@@ -79,11 +79,11 @@ stripQuotes = \jsString ->
   jsString[1 .. -2]
 
 coreEffectfulFunctionLabel = '<effectful core function>'
-corePureFunctionLabel      = '<pure core function>'
+corePureFunctionLabel      = '<core function>'
 ignoreLabel                = '<ignore>'
 keywordLabel               = '<keyword>'
 macroLabel                 = '<macro>'
 nilLabel                   = 'nil'
-userPureFunctionLabel      = '<user function>'
+userPureFunctionLabel      = '<function>'
 
 module.exports = serialize

@@ -285,23 +285,24 @@ functionsOnMalValues = {
   'parse'              : _interpret
   'prepend'            : prepend
   'pr-str'             : prStr
-  '-quit-'             : _quit_              # Effect
-  'read'               : read
-  'reset!'             : reset
   'rest'               : _cdr
   'reverse'            : _reverse
-  'set!'               : set
-  'slurp'              : slurp
   'str'                : str
   'string?'            : string?
   'symbol'             : symbol
   'symbol?'            : symbol?
   'take'               : _take
   'throw'              : _throw
-  'time-ms'            : time-ms
   'true?'              : true?
   'typeof'             : typeOf
   'user-fn?'           : userFn?
+
+  '-quit-'             : _quit_              # Effect
+  'read'               : read
+  'reset!'             : reset
+  'set!'               : set
+  'slurp'              : slurp
+  'time-ms'            : time-ms
   'with-meta'          : withMeta
   'write'              : write
 }

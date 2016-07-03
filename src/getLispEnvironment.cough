@@ -5,7 +5,6 @@ setEnv2! = require './env2'
 setEnv3! = require './env3'
 
 getLispEnvironment = \config ->
-  console.log 'getLispEnvironment'
   { display } = config
   environment = {}
   config = { display, environment }

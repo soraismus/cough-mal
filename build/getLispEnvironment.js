@@ -12,7 +12,6 @@ setEnv3_bang_ = require('./env3');
 
 getLispEnvironment = function(config) {
   var display, envCopy, environment;
-  console.log('getLispEnvironment');
   display = config.display;
   environment = {};
   config = {

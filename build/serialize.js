@@ -148,7 +148,7 @@ stripQuotes = function(jsString) {
 
 coreEffectfulFunctionLabel = '<effectful core function>';
 
-corePureFunctionLabel = '<pure core function>';
+corePureFunctionLabel = '<core function>';
 
 ignoreLabel = '<ignore>';
 
@@ -158,6 +158,6 @@ macroLabel = '<macro>';
 
 nilLabel = 'nil';
 
-userPureFunctionLabel = '<user function>';
+userPureFunctionLabel = '<function>';
 
 module.exports = serialize;

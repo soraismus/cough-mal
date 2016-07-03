@@ -29,9 +29,9 @@ module.exports = """
               cache))
           cache))))
 
-  (def! 1st car)
-  (def! 2nd (fn* (xs) (nth 1 xs)))
-  (def! 3rd (fn* (xs) (nth 2 xs)))
+  (def! _0 car)
+  (def! _1 (fn* (xs) (nth 1 xs)))
+  (def! _2 (fn* (xs) (nth 2 xs)))
 
   (def! swap! (macro* (atom & xs)
     (if (empty? xs)
@@ -72,21 +72,21 @@ module.exports = """
         (let* (-query- (gensym))
           `(let* (~-query- ~(car xs))
             (if ~-query-
-              ~(2nd xs)
+              ~(_1 xs)
               (cond ~@(cdr (cdr xs))))))))))
 
   (def! loop (macro* (form0 form1)
-    `(let* (loop (memfix* (fn* (loop) (fn* (~(1st form0)) ~form1)))) (loop ~(2nd form0)))))
+    `(let* (loop (memfix* (fn* (loop) (fn* (~(_0 form0)) ~form1)))) (loop ~(_1 form0)))))
 
   (def! -> (macro* (& xs)
     (if (empty? xs)
       nil
       (let* (x  (car xs)
-            xs (cdr xs))
+             xs (cdr xs))
         (if (empty? xs)
           x
           (let* (form  (car xs)
-                forms (cdr xs))
+                forms  (cdr xs))
             (if (empty? forms)
               (if (list? form)
                 (if (= (symbol "fn*") (car form))
@@ -99,11 +99,11 @@ module.exports = """
     (if (empty? xs)
       nil
       (let* (x  (car xs)
-            xs (cdr xs))
+             xs (cdr xs))
         (if (empty? xs)
           x
           (let* (form  (car xs)
-                forms (cdr xs))
+                 forms (cdr xs))
             (if (empty? forms)
               (if (list? form)
                 (if (= (symbol "fn*") (car form))
@@ -126,6 +126,19 @@ module.exports = """
   (def! constant-fn (fn* (x) (fn* (y) x)))
 
   (def! call-on (fn* (& xs) (fn* (fn) (apply fn xs))))
+
+  (def! step-into-list (fn* (xs fn0 fn1)
+    (let* (x   (car xs)
+          -xs- (cdr xs))
+      (if (empty? -xs-)
+        (fn1 x)
+        (fn0 x -xs-)))))
+
+  (def! apply-on (fn* (& xs)
+    (step-into-list
+      xs
+      (fn* (arguments -xs-) (apply (car -xs-) arguments))
+      (fn* (arguments) (fn* (f) (apply f arguments))))))
 
   (def! reduce (fn* (f seed xs)
       (if (empty? xs)
@@ -150,12 +163,12 @@ module.exports = """
           (some? pred (cdr xs))))))
 
   (def! letmemrec* (macro* (alias expr)
-    `(let* (~(car alias) (memfix* (fn* (~(car alias)) ~(2nd alias)))) ~expr)))
+    `(let* (~(car alias) (memfix* (fn* (~(car alias)) ~(_1 alias)))) ~expr)))
 
   (def! skip (fn* (nbr xs)
     (letrec* (-skip- (fn* (ys)
       (let* (nbr (car ys)
-            xs (2nd ys))
+             xs  (_1 ys))
         (cond
           (= 0 nbr) xs
           (= 1 nbr) (cdr xs)
@@ -166,10 +179,10 @@ module.exports = """
     `((get ~x ~key) ~@xs)))
 
   (def! .. (fn* (lo hi)
-    (letrec* (-..- (fn* (ys)
-      (let* (lo     (1st ys)
-            hi     (2nd ys)
-            -list- (3rd ys))
+    (letrec* (-..- (fn* (xs)
+      (let* (lo     (_0 xs)
+             hi     (_1 xs)
+             -list- (_2 xs))
         (if (= lo hi)
           (cons hi -list-)
           (-..- (list lo (decr hi) (cons hi -list-)))))))
@@ -180,10 +193,10 @@ module.exports = """
 
   (def! for* (macro* (loop-parameters body)
     `(loop
-      ~(1st loop-parameters)
-      (if ~(2nd loop-parameters)
+      ~(_0 loop-parameters)
+      (if ~(_1 loop-parameters)
         nil
-        (do ~body (loop ~(3rd loop-parameters)))))))
+        (do ~body (loop ~(_2 loop-parameters)))))))
 
   (def! for-each (fn* (f xs)
     (reduce
@@ -196,6 +209,16 @@ module.exports = """
       (if (= i n)
         nil
         (do (f i) (loop (+ i 1)))))))
+
+  (def! tap (fn* (f x)
+    (do (f x) x)))
+
+  (def! with-side-effect (fn* (thunk x)
+    (do (thunk) x)))
+
+
+  (def! thunk (macro* (form)
+    `(fn* () ~form)))
 
 )
 """
