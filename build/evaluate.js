@@ -1,4 +1,4 @@
-var addEnv, car, catch_asterisk_, cdr, circumpendQuotes, commentSignal, createFn, createLocalEnv, createMacro, createMalIndex, createMalKeyword, createMalList, createMalMacro, createMalNumber, createMalString, createMalSymbol, createMalUserPureFunction, def_bang_, defineNewValue, empty_question_, evalQuasiquotedExpr, evaluate, expandMacro, expand_hyphen_macro, extractJsValue, filter, fn_asterisk_, forEach, fromArray, ignorable_question_, jsString_question_, keyword_question_, let_asterisk_, letrec_asterisk_, lookup, macro_asterisk_, malCoreEffectfulFunction_question_, malCorePureFunction_question_, malIgnore_question_, malIndex_question_, malList_question_, malMacro_question_, malNil, malSymbol_question_, malUserPureFunction_question_, map, next, quasiquote, quote, recurse, reduce, reduceBy2, reduceLet_asterisk_, reduceLetrec_asterisk_, reverse, setMainEnv, splat, spliceUnquote, spliceUnquote_question_, spliceUnquotedExpr_question_, toPartialArray, try_asterisk_, undef_bang_, undefineValue, unquote, unquote_question_, unquotedExpr_question_, unsetMainEnv, _do, _evaluate, _if,
+var addEnv, car, catch_asterisk_, cdr, circumpendQuotes, commentSignal, createFn, createLocalEnv, createMacro, createMalIndex, createMalKeyword, createMalList, createMalMacro, createMalNumber, createMalString, createMalSymbol, createMalUserPureFunction, def_bang_, defineNewValue, empty_question_, evalQuasiquotedExpr, evaluate, expandMacro, expand_hyphen_macro, extractJsValue, filter, fn_asterisk_, forEach, fromArray, fromJsObjects, ignorable_question_, jsString_question_, keyword_question_, let_asterisk_, letrec_asterisk_, lookup, macro_asterisk_, malCoreEffectfulFunction_question_, malCorePureFunction_question_, malIgnore_question_, malIndex_question_, malList_question_, malMacro_question_, malNil, malSymbol_question_, malUserPureFunction_question_, map, next, quasiquote, quote, recurse, reduce, reduceBy2, reduceLet_asterisk_, reduceLetrec_asterisk_, reverse, setMainEnv, splat, spliceUnquote, spliceUnquote_question_, spliceUnquotedExpr_question_, toPartialArray, try_asterisk_, undef_bang_, undefineValue, unquote, unquote_question_, unquotedExpr_question_, unsetMainEnv, _do, _evaluate, _getCurrentEnv, _getDefaultEnv, _if,
   __hasProp = {}.hasOwnProperty;
 
 addEnv = require('./env-utilities').addEnv;
@@ -46,6 +46,12 @@ fn_asterisk_ = require('./keyTokens').fn_asterisk_;
 forEach = require('./linked-list').forEach;
 
 fromArray = require('./linked-list').fromArray;
+
+fromJsObjects = require('./index-utilities').fromJsObjects;
+
+_getCurrentEnv = require('./keyTokens')._getCurrentEnv;
+
+_getDefaultEnv = require('./keyTokens')._getDefaultEnv;
 
 _if = require('./keyTokens')._if;
 
@@ -219,6 +225,10 @@ _evaluate = function(malExpr, envs, addResult) {
             break;
           case _do:
             return forEach(evaluate(envs, addResult), tailList);
+          case _getCurrentEnv:
+            return fromJsObjects.apply(null, envs.reverse());
+          case _getDefaultEnv:
+            return fromJsObjects(envs[envs.length - 1]);
           case _if:
             malExpr = extractJsValue(_evaluate(arg1, envs, addResult)) ? car(remainingArgs) : empty_question_(otherwise = next(remainingArgs)) ? malNil : otherwise;
             break;

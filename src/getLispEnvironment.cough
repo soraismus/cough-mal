@@ -1,4 +1,3 @@
-{ fromJsObject } = require './index-utilities'
 setEnv0! = require './env0'
 setEnv1! = require './env1'
 setEnv2! = require './env2'
@@ -12,8 +11,6 @@ getLispEnvironment = \config ->
   setEnv1! config
   setEnv2! config
   setEnv3! config
-  envCopy = fromJsObject environment
-  environment['*DEFAULT-ENV*'] = envCopy
   environment
 
 module.exports = getLispEnvironment

@@ -145,8 +145,18 @@ module.exports = """
         seed
         (reduce f (f seed (car xs)) (cdr xs)))))
 
-  (def! map (fn* (fn xs)
-      (reverse (reduce (fn* (memo x) (cons (fn x) memo)) '() xs))))
+  (def! filter (fn* (predicate xs)
+    (reverse
+      (reduce
+        (fn* (memo x)
+          (if (predicate x)
+            (cons x memo)
+            memo))
+        '()
+        xs))))
+
+  (def! map (fn* (f xs)
+      (reverse (reduce (fn* (memo x) (cons (f x) memo)) '() xs))))
 
   (def! every?  (fn* (pred xs)
       (if (empty? xs)

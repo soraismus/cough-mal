@@ -62,8 +62,8 @@ getEnvironment = function(config) {
     'call': call,
     'eval': _evalListHead,
     'eval-string': evalString,
-    'eval-with-env': evalWithEnv,
-    'eval-with-bare-env': evalWithBareEnv
+    'eval-with-bare-env': evalWithBareEnv,
+    'eval-with-env': evalWithEnv
   };
   setCoreFnsOnMalValues_bang_(environment, functionsOnMalValues);
   return environment;

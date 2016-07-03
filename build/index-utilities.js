@@ -1,20 +1,25 @@
-var createMalIndex, fromJsObject, fromMalIndex, jsString_question_, stripQuotes,
+var createMalIndex, fromJsObjects, fromMalIndex, jsString_question_, stripQuotes,
+  __slice = [].slice,
   __hasProp = {}.hasOwnProperty;
 
 createMalIndex = require('./type-utilities').createMalIndex;
 
 jsString_question_ = require('./js-utilities').jsString_question_;
 
-fromJsObject = function(jsObject) {
-  var copy, key, val;
+fromJsObjects = function() {
+  var copy, jsObject, jsObjects, key, val, _i, _len;
+  jsObjects = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
   copy = {};
-  for (key in jsObject) {
-    if (!__hasProp.call(jsObject, key)) continue;
-    val = jsObject[key];
-    if (jsString_question_(key)) {
-      copy['"' + key + '"'] = val;
-    } else {
-      copy[key] = val;
+  for (_i = 0, _len = jsObjects.length; _i < _len; _i++) {
+    jsObject = jsObjects[_i];
+    for (key in jsObject) {
+      if (!__hasProp.call(jsObject, key)) continue;
+      val = jsObject[key];
+      if (jsString_question_(key)) {
+        copy[':' + key] = val;
+      } else {
+        copy[key] = val;
+      }
     }
   }
   return createMalIndex(copy);
@@ -42,6 +47,6 @@ stripQuotes = function(jsString) {
 };
 
 module.exports = {
-  fromJsObject: fromJsObject,
+  fromJsObjects: fromJsObjects,
   fromMalIndex: fromMalIndex
 };

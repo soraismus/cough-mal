@@ -10,6 +10,8 @@ keyTokens = [
   expand-macro        = 'expand-macro'
   _false             = 'false'
   fn*                = 'fn*'
+  _getCurrentEnv     = '-get-current-env-'
+  _getDefaultEnv     = '-get-default-env-'
   _if                = 'if'
 
   ignore!               = 'ignore!'
@@ -50,6 +52,8 @@ keywords = [
   expand-macro
   _false
   fn*
+  _getCurrentEnv
+  _getDefaultEnv
   _if
   ignore
   let*
@@ -97,6 +101,8 @@ module.exports = {
   expand-macro
   _false
   fn*
+  _getCurrentEnv
+  _getDefaultEnv
   glyphTokens
   _if
   ignoreIfTrue

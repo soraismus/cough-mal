@@ -21,6 +21,9 @@ commentSignal                 = require './commentSignal'
 { fn* }                       = require './keyTokens'
 { forEach }                   = require './linked-list'
 { fromArray }                 = require './linked-list'
+{ fromJsObjects }             = require './index-utilities'
+{ _getCurrentEnv }            = require './keyTokens'
+{ _getDefaultEnv }            = require './keyTokens'
 { _if }                       = require './keyTokens'
 { jsString? }                 = require './js-utilities'
 { keyword? }                  = require './keyTokens'
@@ -146,6 +149,12 @@ _evaluate = (malExpr, envs, addResult) ->
 
           when _do
             return forEach ((evaluate (envs, addResult)), tailList)
+
+          when _getCurrentEnv
+            return fromJsObjects ((envs.reverse ())...)
+
+          when _getDefaultEnv
+            return fromJsObjects envs[envs.length - 1]
 
           when _if
             malExpr =
