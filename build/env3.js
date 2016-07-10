@@ -1,4 +1,4 @@
-var car, createMalCorePureFunction, createMalList, createMalSymbol, extractJsValue, fromArray, fromMalIndex, getEnvironment, identity, malList_question_, setCoreFnsOnMalValues_bang_, stripQuotes, toArray, toPartialArray, tokenizeAndParse, _process, _process_,
+var car, createMalCorePureFunction, createMalList, createMalSymbol, extractJsValue, fromArray, fromMalIndex, getEnvironment, malList_question_, setCoreFnsOnMalValues_bang_, stripQuotes, toArray, toPartialArray, tokenizeAndParse, _process, _process_,
   __hasProp = {}.hasOwnProperty;
 
 car = require('./linked-list').car;
@@ -26,7 +26,7 @@ tokenizeAndParse = require('./tokenizeAndParse');
 toPartialArray = require('./linked-list').toPartialArray;
 
 getEnvironment = function(config) {
-  var apply, call, environment, evalString, evalWithBareEnv, evalWithEnv, functionsOnMalValues, _eval, _evalListHead;
+  var apply, call, environment, evalString, evalWithBareEnv, evalWithEnv, functionsOnMalValues, parse, _eval, _evalListHead;
   environment = config.environment;
   apply = function(malArgs) {
     var malArgList, malFn, _ref;
@@ -57,26 +57,14 @@ getEnvironment = function(config) {
     _ref = toPartialArray(2, malArgs), expr = _ref[0], localEnv = _ref[1];
     return _process_([fromMalIndex(localEnv), environment])(expr);
   };
+  parse = function(malArgs) {
+    return tokenizeAndParse(stripQuotes(extractJsValue(car(malArgs))));
+  };
   functionsOnMalValues = {
-    'apply': apply,
-    'call': call,
-    'eval': _evalListHead,
-    'eval-string': evalString,
-    'eval-with-bare-env': evalWithBareEnv,
-    'eval-with-env': evalWithEnv
+    parse: parse
   };
   setCoreFnsOnMalValues_bang_(environment, functionsOnMalValues);
   return environment;
-};
-
-identity = function(malVal) {
-  return malVal;
-};
-
-_process_ = function(envs) {
-  return function(malVal) {
-    return _process(identity)(envs)(malVal);
-  };
 };
 
 setCoreFnsOnMalValues_bang_ = function(env, fns) {
@@ -93,5 +81,9 @@ setCoreFnsOnMalValues_bang_ = function(env, fns) {
 stripQuotes = function(jsString) {
   return jsString.slice(1, -1);
 };
+
+_process_ = _process(function(malVal) {
+  return malVal;
+});
 
 module.exports = getEnvironment;

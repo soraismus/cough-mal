@@ -38,23 +38,17 @@ getEnvironment = \config ->
     [expr, localEnv] = toPartialArray (2, malArgs)
     _process_ [(fromMalIndex localEnv), environment] expr
 
+  parse = \malArgs ->
+    tokenizeAndParse (stripQuotes (extractJsValue (car malArgs)))
+
   functionsOnMalValues = {
-    'apply'              : apply
-    'call'               : call
-    'eval'               : _evalListHead
-    'eval-string'        : evalString
-    'eval-with-bare-env' : evalWithBareEnv
-    'eval-with-env'      : evalWithEnv
+    #'eval-with-bare-env' : evalWithBareEnv
+    #'eval-with-env'      : evalWithEnv
+    parse : parse
   }
 
   setCoreFnsOnMalValues! (environment, functionsOnMalValues)
   return environment
-
-identity = \malVal ->
-  malVal
-
-_process_ = \envs \malVal ->
-  _process identity envs malVal
 
 # WET.
 setCoreFnsOnMalValues! = (env, fns) ->
@@ -64,5 +58,7 @@ setCoreFnsOnMalValues! = (env, fns) ->
 # WET.
 stripQuotes = \jsString ->
   jsString[1 .. -2]
+
+_process_ = _process (\malVal -> malVal)
 
 module.exports = getEnvironment

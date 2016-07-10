@@ -194,7 +194,7 @@ module.exports = {
 
 
 },{}],6:[function(_dereq_,module,exports){
-var add, assoc, contains_question_, createMalBoolean, createMalCorePureFunction, createMalIdentifier, createMalIndex, createMalNumber, createMalString, dissoc, divide, exponentiate, extractJsValue, fromArray, functionsOnJsValues, get, getEnvironment, greaterThan, greaterThanOrEqual, index, jsNaN_question_, jsNumber_question_, jsString_question_, keys, length, lessThan, lessThanOrEqual, lift, malNil, mod, multiply, negate, parseNumber, reduce, setCoreFnsOnJsValues_bang_, subtract, toArray, vals,
+var add, contains_question_, createMalBoolean, createMalCorePureFunction, createMalIdentifier, createMalIndex, createMalNumber, createMalString, dissoc, divide, exponentiate, extractJsValue, fromArray, functionsOnJsValues, get, getEnvironment, greaterThan, greaterThanOrEqual, index, jsNaN_question_, jsNumber_question_, jsString_question_, keys, length, lessThan, lessThanOrEqual, lift, malNil, mod, multiply, negate, parseNumber, reduce, setCoreFnsOnJsValues_bang_, subtract, toArray, vals,
   __slice = [].slice,
   __hasProp = {}.hasOwnProperty;
 
@@ -232,24 +232,6 @@ add = function() {
   return createMalNumber(nbrs.reduce(function(x, nbr) {
     return x += nbr;
   }));
-};
-
-assoc = function() {
-  var args, copy, i, index, k, key, value, _i, _len;
-  index = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-  copy = {};
-  for (key in index) {
-    if (!__hasProp.call(index, key)) continue;
-    value = index[key];
-    copy[key] = value;
-  }
-  for (i = _i = 0, _len = args.length; _i < _len; i = ++_i) {
-    k = args[i];
-    if (i % 2 === 0) {
-      copy[k] = args[i + 1];
-    }
-  }
-  return createMalIndex(copy);
 };
 
 contains_question_ = function(index, key) {
@@ -424,7 +406,6 @@ vals = function(index) {
 
 functionsOnJsValues = {
   '+': add,
-  'assoc': assoc,
   'contains?': contains_question_,
   'dissoc': dissoc,
   '/': divide,
@@ -450,7 +431,7 @@ module.exports = getEnvironment;
 
 },{"./js-utilities":14,"./linked-list":16,"./type-utilities":22}],7:[function(_dereq_,module,exports){
 (function (process){
-var append, areEqual, atom, atom_question_, boolean_question_, car, cdr, circumpendQuotes, concat, cons, coreFn_question_, count, createMalAtom, createMalBoolean, createMalCoreEffectfulFunction, createMalCorePureFunction, createMalList, createMalNumber, createMalString, createMalSymbol, createPredicate, deref, drop, empty_question_, equal_question_, extractJsValue, false_question_, first, fromArray, function_question_, functionsOnMalValues, getEnvironment, ignoreIfTrue, ignoreUnlessTrue, ignore_bang_, interpret, last, list, list_question_, macro_question_, malAtom_question_, malBoolean_question_, malCorePureFunction_question_, malFalse, malFalse_question_, malIgnore, malIndex_question_, malList_question_, malMacro_question_, malNil, malNil_question_, malNumber_question_, malString_question_, malSymbol_question_, malTrue, malTrue_question_, malUserPureFunction_question_, meta, next, nil_question_, nth, number_question_, prStr, prepend, read, reduce, reset, rest, reverse, serialize, set, setCoreFnsOnMalValues_bang_, slurp, str, string_question_, stripQuotes, symbol, symbol_question_, take, time_hyphen_ms, toArray, toPartialArray, true_question_, typeOf, userFn_question_, withMeta, write, _car, _cdr, _concat, _drop, _empty_question_, _interpret, _last, _not, _prStr, _quit_, _ref, _reverse, _take, _throw,
+var append, areEqual, assoc, atom, atom_question_, boolean_question_, car, cdr, circumpendQuotes, concat, cons, coreFn_question_, count, createMalAtom, createMalBoolean, createMalCorePureFunction, createMalIndex, createMalList, createMalNumber, createMalString, createMalSymbol, createPredicate, deref, drop, empty_question_, equal_question_, extractJsValue, false_question_, first, fromArray, function_question_, functionsOnMalValues, getEnvironment, ignoreIfTrue, ignoreUnlessTrue, ignore_bang_, interpret, last, list, list_question_, macro_question_, malAtom_question_, malBoolean_question_, malCorePureFunction_question_, malFalse, malFalse_question_, malIgnore, malIndex_question_, malList_question_, malMacro_question_, malNil, malNil_question_, malNumber_question_, malString_question_, malSymbol_question_, malTrue, malTrue_question_, malUserPureFunction_question_, meta, next, nil_question_, nth, number_question_, prepend, prettyString, read, recurse, reduce, reset, rest, reverse, serialize, set, setCoreFnsOnMalValues_bang_, slurp, string, string_question_, stripQuotes, symbol, symbol_question_, take, time_hyphen_ms, toArray, toPartialArray, true_question_, typeOf, userFn_question_, withMeta, write, _car, _cdr, _concat, _drop, _empty_question_, _interpret, _last, _not, _prStr, _quit_, _ref, _reverse, _take, _throw,
   __slice = [].slice,
   __hasProp = {}.hasOwnProperty;
 
@@ -466,9 +447,9 @@ createMalAtom = _dereq_('./type-utilities').createMalAtom;
 
 createMalBoolean = _dereq_('./type-utilities').createMalBoolean;
 
-createMalCoreEffectfulFunction = _dereq_('./type-utilities').createMalCoreEffectfulFunction;
-
 createMalCorePureFunction = _dereq_('./type-utilities').createMalCorePureFunction;
+
+createMalIndex = _dereq_('./type-utilities').createMalIndex;
 
 createMalList = _dereq_('./type-utilities').createMalList;
 
@@ -528,6 +509,8 @@ malUserPureFunction_question_ = _dereq_('./type-utilities').malUserPureFunction_
 
 next = _dereq_('./linked-list').next;
 
+recurse = _dereq_('./linked-list').recurse;
+
 reduce = _dereq_('./linked-list').reduce;
 
 reverse = _dereq_('./linked-list').reverse;
@@ -562,6 +545,25 @@ areEqual = function(malArgs) {
     }
   };
   return createMalBoolean(_areEqual(malValue0, malValue1));
+};
+
+assoc = function(malArgs) {
+  var args, copy, jsIndex, k, key, v, value;
+  jsIndex = extractJsValue(car(malArgs));
+  args = cdr(malArgs);
+  copy = {};
+  for (key in jsIndex) {
+    if (!__hasProp.call(jsIndex, key)) continue;
+    value = jsIndex[key];
+    copy[key] = value;
+  }
+  while (!empty_question_(args)) {
+    k = car(args);
+    v = next(args);
+    args = recurse(recurse(args));
+    copy[extractJsValue(k)] = v;
+  }
+  return createMalIndex(copy);
 };
 
 atom = function(malArgs) {
@@ -738,13 +740,13 @@ prepend = function(malArgs) {
 };
 
 _prStr = function(malArgs, printReadably_question_) {
-  return (toArray(malArgs)).map(function(malArg) {
+  return ((toArray(malArgs)).map(function(malArg) {
     return serialize(malArg, printReadably_question_);
-  });
+  })).join('');
 };
 
-prStr = function(malArgs) {
-  return createMalString('"' + (_prStr(malArgs, true)).join('') + '"');
+prettyString = function(malArgs) {
+  return createMalString(circumpendQuotes(_prStr(malArgs, true)));
 };
 
 _quit_ = function() {
@@ -812,8 +814,8 @@ slurp = function(malArgs) {
   return createMalString(circumpendQuotes(_dereq_('fs').readFileSync(jsFileName).toString()));
 };
 
-str = function(malArgs) {
-  return createMalString('"' + (_prStr(malArgs, false)).join('') + '"');
+string = function(malArgs) {
+  return createMalString(circumpendQuotes(_prStr(malArgs, false)));
 };
 
 stripQuotes = function(jsString) {
@@ -880,6 +882,7 @@ _ref = [malAtom_question_, malBoolean_question_, malCorePureFunction_question_, 
 functionsOnMalValues = {
   '=': areEqual,
   'append': append,
+  'assoc': assoc,
   'atom': atom,
   'atom?': atom_question_,
   'boolean?': boolean_question_,
@@ -909,10 +912,10 @@ functionsOnMalValues = {
   'number?': number_question_,
   'parse': _interpret,
   'prepend': prepend,
-  'pr-str': prStr,
+  'pretty-string': prettyString,
   'rest': _cdr,
   'reverse': _reverse,
-  'str': str,
+  'string': string,
   'string?': string_question_,
   'symbol': symbol,
   'symbol?': symbol_question_,
@@ -974,11 +977,11 @@ setCoreEffectfulFnsOnMalValues_bang_ = function(represent) {
 };
 
 displayEffectsOnMalValues = {
-  'prn': function(malArgs) {
-    return _prStr(malArgs, true);
-  },
-  'println': function(malArgs) {
+  'print': function(malArgs) {
     return _prStr(malArgs, false);
+  },
+  'pretty-print': function(malArgs) {
+    return _prStr(malArgs, true);
   }
 };
 
@@ -986,7 +989,7 @@ module.exports = getEnvironment;
 
 
 },{"./linked-list":16,"./serialize":18,"./type-utilities":22}],9:[function(_dereq_,module,exports){
-var car, createMalCorePureFunction, createMalList, createMalSymbol, extractJsValue, fromArray, fromMalIndex, getEnvironment, identity, malList_question_, setCoreFnsOnMalValues_bang_, stripQuotes, toArray, toPartialArray, tokenizeAndParse, _process, _process_,
+var car, createMalCorePureFunction, createMalList, createMalSymbol, extractJsValue, fromArray, fromMalIndex, getEnvironment, malList_question_, setCoreFnsOnMalValues_bang_, stripQuotes, toArray, toPartialArray, tokenizeAndParse, _process, _process_,
   __hasProp = {}.hasOwnProperty;
 
 car = _dereq_('./linked-list').car;
@@ -1014,7 +1017,7 @@ tokenizeAndParse = _dereq_('./tokenizeAndParse');
 toPartialArray = _dereq_('./linked-list').toPartialArray;
 
 getEnvironment = function(config) {
-  var apply, call, environment, evalString, evalWithBareEnv, evalWithEnv, functionsOnMalValues, _eval, _evalListHead;
+  var apply, call, environment, evalString, evalWithBareEnv, evalWithEnv, functionsOnMalValues, parse, _eval, _evalListHead;
   environment = config.environment;
   apply = function(malArgs) {
     var malArgList, malFn, _ref;
@@ -1045,26 +1048,14 @@ getEnvironment = function(config) {
     _ref = toPartialArray(2, malArgs), expr = _ref[0], localEnv = _ref[1];
     return _process_([fromMalIndex(localEnv), environment])(expr);
   };
+  parse = function(malArgs) {
+    return tokenizeAndParse(stripQuotes(extractJsValue(car(malArgs))));
+  };
   functionsOnMalValues = {
-    'apply': apply,
-    'call': call,
-    'eval': _evalListHead,
-    'eval-string': evalString,
-    'eval-with-bare-env': evalWithBareEnv,
-    'eval-with-env': evalWithEnv
+    parse: parse
   };
   setCoreFnsOnMalValues_bang_(environment, functionsOnMalValues);
   return environment;
-};
-
-identity = function(malVal) {
-  return malVal;
-};
-
-_process_ = function(envs) {
-  return function(malVal) {
-    return _process(identity)(envs)(malVal);
-  };
 };
 
 setCoreFnsOnMalValues_bang_ = function(env, fns) {
@@ -1082,11 +1073,15 @@ stripQuotes = function(jsString) {
   return jsString.slice(1, -1);
 };
 
+_process_ = _process(function(malVal) {
+  return malVal;
+});
+
 module.exports = getEnvironment;
 
 
 },{"./_process":3,"./index-utilities":12,"./linked-list":16,"./tokenizeAndParse":21,"./type-utilities":22}],10:[function(_dereq_,module,exports){
-var addEnv, car, catch_asterisk_, cdr, circumpendQuotes, commentSignal, createFn, createLocalEnv, createMacro, createMalIndex, createMalKeyword, createMalList, createMalMacro, createMalNumber, createMalString, createMalSymbol, createMalUserPureFunction, def_bang_, defineNewValue, empty_question_, evalQuasiquotedExpr, evaluate, expandMacro, expand_hyphen_macro, extractJsValue, filter, fn_asterisk_, forEach, fromArray, fromJsObjects, ignorable_question_, jsString_question_, keyword_question_, let_asterisk_, letrec_asterisk_, lookup, macro_asterisk_, malCoreEffectfulFunction_question_, malCorePureFunction_question_, malIgnore_question_, malIndex_question_, malList_question_, malMacro_question_, malNil, malSymbol_question_, malUserPureFunction_question_, map, next, quasiquote, quote, recurse, reduce, reduceBy2, reduceLet_asterisk_, reduceLetrec_asterisk_, reverse, setMainEnv, splat, spliceUnquote, spliceUnquote_question_, spliceUnquotedExpr_question_, toPartialArray, try_asterisk_, undef_bang_, undefineValue, unquote, unquote_question_, unquotedExpr_question_, unsetMainEnv, _do, _evaluate, _getCurrentEnv, _getDefaultEnv, _if,
+var addEnv, car, catch_asterisk_, cdr, circumpendQuotes, commentSignal, createFn, createLocalEnv, createMacro, createMalIndex, createMalKeyword, createMalList, createMalMacro, createMalNumber, createMalString, createMalSymbol, createMalUserPureFunction, def_bang_, defineNewValue, empty_question_, evalQuasiquotedExpr, evaluate, expandMacro, expand_hyphen_macro, extractJsValue, filter, fn_asterisk_, forEach, fromArray, fromJsObjects, fromMalIndex, ignorable_question_, jsString_question_, keyword_question_, let_asterisk_, letrec_asterisk_, lookup, macro_asterisk_, malCoreEffectfulFunction_question_, malCorePureFunction_question_, malIgnore_question_, malIndex_question_, malKeyword_question_, malList_question_, malMacro_question_, malNil, malSymbol_question_, malUserPureFunction_question_, map, next, quasiquote, quote, recurse, reduce, reduceBy2, reduceLet_asterisk_, reduceLetrec_asterisk_, reverse, setMainEnv, splat, spliceUnquote, spliceUnquote_question_, spliceUnquotedExpr_question_, toPartialArray, try_asterisk_, undef_bang_, undefineValue, unquote, unquote_question_, unquotedExpr_question_, unsetMainEnv, _do, _eval, _evalWithEnv, _evaluate, _getCurrentEnv, _getDefaultEnv, _if,
   __hasProp = {}.hasOwnProperty;
 
 addEnv = _dereq_('./env-utilities').addEnv;
@@ -1123,6 +1118,10 @@ _do = _dereq_('./keyTokens')._do;
 
 empty_question_ = _dereq_('./linked-list').empty_question_;
 
+_eval = _dereq_('./keyTokens')._eval;
+
+_evalWithEnv = _dereq_('./keyTokens')._evalWithEnv;
+
 expand_hyphen_macro = _dereq_('./keyTokens').expand_hyphen_macro;
 
 extractJsValue = _dereq_('./type-utilities').extractJsValue;
@@ -1136,6 +1135,8 @@ forEach = _dereq_('./linked-list').forEach;
 fromArray = _dereq_('./linked-list').fromArray;
 
 fromJsObjects = _dereq_('./index-utilities').fromJsObjects;
+
+fromMalIndex = _dereq_('./index-utilities').fromMalIndex;
 
 _getCurrentEnv = _dereq_('./keyTokens')._getCurrentEnv;
 
@@ -1162,6 +1163,8 @@ malCorePureFunction_question_ = _dereq_('./type-utilities').malCorePureFunction_
 malIgnore_question_ = _dereq_('./type-utilities').malIgnore_question_;
 
 malIndex_question_ = _dereq_('./type-utilities').malIndex_question_;
+
+malKeyword_question_ = _dereq_('./type-utilities').malKeyword_question_;
 
 malList_question_ = _dereq_('./type-utilities').malList_question_;
 
@@ -1303,6 +1306,13 @@ _evaluate = function(malExpr, envs, addResult) {
             return defineNewValue(tailList, envs, addResult);
           case undef_bang_:
             return undefineValue(tailList, envs);
+          case _eval:
+            malExpr = _evaluate(arg1, envs, addResult);
+            break;
+          case _evalWithEnv:
+            envs = [fromMalIndex(_evaluate(arg1, envs, addResult))];
+            malExpr = _evaluate(car(remainingArgs), envs, addResult);
+            break;
           case let_asterisk_:
             malExpr = car(remainingArgs);
             envs = addEnv(envs, reduceLet_asterisk_(envs, arg1, addResult));
@@ -1356,6 +1366,9 @@ _evaluate = function(malExpr, envs, addResult) {
             malExpr = tailList;
             malInvokable = _evaluate(malSymbol, envs, addResult);
             switch (false) {
+              case !malKeyword_question_(malInvokable):
+                malExpr = createMalList(malInvokable, tailList);
+                break;
               case !malMacro_question_(malInvokable):
                 malExpr = expandMacro(head, tailList, envs, addResult);
                 break;
@@ -1376,7 +1389,7 @@ _evaluate = function(malExpr, envs, addResult) {
                 envs = addEnv(localEnvs, newEnv);
                 break;
               default:
-                throw 'Value is not a function';
+                throw "" + (extractJsValue(malSymbol)) + " does not evaluate to a function, macro, or keyword.";
             }
         }
     }
@@ -1490,7 +1503,7 @@ module.exports = getLispEnvironment;
 
 
 },{"./env0":6,"./env1":7,"./env2":8,"./env3":9}],12:[function(_dereq_,module,exports){
-var createMalIndex, fromJsObjects, fromMalIndex, jsString_question_, stripQuotes,
+var createMalIndex, fromJsObjects, fromMalIndex, jsString_question_,
   __slice = [].slice,
   __hasProp = {}.hasOwnProperty;
 
@@ -1518,24 +1531,29 @@ fromJsObjects = function() {
 };
 
 fromMalIndex = function(malIndex) {
-  var key, localEnv, value, _ref;
-  localEnv = {};
+  var key, newKey, result, value, _ref;
+  result = {};
   _ref = malIndex.jsValue;
   for (key in _ref) {
     if (!__hasProp.call(_ref, key)) continue;
     value = _ref[key];
     if (jsString_question_(key)) {
-      stripQuotes(key);
-      localEnv[stripQuotes(key)] = value;
+      newKey = (function() {
+        switch (key[0]) {
+          case ':':
+            return key.slice(1);
+          case '"':
+            return key.slice(1, -1);
+          default:
+            return key;
+        }
+      })();
+      result[newKey] = value;
     } else {
-      localEnv[key] = value;
+      result[key] = value;
     }
   }
-  return localEnv;
-};
-
-stripQuotes = function(jsString) {
-  return jsString.slice(1, -1);
+  return result;
 };
 
 module.exports = {
@@ -1668,16 +1686,16 @@ module.exports = {
 
 
 },{}],15:[function(_dereq_,module,exports){
-var binaryGlyphTokens, catch_asterisk_, def_bang_, deref, derefGlyph, expand_hyphen_macro, fn_asterisk_, glyphTokens, ignore, ignoreIfTrue, ignoreIfTrueGlyph, ignoreUnlessTrue, ignoreUnlessTrueGlyph, ignore_bang_, ignore_bang_Glyph, indexEnd, indexStart, keyTokens, keyword_question_, keywords, let_asterisk_, letrec_asterisk_, listEnd, listStart, macroTokens, macro_asterisk_, nil, quasiquote, quasiquoteGlyph, quote, quoteGlyph, splat, spliceUnquote, spliceUnquoteGlyph, try_asterisk_, undef_bang_, unquote, unquoteGlyph, _do, _false, _getCurrentEnv, _getDefaultEnv, _if, _process, _true,
+var binaryGlyphTokens, catch_asterisk_, def_bang_, deref, derefGlyph, expand_hyphen_macro, fn_asterisk_, glyphTokens, ignore, ignoreIfTrue, ignoreIfTrueGlyph, ignoreUnlessTrue, ignoreUnlessTrueGlyph, ignore_bang_, ignore_bang_Glyph, indexEnd, indexStart, keyTokens, keyword_question_, keywords, let_asterisk_, letrec_asterisk_, listEnd, listStart, macroTokens, macro_asterisk_, nil, quasiquote, quasiquoteGlyph, quote, quoteGlyph, splat, spliceUnquote, spliceUnquoteGlyph, try_asterisk_, undef_bang_, unquote, unquoteGlyph, _do, _eval, _evalWithEnv, _false, _getCurrentEnv, _getDefaultEnv, _if, _process, _true,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 keyword_question_ = function(jsString) {
   return __indexOf.call(keywords, jsString) >= 0;
 };
 
-keyTokens = [deref = 'deref', derefGlyph = '@', catch_asterisk_ = 'catch*', def_bang_ = 'def!', _do = 'do', expand_hyphen_macro = 'expand-macro', _false = 'false', fn_asterisk_ = 'fn*', _getCurrentEnv = '-get-current-env-', _getDefaultEnv = '-get-default-env-', _if = 'if', ignore_bang_ = 'ignore!', ignore_bang_Glyph = '#!', ignoreIfTrue = 'ignoreIfTrue', ignoreIfTrueGlyph = '#-', ignoreUnlessTrue = 'ignoreUnlessTrue', ignoreUnlessTrueGlyph = '#+', ignore = 'ignore', indexEnd = '}', indexStart = '{', let_asterisk_ = 'let*', letrec_asterisk_ = 'letrec*', listEnd = ')', listStart = '(', macro_asterisk_ = 'macro*', nil = 'nil', _process = '-process-', quasiquote = 'quasiquote', quasiquoteGlyph = '`', quote = 'quote', quoteGlyph = '\'', splat = '&', spliceUnquote = 'splice-unquote', spliceUnquoteGlyph = '~@', _true = 'true', try_asterisk_ = 'try*', undef_bang_ = 'undef!', unquote = 'unquote', unquoteGlyph = '~'];
+keyTokens = [deref = 'deref', derefGlyph = '@', catch_asterisk_ = 'catch*', def_bang_ = 'def!', _do = 'do', _eval = 'eval', _evalWithEnv = 'eval-with-env', expand_hyphen_macro = 'expand-macro', _false = 'false', fn_asterisk_ = 'fn*', _getCurrentEnv = '-get-current-env-', _getDefaultEnv = '-get-default-env-', _if = 'if', ignore_bang_ = 'ignore!', ignore_bang_Glyph = '#!', ignoreIfTrue = 'ignoreIfTrue', ignoreIfTrueGlyph = '#-', ignoreUnlessTrue = 'ignoreUnlessTrue', ignoreUnlessTrueGlyph = '#+', ignore = 'ignore', indexEnd = '}', indexStart = '{', let_asterisk_ = 'let*', letrec_asterisk_ = 'letrec*', listEnd = ')', listStart = '(', macro_asterisk_ = 'macro*', nil = 'nil', _process = '-process-', quasiquote = 'quasiquote', quasiquoteGlyph = '`', quote = 'quote', quoteGlyph = '\'', splat = '&', spliceUnquote = 'splice-unquote', spliceUnquoteGlyph = '~@', _true = 'true', try_asterisk_ = 'try*', undef_bang_ = 'undef!', unquote = 'unquote', unquoteGlyph = '~'];
 
-keywords = [catch_asterisk_, def_bang_, _do, expand_hyphen_macro, _false, fn_asterisk_, _getCurrentEnv, _getDefaultEnv, _if, ignore, let_asterisk_, letrec_asterisk_, macro_asterisk_, nil, _process, quasiquote, quote, spliceUnquote, _true, try_asterisk_, undef_bang_, unquote];
+keywords = [catch_asterisk_, def_bang_, _do, _eval, _evalWithEnv, expand_hyphen_macro, _false, fn_asterisk_, _getCurrentEnv, _getDefaultEnv, _if, ignore, let_asterisk_, letrec_asterisk_, macro_asterisk_, nil, _process, quasiquote, quote, spliceUnquote, _true, try_asterisk_, undef_bang_, unquote];
 
 macroTokens = [quasiquote, quote, spliceUnquote, unquote];
 
@@ -1692,6 +1710,8 @@ module.exports = {
   catch_asterisk_: catch_asterisk_,
   def_bang_: def_bang_,
   _do: _do,
+  _eval: _eval,
+  _evalWithEnv: _evalWithEnv,
   expand_hyphen_macro: expand_hyphen_macro,
   _false: _false,
   fn_asterisk_: fn_asterisk_,
@@ -2425,7 +2445,7 @@ module.exports = serialize;
 
 
 },{"./commentSignal":4,"./keyTokens":15,"./linked-list":16,"./type-utilities":22}],19:[function(_dereq_,module,exports){
-module.exports = "(do\n  (def! fix*\n    (fn* (f)\n      ( (fn* (x) (f (fn* (& ys) (apply (x x) ys))))\n        (fn* (x) (f (fn* (& ys) (apply (x x) ys)))))))\n\n  (def! memfix*\n    (fn* (f)\n      (let* (cache {})\n        (\n          (fn* (x cache)\n            (f\n              (fn* (z)\n                (if (contains? cache z)\n                  (get cache z)\n                  (let* (result ((fn* (y) ((x x cache) y)) z))\n                    (do (set! cache z result) result))))\n              cache))\n          (fn* (x cache)\n            (f\n              (fn* (z)\n                (if (contains? cache z)\n                  (get cache z)\n                  (let* (result ((fn* (y) ((x x cache) y)) z))\n                    (do (set! cache z result) result))))\n              cache))\n          cache))))\n\n  (def! _0 car)\n  (def! _1 (fn* (xs) (nth 1 xs)))\n  (def! _2 (fn* (xs) (nth 2 xs)))\n\n  (def! swap! (macro* (atom & xs)\n    (if (empty? xs)\n      atom\n      `(let* (-atom- ~atom)\n        (do\n          (reset! -atom- (~(car xs) (deref -atom-) ~@(cdr xs)))\n          (deref -atom-))))))\n\n  (def! *gensym-counter* (atom 0))\n\n  (def! gensym (fn* ()\n    (symbol (str \"G__\" (swap! *gensym-counter* incr)))))\n\n  (def! or (macro* (& xs)\n    (if (empty? xs)\n      false\n      (let* (-query- (gensym))\n        `(let* (~-query- ~(car xs))\n          (if ~-query- \n            ~-query-\n            (or ~@(cdr xs))))))))\n\n  (def! and (macro* (& xs)\n    (if (empty? xs)\n      true\n      (let* (-query- (gensym))\n        `(let* (~-query- ~(car xs))\n          (if ~-query-\n            (and ~@(cdr xs))\n            false))))))\n\n  (def! cond (macro* (& xs)\n    (if (empty? xs)\n      nil\n      (if (empty? (cdr xs))\n        (throw \"`cond` requires an even number of forms.\")\n        (let* (-query- (gensym))\n          `(let* (~-query- ~(car xs))\n            (if ~-query-\n              ~(_1 xs)\n              (cond ~@(cdr (cdr xs))))))))))\n\n  (def! loop (macro* (form0 form1)\n    `(let* (loop (memfix* (fn* (loop) (fn* (~(_0 form0)) ~form1)))) (loop ~(_1 form0)))))\n\n  (def! -> (macro* (& xs)\n    (if (empty? xs)\n      nil\n      (let* (x  (car xs)\n             xs (cdr xs))\n        (if (empty? xs)\n          x\n          (let* (form  (car xs)\n                forms  (cdr xs))\n            (if (empty? forms)\n              (if (list? form)\n                (if (= (symbol \"fn*\") (car form))\n                  `(~form ~x)\n                  `(~(car form) ~x ~@(cdr form)))\n                (list form x))\n              `(-> (-> ~x ~form) ~@forms))))))))\n\n  (def! ->> (macro* (& xs)\n    (if (empty? xs)\n      nil\n      (let* (x  (car xs)\n             xs (cdr xs))\n        (if (empty? xs)\n          x\n          (let* (form  (car xs)\n                 forms (cdr xs))\n            (if (empty? forms)\n              (if (list? form)\n                (if (= (symbol \"fn*\") (car form))\n                  `(~form ~x)\n                  `(~@form  ~x))\n                (list form x))\n              `(->> (->> ~x ~form) ~@forms))))))))\n\n  (def! ->* (macro* (& xs) `(fn* (-x-) (-> -x- ~@xs))))\n\n  (def! ->>* (macro* (& xs) `(fn* (-x-) (->> -x- ~@xs))))\n\n  (def! not (fn* (x) (if x false true)))\n  (def! incr  (->* (+ 1)))\n  (def! decr  (->* (- 1)))\n  (def! zero? (->* (= 0)))\n\n  (def! identity (fn* (x) x))\n\n  (def! constant-fn (fn* (x) (fn* (y) x)))\n\n  (def! call-on (fn* (& xs) (fn* (fn) (apply fn xs))))\n\n  (def! step-into-list (fn* (xs fn0 fn1)\n    (let* (x   (car xs)\n          -xs- (cdr xs))\n      (if (empty? -xs-)\n        (fn1 x)\n        (fn0 x -xs-)))))\n\n  (def! apply-on (fn* (& xs)\n    (step-into-list\n      xs\n      (fn* (arguments -xs-) (apply (car -xs-) arguments))\n      (fn* (arguments) (fn* (f) (apply f arguments))))))\n\n  (def! reduce (fn* (f seed xs)\n      (if (empty? xs)\n        seed\n        (reduce f (f seed (car xs)) (cdr xs)))))\n\n  (def! filter (fn* (predicate xs)\n    (reverse\n      (reduce\n        (fn* (memo x)\n          (if (predicate x)\n            (cons x memo)\n            memo))\n        '()\n        xs))))\n\n  (def! map (fn* (f xs)\n      (reverse (reduce (fn* (memo x) (cons (f x) memo)) '() xs))))\n\n  (def! every?  (fn* (pred xs)\n      (if (empty? xs)\n        true\n        (if (pred (car xs))\n          (every? pred (cdr xs))\n          false))))\n\n  (def! some?  (fn* (pred xs)\n      (if (empty? xs)\n        false\n        (if (pred (car xs))\n          true\n          (some? pred (cdr xs))))))\n\n  (def! letmemrec* (macro* (alias expr)\n    `(let* (~(car alias) (memfix* (fn* (~(car alias)) ~(_1 alias)))) ~expr)))\n\n  (def! skip (fn* (nbr xs)\n    (letrec* (-skip- (fn* (ys)\n      (let* (nbr (car ys)\n             xs  (_1 ys))\n        (cond\n          (= 0 nbr) xs\n          (= 1 nbr) (cdr xs)\n          \"default\" (-skip- (list (decr nbr) (cdr xs)))))))\n      (-skip- (list nbr xs)))))\n\n  (def! . (macro* (x key & xs)\n    `((get ~x ~key) ~@xs)))\n\n  (def! .. (fn* (lo hi)\n    (letrec* (-..- (fn* (xs)\n      (let* (lo     (_0 xs)\n             hi     (_1 xs)\n             -list- (_2 xs))\n        (if (= lo hi)\n          (cons hi -list-)\n          (-..- (list lo (decr hi) (cons hi -list-)))))))\n      (-..- (list lo hi '())))))\n\n  (def! defrec! (macro* (fn-name fn-body)\n    `(def! ~fn-name (letrec* (~fn-name ~fn-body) ~fn-name))))\n\n  (def! for* (macro* (loop-parameters body)\n    `(loop\n      ~(_0 loop-parameters)\n      (if ~(_1 loop-parameters)\n        nil\n        (do ~body (loop ~(_2 loop-parameters)))))))\n\n  (def! for-each (fn* (f xs)\n    (reduce\n      (fn* (memo x) (do (f x) memo))\n      nil\n      xs)))\n\n  (def! n-times (fn* (n f)\n    (loop (i 0)\n      (if (= i n)\n        nil\n        (do (f i) (loop (+ i 1)))))))\n\n  (def! tap (fn* (f x)\n    (do (f x) x)))\n\n  (def! with-side-effect (fn* (thunk x)\n    (do (thunk) x)))\n\n\n  (def! thunk (macro* (form)\n    `(fn* () ~form)))\n\n)";
+module.exports = "(do\n  (def! fix*\n    (fn* (f)\n      ( (fn* (x) (f (fn* (& ys) (apply (x x) ys))))\n        (fn* (x) (f (fn* (& ys) (apply (x x) ys)))))))\n\n  (def! memfix*\n    (fn* (f)\n      (let* (cache {})\n        (\n          (fn* (x cache)\n            (f\n              (fn* (z)\n                (if (contains? cache z)\n                  (get cache z)\n                  (let* (result ((fn* (y) ((x x cache) y)) z))\n                    (do (set! cache z result) result))))\n              cache))\n          (fn* (x cache)\n            (f\n              (fn* (z)\n                (if (contains? cache z)\n                  (get cache z)\n                  (let* (result ((fn* (y) ((x x cache) y)) z))\n                    (do (set! cache z result) result))))\n              cache))\n          cache))))\n\n  (def! _0 car)\n  (def! _1 (fn* (xs) (nth 1 xs)))\n  (def! _2 (fn* (xs) (nth 2 xs)))\n\n  (def! swap! (macro* (atom & xs)\n    (if (empty? xs)\n      atom\n      `(let* (-atom- ~atom)\n        (do\n          (reset! -atom- (~(car xs) (deref -atom-) ~@(cdr xs)))\n          (deref -atom-))))))\n\n  (def! *gensym-counter* (atom 0))\n\n  (def! gensym (fn* ()\n    (symbol (str \"G__\" (swap! *gensym-counter* incr)))))\n\n  (def! or (macro* (& xs)\n    (if (empty? xs)\n      false\n      (let* (-query- (gensym))\n        `(let* (~-query- ~(car xs))\n          (if ~-query- \n            ~-query-\n            (or ~@(cdr xs))))))))\n\n  (def! and (macro* (& xs)\n    (if (empty? xs)\n      true\n      (let* (-query- (gensym))\n        `(let* (~-query- ~(car xs))\n          (if ~-query-\n            (and ~@(cdr xs))\n            false))))))\n\n  (def! cond (macro* (& xs)\n    (if (empty? xs)\n      nil\n      (if (empty? (cdr xs))\n        (throw \"`cond` requires an even number of forms.\")\n        (let* (-query- (gensym))\n          `(let* (~-query- ~(car xs))\n            (if ~-query-\n              ~(_1 xs)\n              (cond ~@(cdr (cdr xs))))))))))\n\n  (def! loop (macro* (form0 form1)\n    `(let* (loop (memfix* (fn* (loop) (fn* (~(_0 form0)) ~form1)))) (loop ~(_1 form0)))))\n\n  (def! -> (macro* (& xs)\n    (if (empty? xs)\n      nil\n      (let* (x  (car xs)\n             xs (cdr xs))\n        (if (empty? xs)\n          x\n          (let* (form  (car xs)\n                forms  (cdr xs))\n            (if (empty? forms)\n              (if (list? form)\n                (if (= (symbol \"fn*\") (car form))\n                  `(~form ~x)\n                  `(~(car form) ~x ~@(cdr form)))\n                (list form x))\n              `(-> (-> ~x ~form) ~@forms))))))))\n\n  (def! ->> (macro* (& xs)\n    (if (empty? xs)\n      nil\n      (let* (x  (car xs)\n             xs (cdr xs))\n        (if (empty? xs)\n          x\n          (let* (form  (car xs)\n                 forms (cdr xs))\n            (if (empty? forms)\n              (if (list? form)\n                (if (= (symbol \"fn*\") (car form))\n                  `(~form ~x)\n                  `(~@form  ~x))\n                (list form x))\n              `(->> (->> ~x ~form) ~@forms))))))))\n\n  (def! ->* (macro* (& xs) `(fn* (-x-) (-> -x- ~@xs))))\n\n  (def! ->>* (macro* (& xs) `(fn* (-x-) (->> -x- ~@xs))))\n\n  (def! not (fn* (x) (if x false true)))\n  (def! incr  (->* (+ 1)))\n  (def! decr  (->* (- 1)))\n  (def! zero? (->* (= 0)))\n\n  (def! identity (fn* (x) x))\n\n  (def! constant-fn (fn* (x) (fn* (y) x)))\n\n  (def! call-on (fn* (& xs) (fn* (fn) (apply fn xs))))\n\n  (def! step-into-list (fn* (xs fn0 fn1)\n    (let* (x   (car xs)\n          -xs- (cdr xs))\n      (if (empty? -xs-)\n        (fn1 x)\n        (fn0 x -xs-)))))\n\n  (def! apply-on (fn* (& xs)\n    (step-into-list\n      xs\n      (fn* (arguments -xs-) (apply (car -xs-) arguments))\n      (fn* (arguments) (fn* (f) (apply f arguments))))))\n\n  (def! reduce (fn* (f seed xs)\n      (if (empty? xs)\n        seed\n        (reduce f (f seed (car xs)) (cdr xs)))))\n\n  (def! filter (fn* (predicate xs)\n    (reverse\n      (reduce\n        (fn* (memo x)\n          (if (predicate x)\n            (cons x memo)\n            memo))\n        '()\n        xs))))\n\n  (def! map (fn* (f xs)\n    (reverse (reduce (fn* (memo x) (cons (f x) memo)) '() xs))))\n\n  (def! every?  (fn* (pred xs)\n    (if (empty? xs)\n      true\n      (if (pred (car xs))\n        (every? pred (cdr xs))\n        false))))\n\n  (def! some?  (fn* (pred xs)\n    (if (empty? xs)\n      false\n      (if (pred (car xs))\n        true\n        (some? pred (cdr xs))))))\n\n  (def! letmemrec* (macro* (alias expr)\n    `(let* (~(car alias) (memfix* (fn* (~(car alias)) ~(_1 alias)))) ~expr)))\n\n  (def! skip (fn* (nbr xs)\n    (letrec* (-skip- (fn* (ys)\n      (let* (nbr (car ys)\n             xs  (_1 ys))\n        (cond\n          (= 0 nbr) xs\n          (= 1 nbr) (cdr xs)\n          \"default\" (-skip- (list (decr nbr) (cdr xs)))))))\n      (-skip- (list nbr xs)))))\n\n  (def! invokable? (fn* (x) (or (function? x) (macro? x))))\n\n  (def! . (macro* (x key & xs)\n    (if (empty? xs)\n      `(get ~x ~key)\n      `((get ~x ~key) ~@xs))))\n\n  (def! .. (fn* (lo hi)\n    (letrec* (-..- (fn* (xs)\n      (let* (lo     (_0 xs)\n             hi     (_1 xs)\n             -list- (_2 xs))\n        (if (= lo hi)\n          (cons hi -list-)\n          (-..- (list lo (decr hi) (cons hi -list-)))))))\n      (-..- (list lo hi '())))))\n\n  (def! defrec! (macro* (fn-name fn-body)\n    `(def! ~fn-name (letrec* (~fn-name ~fn-body) ~fn-name))))\n\n  (def! for* (macro* (loop-parameters body)\n    `(loop\n      ~(_0 loop-parameters)\n      (if ~(_1 loop-parameters)\n        nil\n        (do ~body (loop ~(_2 loop-parameters)))))))\n\n  (def! for-each (fn* (f xs)\n    (reduce\n      (fn* (memo x) (do (f x) memo))\n      nil\n      xs)))\n\n  (def! n-times (fn* (n f)\n    (loop (i 0)\n      (if (= i n)\n        nil\n        (do (f i) (loop (+ i 1)))))))\n\n  (def! tap (fn* (f x) (do (f x) x)))\n\n  (def! with-side-effect (fn* (thunk x)\n    (do (thunk) x)))\n\n  (def! thunk (macro* (form)\n    `(fn* () ~form)))\n\n  (def! call (macro* (f & xs) `(~f ~@xs)))\n\n  (def! apply (macro* (f xs) `(eval (cons ~f ~xs))))\n\n  (def! eval-string (fn* (malString) (eval (parse malString))))\n\n)";
 
 
 },{}],20:[function(_dereq_,module,exports){

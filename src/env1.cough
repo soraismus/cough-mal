@@ -1,46 +1,47 @@
-{ car }                            = require './linked-list'
-{ cdr }                            = require './linked-list'
-{ circumpendQuotes }               = require './js-utilities'
-{ concat }                         = require './linked-list'
-{ createMalAtom }                  = require './type-utilities'
-{ createMalBoolean }               = require './type-utilities'
-{ createMalCoreEffectfulFunction } = require './type-utilities'
-{ createMalCorePureFunction }      = require './type-utilities'
-{ createMalList }                  = require './type-utilities'
-{ createMalNumber }                = require './type-utilities'
-{ createMalString }                = require './type-utilities'
-{ createMalSymbol }                = require './type-utilities'
-{ drop }                           = require './linked-list'
-{ empty? }                         = require './linked-list'
-{ equal? }                         = require './linked-list'
-{ extractJsValue }                 = require './type-utilities'
-{ fromArray }                      = require './linked-list'
-interpret                          = require './interpret'
-{ last }                           = require './linked-list'
-{ malAtom? }                       = require './type-utilities'
-{ malCorePureFunction? }           = require './type-utilities'
-{ malBoolean? }                    = require './type-utilities'
-{ malFalse }                       = require './type-utilities'
-{ malFalse? }                      = require './type-utilities'
-{ malIgnore }                      = require './type-utilities'
-{ malIndex? }                      = require './type-utilities'
-{ malList? }                       = require './type-utilities'
-{ malMacro? }                      = require './type-utilities'
-{ malNil }                         = require './type-utilities'
-{ malNil? }                        = require './type-utilities'
-{ malNumber? }                     = require './type-utilities'
-{ malString? }                     = require './type-utilities'
-{ malSymbol? }                     = require './type-utilities'
-{ malTrue }                        = require './type-utilities'
-{ malTrue? }                       = require './type-utilities'
-{ malUserPureFunction? }           = require './type-utilities'
-{ next }                           = require './linked-list'
-{ reduce }                         = require './linked-list'
-{ reverse }                        = require './linked-list'
-serialize                          = require './serialize'
-{ take }                           = require './linked-list'
-{ toArray }                        = require './linked-list'
-{ toPartialArray }                 = require './linked-list'
+{ car }                       = require './linked-list'
+{ cdr }                       = require './linked-list'
+{ circumpendQuotes }          = require './js-utilities'
+{ concat }                    = require './linked-list'
+{ createMalAtom }             = require './type-utilities'
+{ createMalBoolean }          = require './type-utilities'
+{ createMalCorePureFunction } = require './type-utilities'
+{ createMalIndex }            = require './type-utilities'
+{ createMalList }             = require './type-utilities'
+{ createMalNumber }           = require './type-utilities'
+{ createMalString }           = require './type-utilities'
+{ createMalSymbol }           = require './type-utilities'
+{ drop }                      = require './linked-list'
+{ empty? }                    = require './linked-list'
+{ equal? }                    = require './linked-list'
+{ extractJsValue }            = require './type-utilities'
+{ fromArray }                 = require './linked-list'
+interpret                     = require './interpret'
+{ last }                      = require './linked-list'
+{ malAtom? }                  = require './type-utilities'
+{ malCorePureFunction? }      = require './type-utilities'
+{ malBoolean? }               = require './type-utilities'
+{ malFalse }                  = require './type-utilities'
+{ malFalse? }                 = require './type-utilities'
+{ malIgnore }                 = require './type-utilities'
+{ malIndex? }                 = require './type-utilities'
+{ malList? }                  = require './type-utilities'
+{ malMacro? }                 = require './type-utilities'
+{ malNil }                    = require './type-utilities'
+{ malNil? }                   = require './type-utilities'
+{ malNumber? }                = require './type-utilities'
+{ malString? }                = require './type-utilities'
+{ malSymbol? }                = require './type-utilities'
+{ malTrue }                   = require './type-utilities'
+{ malTrue? }                  = require './type-utilities'
+{ malUserPureFunction? }      = require './type-utilities'
+{ next }                      = require './linked-list'
+{ recurse }                   = require './linked-list'
+{ reduce }                    = require './linked-list'
+{ reverse }                   = require './linked-list'
+serialize                     = require './serialize'
+{ take }                      = require './linked-list'
+{ toArray }                   = require './linked-list'
+{ toPartialArray }            = require './linked-list'
 
 append = \malArgs ->
   [malList, malValues...] = toArray malArgs
@@ -59,6 +60,19 @@ areEqual = \malArgs ->
     else
       malValue0.jsValue == malValue1.jsValue
   createMalBoolean (_areEqual (malValue0, malValue1))
+
+assoc = \malArgs ->
+  jsIndex = extractJsValue (car malArgs)
+  args = cdr malArgs
+  copy = {}
+  for own key, value of jsIndex
+    copy[key] = value
+  until empty? args
+    k = car args
+    v = next args
+    args = recurse (recurse args)
+    copy[(extractJsValue k)] = v
+  createMalIndex copy
 
 atom = \malArgs -> createMalAtom (car malArgs)
 
@@ -154,11 +168,14 @@ prepend = \malArgs ->
     createMalList (val, list)
   malValues.reduce (_reduce, malList)
 
+# WET; cf. 'env2.cough'.
 _prStr = (malArgs, printReadably?) ->
-  ((toArray malArgs).map \malArg -> serialize (malArg, printReadably?))
+  ((toArray malArgs)
+    .map \malArg -> serialize (malArg, printReadably?))
+    .join ''
 
-prStr = \malArgs ->
-  createMalString ('"' + (_prStr (malArgs, true)).join '' + '"')
+prettyString = \malArgs ->
+  createMalString (circumpendQuotes (_prStr (malArgs, true)))
 
 _quit_ = ->
   process.exit 0
@@ -197,8 +214,8 @@ slurp = \malArgs ->
     circumpendQuotes (
       require('fs').readFileSync(jsFileName).toString()))
 
-str = \malArgs ->
-  createMalString ('"' + (_prStr (malArgs, false)).join '' + '"')
+string = \malArgs ->
+  createMalString (circumpendQuotes (_prStr (malArgs, false)))
 
 stripQuotes = \jsString ->
   jsString[1 .. -2]
@@ -255,6 +272,7 @@ write = \malArgs ->
 functionsOnMalValues = {
   '='                  : areEqual
   'append'             : append
+  'assoc'              : assoc
   'atom'               : atom
   'atom?'              : atom?
   'boolean?'           : boolean?
@@ -284,10 +302,10 @@ functionsOnMalValues = {
   'number?'            : number?
   'parse'              : _interpret
   'prepend'            : prepend
-  'pr-str'             : prStr
+  'pretty-string'      : prettyString
   'rest'               : _cdr
   'reverse'            : _reverse
-  'str'                : str
+  'string'             : string
   'string?'            : string?
   'symbol'             : symbol
   'symbol?'            : symbol?
@@ -297,7 +315,8 @@ functionsOnMalValues = {
   'typeof'             : typeOf
   'user-fn?'           : userFn?
 
-  '-quit-'             : _quit_              # Effect
+  # Effects:
+  '-quit-'             : _quit_
   'read'               : read
   'reset!'             : reset
   'set!'               : set

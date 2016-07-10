@@ -154,21 +154,21 @@ module.exports = """
         xs))))
 
   (def! map (fn* (f xs)
-      (reverse (reduce (fn* (memo x) (cons (f x) memo)) '() xs))))
+    (reverse (reduce (fn* (memo x) (cons (f x) memo)) '() xs))))
 
   (def! every?  (fn* (pred xs)
-      (if (empty? xs)
-        true
-        (if (pred (car xs))
-          (every? pred (cdr xs))
-          false))))
+    (if (empty? xs)
+      true
+      (if (pred (car xs))
+        (every? pred (cdr xs))
+        false))))
 
   (def! some?  (fn* (pred xs)
-      (if (empty? xs)
-        false
-        (if (pred (car xs))
-          true
-          (some? pred (cdr xs))))))
+    (if (empty? xs)
+      false
+      (if (pred (car xs))
+        true
+        (some? pred (cdr xs))))))
 
   (def! letmemrec* (macro* (alias expr)
     `(let* (~(car alias) (memfix* (fn* (~(car alias)) ~(_1 alias)))) ~expr)))
@@ -183,8 +183,12 @@ module.exports = """
           "default" (-skip- (list (decr nbr) (cdr xs)))))))
       (-skip- (list nbr xs)))))
 
+  (def! invokable? (fn* (x) (or (function? x) (macro? x))))
+
   (def! . (macro* (x key & xs)
-    `((get ~x ~key) ~@xs)))
+    (if (empty? xs)
+      `(get ~x ~key)
+      `((get ~x ~key) ~@xs))))
 
   (def! .. (fn* (lo hi)
     (letrec* (-..- (fn* (xs)
@@ -218,15 +222,19 @@ module.exports = """
         nil
         (do (f i) (loop (+ i 1)))))))
 
-  (def! tap (fn* (f x)
-    (do (f x) x)))
+  (def! tap (fn* (f x) (do (f x) x)))
 
   (def! with-side-effect (fn* (thunk x)
     (do (thunk) x)))
 
-
   (def! thunk (macro* (form)
     `(fn* () ~form)))
+
+  (def! call (macro* (f & xs) `(~f ~@xs)))
+
+  (def! apply (macro* (f xs) `(eval (cons ~f ~xs))))
+
+  (def! eval-string (fn* (malString) (eval (parse malString))))
 
 )
 """

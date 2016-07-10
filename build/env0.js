@@ -1,4 +1,4 @@
-var add, assoc, contains_question_, createMalBoolean, createMalCorePureFunction, createMalIdentifier, createMalIndex, createMalNumber, createMalString, dissoc, divide, exponentiate, extractJsValue, fromArray, functionsOnJsValues, get, getEnvironment, greaterThan, greaterThanOrEqual, index, jsNaN_question_, jsNumber_question_, jsString_question_, keys, length, lessThan, lessThanOrEqual, lift, malNil, mod, multiply, negate, parseNumber, reduce, setCoreFnsOnJsValues_bang_, subtract, toArray, vals,
+var add, contains_question_, createMalBoolean, createMalCorePureFunction, createMalIdentifier, createMalIndex, createMalNumber, createMalString, dissoc, divide, exponentiate, extractJsValue, fromArray, functionsOnJsValues, get, getEnvironment, greaterThan, greaterThanOrEqual, index, jsNaN_question_, jsNumber_question_, jsString_question_, keys, length, lessThan, lessThanOrEqual, lift, malNil, mod, multiply, negate, parseNumber, reduce, setCoreFnsOnJsValues_bang_, subtract, toArray, vals,
   __slice = [].slice,
   __hasProp = {}.hasOwnProperty;
 
@@ -36,24 +36,6 @@ add = function() {
   return createMalNumber(nbrs.reduce(function(x, nbr) {
     return x += nbr;
   }));
-};
-
-assoc = function() {
-  var args, copy, i, index, k, key, value, _i, _len;
-  index = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-  copy = {};
-  for (key in index) {
-    if (!__hasProp.call(index, key)) continue;
-    value = index[key];
-    copy[key] = value;
-  }
-  for (i = _i = 0, _len = args.length; _i < _len; i = ++_i) {
-    k = args[i];
-    if (i % 2 === 0) {
-      copy[k] = args[i + 1];
-    }
-  }
-  return createMalIndex(copy);
 };
 
 contains_question_ = function(index, key) {
@@ -228,7 +210,6 @@ vals = function(index) {
 
 functionsOnJsValues = {
   '+': add,
-  'assoc': assoc,
   'contains?': contains_question_,
   'dissoc': dissoc,
   '/': divide,

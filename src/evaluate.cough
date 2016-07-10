@@ -15,6 +15,8 @@ commentSignal                 = require './commentSignal'
 { def! }                      = require './keyTokens'
 { _do }                       = require './keyTokens'
 { empty? }                    = require './linked-list' 
+{ _eval }                     = require './keyTokens'
+{ _evalWithEnv }              = require './keyTokens'
 { expand-macro }              = require './keyTokens'
 { extractJsValue }            = require './type-utilities'
 { filter }                    = require './linked-list'
@@ -22,6 +24,7 @@ commentSignal                 = require './commentSignal'
 { forEach }                   = require './linked-list'
 { fromArray }                 = require './linked-list'
 { fromJsObjects }             = require './index-utilities'
+{ fromMalIndex }              = require './index-utilities'
 { _getCurrentEnv }            = require './keyTokens'
 { _getDefaultEnv }            = require './keyTokens'
 { _if }                       = require './keyTokens'
@@ -35,6 +38,7 @@ commentSignal                 = require './commentSignal'
 { malCorePureFunction? }      = require './type-utilities'
 { malIgnore? }                = require './type-utilities'
 { malIndex? }                 = require './type-utilities'
+{ malKeyword? }               = require './type-utilities'
 { malList? }                  = require './type-utilities'
 { malMacro? }                 = require './type-utilities'
 { malNil }                    = require './type-utilities'
@@ -139,6 +143,13 @@ _evaluate = (malExpr, envs, addResult) ->
           when undef!
             return undefineValue (tailList, envs) 
 
+          when _eval
+            malExpr = _evaluate (arg1, envs, addResult)
+
+          when _evalWithEnv
+            envs = [(fromMalIndex (_evaluate (arg1, envs, addResult)))]
+            malExpr = _evaluate ((car remainingArgs), envs, addResult)
+
           when let*
             malExpr = (car remainingArgs)
             envs = addEnv (envs, reduceLet* (envs, arg1, addResult))
@@ -200,6 +211,9 @@ _evaluate = (malExpr, envs, addResult) ->
             malInvokable = _evaluate (malSymbol, envs, addResult)
 
             switch
+              when malKeyword? malInvokable
+                malExpr = createMalList (malInvokable, tailList)
+
               when malMacro? malInvokable
                 malExpr = expandMacro (head, tailList, envs, addResult)
 
@@ -224,7 +238,8 @@ _evaluate = (malExpr, envs, addResult) ->
                 envs = addEnv (localEnvs, newEnv)
 
               else
-                throw 'Value is not a function'
+                #throw 'Value is not a function'
+                throw "#{extractJsValue malSymbol} does not evaluate to a function, macro, or keyword."
 
 evaluate = (envs, addResult) -> (malExpr) ->
   return commentSignal if malExpr == commentSignal

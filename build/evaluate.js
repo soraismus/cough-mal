@@ -1,4 +1,4 @@
-var addEnv, car, catch_asterisk_, cdr, circumpendQuotes, commentSignal, createFn, createLocalEnv, createMacro, createMalIndex, createMalKeyword, createMalList, createMalMacro, createMalNumber, createMalString, createMalSymbol, createMalUserPureFunction, def_bang_, defineNewValue, empty_question_, evalQuasiquotedExpr, evaluate, expandMacro, expand_hyphen_macro, extractJsValue, filter, fn_asterisk_, forEach, fromArray, fromJsObjects, ignorable_question_, jsString_question_, keyword_question_, let_asterisk_, letrec_asterisk_, lookup, macro_asterisk_, malCoreEffectfulFunction_question_, malCorePureFunction_question_, malIgnore_question_, malIndex_question_, malList_question_, malMacro_question_, malNil, malSymbol_question_, malUserPureFunction_question_, map, next, quasiquote, quote, recurse, reduce, reduceBy2, reduceLet_asterisk_, reduceLetrec_asterisk_, reverse, setMainEnv, splat, spliceUnquote, spliceUnquote_question_, spliceUnquotedExpr_question_, toPartialArray, try_asterisk_, undef_bang_, undefineValue, unquote, unquote_question_, unquotedExpr_question_, unsetMainEnv, _do, _evaluate, _getCurrentEnv, _getDefaultEnv, _if,
+var addEnv, car, catch_asterisk_, cdr, circumpendQuotes, commentSignal, createFn, createLocalEnv, createMacro, createMalIndex, createMalKeyword, createMalList, createMalMacro, createMalNumber, createMalString, createMalSymbol, createMalUserPureFunction, def_bang_, defineNewValue, empty_question_, evalQuasiquotedExpr, evaluate, expandMacro, expand_hyphen_macro, extractJsValue, filter, fn_asterisk_, forEach, fromArray, fromJsObjects, fromMalIndex, ignorable_question_, jsString_question_, keyword_question_, let_asterisk_, letrec_asterisk_, lookup, macro_asterisk_, malCoreEffectfulFunction_question_, malCorePureFunction_question_, malIgnore_question_, malIndex_question_, malKeyword_question_, malList_question_, malMacro_question_, malNil, malSymbol_question_, malUserPureFunction_question_, map, next, quasiquote, quote, recurse, reduce, reduceBy2, reduceLet_asterisk_, reduceLetrec_asterisk_, reverse, setMainEnv, splat, spliceUnquote, spliceUnquote_question_, spliceUnquotedExpr_question_, toPartialArray, try_asterisk_, undef_bang_, undefineValue, unquote, unquote_question_, unquotedExpr_question_, unsetMainEnv, _do, _eval, _evalWithEnv, _evaluate, _getCurrentEnv, _getDefaultEnv, _if,
   __hasProp = {}.hasOwnProperty;
 
 addEnv = require('./env-utilities').addEnv;
@@ -35,6 +35,10 @@ _do = require('./keyTokens')._do;
 
 empty_question_ = require('./linked-list').empty_question_;
 
+_eval = require('./keyTokens')._eval;
+
+_evalWithEnv = require('./keyTokens')._evalWithEnv;
+
 expand_hyphen_macro = require('./keyTokens').expand_hyphen_macro;
 
 extractJsValue = require('./type-utilities').extractJsValue;
@@ -48,6 +52,8 @@ forEach = require('./linked-list').forEach;
 fromArray = require('./linked-list').fromArray;
 
 fromJsObjects = require('./index-utilities').fromJsObjects;
+
+fromMalIndex = require('./index-utilities').fromMalIndex;
 
 _getCurrentEnv = require('./keyTokens')._getCurrentEnv;
 
@@ -74,6 +80,8 @@ malCorePureFunction_question_ = require('./type-utilities').malCorePureFunction_
 malIgnore_question_ = require('./type-utilities').malIgnore_question_;
 
 malIndex_question_ = require('./type-utilities').malIndex_question_;
+
+malKeyword_question_ = require('./type-utilities').malKeyword_question_;
 
 malList_question_ = require('./type-utilities').malList_question_;
 
@@ -215,6 +223,13 @@ _evaluate = function(malExpr, envs, addResult) {
             return defineNewValue(tailList, envs, addResult);
           case undef_bang_:
             return undefineValue(tailList, envs);
+          case _eval:
+            malExpr = _evaluate(arg1, envs, addResult);
+            break;
+          case _evalWithEnv:
+            envs = [fromMalIndex(_evaluate(arg1, envs, addResult))];
+            malExpr = _evaluate(car(remainingArgs), envs, addResult);
+            break;
           case let_asterisk_:
             malExpr = car(remainingArgs);
             envs = addEnv(envs, reduceLet_asterisk_(envs, arg1, addResult));
@@ -268,6 +283,9 @@ _evaluate = function(malExpr, envs, addResult) {
             malExpr = tailList;
             malInvokable = _evaluate(malSymbol, envs, addResult);
             switch (false) {
+              case !malKeyword_question_(malInvokable):
+                malExpr = createMalList(malInvokable, tailList);
+                break;
               case !malMacro_question_(malInvokable):
                 malExpr = expandMacro(head, tailList, envs, addResult);
                 break;
@@ -288,7 +306,7 @@ _evaluate = function(malExpr, envs, addResult) {
                 envs = addEnv(localEnvs, newEnv);
                 break;
               default:
-                throw 'Value is not a function';
+                throw "" + (extractJsValue(malSymbol)) + " does not evaluate to a function, macro, or keyword.";
             }
         }
     }

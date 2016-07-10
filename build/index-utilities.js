@@ -1,4 +1,4 @@
-var createMalIndex, fromJsObjects, fromMalIndex, jsString_question_, stripQuotes,
+var createMalIndex, fromJsObjects, fromMalIndex, jsString_question_,
   __slice = [].slice,
   __hasProp = {}.hasOwnProperty;
 
@@ -26,24 +26,29 @@ fromJsObjects = function() {
 };
 
 fromMalIndex = function(malIndex) {
-  var key, localEnv, value, _ref;
-  localEnv = {};
+  var key, newKey, result, value, _ref;
+  result = {};
   _ref = malIndex.jsValue;
   for (key in _ref) {
     if (!__hasProp.call(_ref, key)) continue;
     value = _ref[key];
     if (jsString_question_(key)) {
-      stripQuotes(key);
-      localEnv[stripQuotes(key)] = value;
+      newKey = (function() {
+        switch (key[0]) {
+          case ':':
+            return key.slice(1);
+          case '"':
+            return key.slice(1, -1);
+          default:
+            return key;
+        }
+      })();
+      result[newKey] = value;
     } else {
-      localEnv[key] = value;
+      result[key] = value;
     }
   }
-  return localEnv;
-};
-
-stripQuotes = function(jsString) {
-  return jsString.slice(1, -1);
+  return result;
 };
 
 module.exports = {

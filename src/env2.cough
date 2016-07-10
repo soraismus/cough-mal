@@ -8,6 +8,7 @@ getEnvironment = \config ->
     environment, displayEffectsOnMalValues)
   return environment
 
+# WET; cf. 'env1.cough'.
 _prStr = (malArgs, printReadably?) ->
   ((toArray malArgs)
     .map \malArg -> serialize (malArg, printReadably?))
@@ -19,8 +20,8 @@ setCoreEffectfulFnsOnMalValues! = (represent) -> (env, fns) ->
       represent (fn malArgs)
 
 displayEffectsOnMalValues = {
-  'prn'     : \malArgs -> _prStr (malArgs, true)
-  'println' : \malArgs -> _prStr (malArgs, false)
+  'print'        : \malArgs -> _prStr (malArgs, false)
+  'pretty-print' : \malArgs -> _prStr (malArgs, true)
 }
 
 module.exports = getEnvironment

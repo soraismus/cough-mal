@@ -36,11 +36,11 @@ setCoreEffectfulFnsOnMalValues_bang_ = function(represent) {
 };
 
 displayEffectsOnMalValues = {
-  'prn': function(malArgs) {
-    return _prStr(malArgs, true);
-  },
-  'println': function(malArgs) {
+  'print': function(malArgs) {
     return _prStr(malArgs, false);
+  },
+  'pretty-print': function(malArgs) {
+    return _prStr(malArgs, true);
   }
 };
 

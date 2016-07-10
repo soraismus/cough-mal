@@ -13,18 +13,17 @@ fromJsObjects = (jsObjects...) ->
   createMalIndex copy
 
 fromMalIndex = \malIndex ->
-  localEnv = {}
+  result = {}
   for own key, value of malIndex.jsValue
     if jsString? key
-      stripQuotes key
-      localEnv[stripQuotes key] = value
+      newKey = switch key[0]
+        when ':' then key[1 ..]
+        when '"' then key[1 .. -2]
+        else          key
+      result[newKey] = value
     else
-      localEnv[key] = value
-  localEnv
-
-# WET.
-stripQuotes = \jsString ->
-  jsString[1 .. -2]
+      result[key] = value
+  result
 
 module.exports = {
   fromJsObjects

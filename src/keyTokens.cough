@@ -7,6 +7,8 @@ keyTokens = [
   catch*             = 'catch*'
   def!               = 'def!'
   _do                = 'do'
+  _eval              = 'eval'
+  _evalWithEnv       = 'eval-with-env'
   expand-macro        = 'expand-macro'
   _false             = 'false'
   fn*                = 'fn*'
@@ -49,6 +51,8 @@ keywords = [
   catch*
   def!
   _do
+  _eval
+  _evalWithEnv
   expand-macro
   _false
   fn*
@@ -98,6 +102,8 @@ module.exports = {
   catch*
   def!
   _do
+  _eval
+  _evalWithEnv
   expand-macro
   _false
   fn*

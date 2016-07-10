@@ -1,4 +1,4 @@
-var append, areEqual, atom, atom_question_, boolean_question_, car, cdr, circumpendQuotes, concat, cons, coreFn_question_, count, createMalAtom, createMalBoolean, createMalCoreEffectfulFunction, createMalCorePureFunction, createMalList, createMalNumber, createMalString, createMalSymbol, createPredicate, deref, drop, empty_question_, equal_question_, extractJsValue, false_question_, first, fromArray, function_question_, functionsOnMalValues, getEnvironment, ignoreIfTrue, ignoreUnlessTrue, ignore_bang_, interpret, last, list, list_question_, macro_question_, malAtom_question_, malBoolean_question_, malCorePureFunction_question_, malFalse, malFalse_question_, malIgnore, malIndex_question_, malList_question_, malMacro_question_, malNil, malNil_question_, malNumber_question_, malString_question_, malSymbol_question_, malTrue, malTrue_question_, malUserPureFunction_question_, meta, next, nil_question_, nth, number_question_, prStr, prepend, read, reduce, reset, rest, reverse, serialize, set, setCoreFnsOnMalValues_bang_, slurp, str, string_question_, stripQuotes, symbol, symbol_question_, take, time_hyphen_ms, toArray, toPartialArray, true_question_, typeOf, userFn_question_, withMeta, write, _car, _cdr, _concat, _drop, _empty_question_, _interpret, _last, _not, _prStr, _quit_, _ref, _reverse, _take, _throw,
+var append, areEqual, assoc, atom, atom_question_, boolean_question_, car, cdr, circumpendQuotes, concat, cons, coreFn_question_, count, createMalAtom, createMalBoolean, createMalCorePureFunction, createMalIndex, createMalList, createMalNumber, createMalString, createMalSymbol, createPredicate, deref, drop, empty_question_, equal_question_, extractJsValue, false_question_, first, fromArray, function_question_, functionsOnMalValues, getEnvironment, ignoreIfTrue, ignoreUnlessTrue, ignore_bang_, interpret, last, list, list_question_, macro_question_, malAtom_question_, malBoolean_question_, malCorePureFunction_question_, malFalse, malFalse_question_, malIgnore, malIndex_question_, malList_question_, malMacro_question_, malNil, malNil_question_, malNumber_question_, malString_question_, malSymbol_question_, malTrue, malTrue_question_, malUserPureFunction_question_, meta, next, nil_question_, nth, number_question_, prepend, prettyString, read, recurse, reduce, reset, rest, reverse, serialize, set, setCoreFnsOnMalValues_bang_, slurp, string, string_question_, stripQuotes, symbol, symbol_question_, take, time_hyphen_ms, toArray, toPartialArray, true_question_, typeOf, userFn_question_, withMeta, write, _car, _cdr, _concat, _drop, _empty_question_, _interpret, _last, _not, _prStr, _quit_, _ref, _reverse, _take, _throw,
   __slice = [].slice,
   __hasProp = {}.hasOwnProperty;
 
@@ -14,9 +14,9 @@ createMalAtom = require('./type-utilities').createMalAtom;
 
 createMalBoolean = require('./type-utilities').createMalBoolean;
 
-createMalCoreEffectfulFunction = require('./type-utilities').createMalCoreEffectfulFunction;
-
 createMalCorePureFunction = require('./type-utilities').createMalCorePureFunction;
+
+createMalIndex = require('./type-utilities').createMalIndex;
 
 createMalList = require('./type-utilities').createMalList;
 
@@ -76,6 +76,8 @@ malUserPureFunction_question_ = require('./type-utilities').malUserPureFunction_
 
 next = require('./linked-list').next;
 
+recurse = require('./linked-list').recurse;
+
 reduce = require('./linked-list').reduce;
 
 reverse = require('./linked-list').reverse;
@@ -110,6 +112,25 @@ areEqual = function(malArgs) {
     }
   };
   return createMalBoolean(_areEqual(malValue0, malValue1));
+};
+
+assoc = function(malArgs) {
+  var args, copy, jsIndex, k, key, v, value;
+  jsIndex = extractJsValue(car(malArgs));
+  args = cdr(malArgs);
+  copy = {};
+  for (key in jsIndex) {
+    if (!__hasProp.call(jsIndex, key)) continue;
+    value = jsIndex[key];
+    copy[key] = value;
+  }
+  while (!empty_question_(args)) {
+    k = car(args);
+    v = next(args);
+    args = recurse(recurse(args));
+    copy[extractJsValue(k)] = v;
+  }
+  return createMalIndex(copy);
 };
 
 atom = function(malArgs) {
@@ -286,13 +307,13 @@ prepend = function(malArgs) {
 };
 
 _prStr = function(malArgs, printReadably_question_) {
-  return (toArray(malArgs)).map(function(malArg) {
+  return ((toArray(malArgs)).map(function(malArg) {
     return serialize(malArg, printReadably_question_);
-  });
+  })).join('');
 };
 
-prStr = function(malArgs) {
-  return createMalString('"' + (_prStr(malArgs, true)).join('') + '"');
+prettyString = function(malArgs) {
+  return createMalString(circumpendQuotes(_prStr(malArgs, true)));
 };
 
 _quit_ = function() {
@@ -360,8 +381,8 @@ slurp = function(malArgs) {
   return createMalString(circumpendQuotes(require('fs').readFileSync(jsFileName).toString()));
 };
 
-str = function(malArgs) {
-  return createMalString('"' + (_prStr(malArgs, false)).join('') + '"');
+string = function(malArgs) {
+  return createMalString(circumpendQuotes(_prStr(malArgs, false)));
 };
 
 stripQuotes = function(jsString) {
@@ -428,6 +449,7 @@ _ref = [malAtom_question_, malBoolean_question_, malCorePureFunction_question_, 
 functionsOnMalValues = {
   '=': areEqual,
   'append': append,
+  'assoc': assoc,
   'atom': atom,
   'atom?': atom_question_,
   'boolean?': boolean_question_,
@@ -457,10 +479,10 @@ functionsOnMalValues = {
   'number?': number_question_,
   'parse': _interpret,
   'prepend': prepend,
-  'pr-str': prStr,
+  'pretty-string': prettyString,
   'rest': _cdr,
   'reverse': _reverse,
-  'str': str,
+  'string': string,
   'string?': string_question_,
   'symbol': symbol,
   'symbol?': symbol_question_,

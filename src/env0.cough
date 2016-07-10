@@ -16,14 +16,6 @@
 add = (nbrs...) ->
   createMalNumber (nbrs.reduce ((x, nbr) ->  x += nbr))
 
-assoc = (index, args...) ->
-  copy = {}
-  for own key, value of index
-    copy[key] = value
-  for k, i in args when i % 2 == 0
-    copy[k] = args[i + 1]
-  createMalIndex copy
-
 contains? = (index, key) -> createMalBoolean (key of index)
 
 dissoc = (index, keys...) ->
@@ -110,7 +102,6 @@ vals = \index ->
 
 functionsOnJsValues = {
   '+'            : add
-  'assoc'        : assoc
   'contains?'    : contains?
   'dissoc'       : dissoc
   '/'            : divide
