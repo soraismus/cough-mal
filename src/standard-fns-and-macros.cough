@@ -42,7 +42,7 @@ module.exports = """
   (def! *gensym-counter* (atom 0))
 
   (def! gensym (fn* ()
-    (symbol (str "G__" (swap! *gensym-counter* incr)))))
+    (symbol (string "G__" (swap! *gensym-counter* incr)))))
 
   (def! or (macro* (& xs)
     (if (empty? xs)
