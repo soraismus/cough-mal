@@ -194,7 +194,7 @@ module.exports = {
 
 
 },{}],6:[function(_dereq_,module,exports){
-var add, contains_question_, createMalBoolean, createMalCorePureFunction, createMalIdentifier, createMalIndex, createMalNumber, createMalString, dissoc, divide, exponentiate, extractJsValue, fromArray, functionsOnJsValues, get, getEnvironment, greaterThan, greaterThanOrEqual, index, jsNaN_question_, jsNumber_question_, jsString_question_, keys, length, lessThan, lessThanOrEqual, lift, malNil, mod, multiply, negate, parseNumber, reduce, setCoreFnsOnJsValues_bang_, subtract, toArray, vals,
+var add, contains_question_, createMalBoolean, createMalCorePureFunction, createMalIdentifier, createMalIndex, createMalNumber, createMalString, dissoc, divide, exponentiate, extractJsValue, fromArray, functionsOnJsValues, get, getEnvironment, greaterThan, greaterThanOrEqual, index, jsNaN_question_, jsNumber_question_, jsString_question_, keys, length, lessThan, lessThanOrEqual, lift, malNil, max, min, mod, multiply, negate, parseNumber, reduce, setCoreFnsOnJsValues_bang_, subtract, toArray, vals,
   __slice = [].slice,
   __hasProp = {}.hasOwnProperty;
 
@@ -342,6 +342,18 @@ lift = function(fnOnJsValues) {
   };
 };
 
+max = function() {
+  var nbrs;
+  nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+  return createMalNumber(Math.max.apply(Math, nbrs));
+};
+
+min = function() {
+  var nbrs;
+  nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+  return createMalNumber(Math.min.apply(Math, nbrs));
+};
+
 mod = function(nbr0, nbr1) {
   return createMalNumber(nbr0 % nbr1);
 };
@@ -416,6 +428,8 @@ functionsOnJsValues = {
   'index': index,
   'keys': keys,
   'length': length,
+  'max': max,
+  'min': min,
   '<': lessThan,
   '<=': lessThanOrEqual,
   '%': mod,

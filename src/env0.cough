@@ -72,6 +72,12 @@ lessThanOrEqual = (nbrs...) ->
 lift = (fnOnJsValues) -> (malValueList) ->
   fnOnJsValues (((toArray malValueList).map extractJsValue)...)
 
+max = (nbrs...) ->
+  createMalNumber (Math.max (nbrs...))
+
+min = (nbrs...) ->
+  createMalNumber (Math.min (nbrs...))
+
 mod = (nbr0, nbr1) ->
   createMalNumber (nbr0 % nbr1)
 
@@ -112,6 +118,8 @@ functionsOnJsValues = {
   'index'        : index
   'keys'         : keys
   'length'       : length
+  'max'          : max
+  'min'          : min
   '<'            : lessThan
   '<='           : lessThanOrEqual
   '%'            : mod
