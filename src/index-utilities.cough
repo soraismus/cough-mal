@@ -1,4 +1,4 @@
-{ createMalIndex } = require './type-utilities'
+{ createErlIndex } = require './type-utilities'
 { jsString? }      = require './js-utilities'
 
 fromJsObjects = (jsObjects...) ->
@@ -10,11 +10,11 @@ fromJsObjects = (jsObjects...) ->
         copy[':' + key] = val
       else
         copy[key] = val
-  createMalIndex copy
+  createErlIndex copy
 
-fromMalIndex = \malIndex ->
+fromErlIndex = \erlIndex ->
   result = {}
-  for own key, value of malIndex.jsValue
+  for own key, value of erlIndex.jsValue
     if jsString? key
       newKey = switch key[0]
         when ':' then key[1 ..]
@@ -27,5 +27,5 @@ fromMalIndex = \malIndex ->
 
 module.exports = {
   fromJsObjects
-  fromMalIndex
+  fromErlIndex
 }

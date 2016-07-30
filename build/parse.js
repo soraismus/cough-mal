@@ -1,27 +1,27 @@
-var atomize, binaryGlyphIndex, binaryGlyphTokens, binaryGlyph_question_, boolean_question_, comment, createMalBoolean, createMalIdentifier, createMalIgnore, createMalIndex, createMalList, createMalNil, createMalNumber, createMalString, createMalSymbol, deref, derefGlyph, extractJsValue, float_question_, glyphIndex, glyphTokens, glyph_question_, identifer_question_, ignore, ignoreIfTrue, ignoreIfTrueGlyph, ignoreUnlessTrue, ignoreUnlessTrueGlyph, ignore_bang_, ignore_bang_Glyph, ignore_question_, indexEnd, indexStart, indexStart_question_, integer_question_, keyTokens, listEnd, listStart, listStart_question_, nil, nil_question_, parse, parseBinaryGlyph, parseBoolean, parseFloat10, parseGlyph, parseIndex, parseInt10, parseList, quasiquote, quasiquoteGlyph, quote, quoteGlyph, reverse, spliceUnquote, spliceUnquoteGlyph, startsWith_question_, string_question_, stripUnderscores, unquote, unquoteGlyph, _false, _parse, _true,
+var atomize, binaryGlyphIndex, binaryGlyphTokens, binaryGlyph_question_, boolean_question_, comment, createErlBoolean, createErlIdentifier, createErlIgnore, createErlIndex, createErlList, createErlNil, createErlNumber, createErlString, createErlSymbol, deref, derefGlyph, extractJsValue, float_question_, glyphIndex, glyphTokens, glyph_question_, identifer_question_, ignore, ignoreIfTrue, ignoreIfTrueGlyph, ignoreUnlessTrue, ignoreUnlessTrueGlyph, ignore_bang_, ignore_bang_Glyph, ignore_question_, indexEnd, indexStart, indexStart_question_, integer_question_, keyTokens, listEnd, listStart, listStart_question_, nil, nil_question_, parse, parseBinaryGlyph, parseBoolean, parseFloat10, parseGlyph, parseIndex, parseInt10, parseList, quasiquote, quasiquoteGlyph, quote, quoteGlyph, reverse, spliceUnquote, spliceUnquoteGlyph, startsWith_question_, string_question_, stripUnderscores, unquote, unquoteGlyph, _false, _parse, _true,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 binaryGlyphTokens = require('./keyTokens').binaryGlyphTokens;
 
 comment = require('./commentSignal');
 
-createMalBoolean = require('./type-utilities').createMalBoolean;
+createErlBoolean = require('./type-utilities').createErlBoolean;
 
-createMalIdentifier = require('./type-utilities').createMalIdentifier;
+createErlIdentifier = require('./type-utilities').createErlIdentifier;
 
-createMalIgnore = require('./type-utilities').createMalIgnore;
+createErlIgnore = require('./type-utilities').createErlIgnore;
 
-createMalIndex = require('./type-utilities').createMalIndex;
+createErlIndex = require('./type-utilities').createErlIndex;
 
-createMalList = require('./type-utilities').createMalList;
+createErlList = require('./type-utilities').createErlList;
 
-createMalNil = require('./type-utilities').createMalNil;
+createErlNil = require('./type-utilities').createErlNil;
 
-createMalNumber = require('./type-utilities').createMalNumber;
+createErlNumber = require('./type-utilities').createErlNumber;
 
-createMalString = require('./type-utilities').createMalString;
+createErlString = require('./type-utilities').createErlString;
 
-createMalSymbol = require('./type-utilities').createMalSymbol;
+createErlSymbol = require('./type-utilities').createErlSymbol;
 
 deref = require('./keyTokens').deref;
 
@@ -80,34 +80,34 @@ reverse = require('./linked-list').reverse;
 _true = require('./keyTokens')._true;
 
 atomize = function(token) {
-  var createMalValue;
-  createMalValue = (function() {
+  var createErlValue;
+  createErlValue = (function() {
     switch (false) {
       case !nil_question_(token):
-        return createMalNil;
+        return createErlNil;
       case !ignore_question_(token):
-        return createMalIgnore;
+        return createErlIgnore;
       case !boolean_question_(token):
         return function(__i) {
-          return createMalBoolean(parseBoolean(__i));
+          return createErlBoolean(parseBoolean(__i));
         };
       case !string_question_(token):
-        return createMalString;
+        return createErlString;
       case !identifer_question_(token):
-        return createMalIdentifier;
+        return createErlIdentifier;
       case !integer_question_(token):
         return function(__i) {
-          return createMalNumber(parseInt10(__i));
+          return createErlNumber(parseInt10(__i));
         };
       case !float_question_(token):
         return function(__i) {
-          return createMalNumber(parseFloat10(__i));
+          return createErlNumber(parseFloat10(__i));
         };
       default:
-        return createMalSymbol;
+        return createErlSymbol;
     }
   })();
-  return createMalValue(token);
+  return createErlValue(token);
 };
 
 boolean_question_ = function(token) {
@@ -169,7 +169,7 @@ parse = function(tokens) {
 };
 
 parseBinaryGlyph = function(keyword, tokens) {
-  return createMalList(createMalSymbol(keyword), createMalList(parse(tokens), createMalList(parse(tokens))));
+  return createErlList(createErlSymbol(keyword), createErlList(parse(tokens), createErlList(parse(tokens))));
 };
 
 parseBoolean = function(token) {
@@ -181,7 +181,7 @@ parseFloat10 = function(token) {
 };
 
 parseGlyph = function(keyword, tokens) {
-  return createMalList(createMalSymbol(keyword), createMalList(parse(tokens)));
+  return createErlList(createErlSymbol(keyword), createErlList(parse(tokens)));
 };
 
 parseIndex = function(tokens) {
@@ -198,7 +198,7 @@ parseIndex = function(tokens) {
       keyStep_question_ = true;
     }
   }
-  return createMalIndex(jsIndex);
+  return createErlIndex(jsIndex);
 };
 
 parseInt10 = function(token) {
@@ -206,12 +206,12 @@ parseInt10 = function(token) {
 };
 
 parseList = function(tokens) {
-  var malList, token;
-  malList = createMalList();
+  var erlList, token;
+  erlList = createErlList();
   while ((token = tokens.shift()) !== listEnd) {
-    malList = createMalList(_parse(token, tokens), malList);
+    erlList = createErlList(_parse(token, tokens), erlList);
   }
-  return reverse(malList);
+  return reverse(erlList);
 };
 
 startsWith_question_ = function(char) {

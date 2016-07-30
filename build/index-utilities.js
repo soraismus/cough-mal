@@ -1,8 +1,8 @@
-var createMalIndex, fromJsObjects, fromMalIndex, jsString_question_,
+var createErlIndex, fromErlIndex, fromJsObjects, jsString_question_,
   __slice = [].slice,
   __hasProp = {}.hasOwnProperty;
 
-createMalIndex = require('./type-utilities').createMalIndex;
+createErlIndex = require('./type-utilities').createErlIndex;
 
 jsString_question_ = require('./js-utilities').jsString_question_;
 
@@ -22,13 +22,13 @@ fromJsObjects = function() {
       }
     }
   }
-  return createMalIndex(copy);
+  return createErlIndex(copy);
 };
 
-fromMalIndex = function(malIndex) {
+fromErlIndex = function(erlIndex) {
   var key, newKey, result, value, _ref;
   result = {};
-  _ref = malIndex.jsValue;
+  _ref = erlIndex.jsValue;
   for (key in _ref) {
     if (!__hasProp.call(_ref, key)) continue;
     value = _ref[key];
@@ -53,5 +53,5 @@ fromMalIndex = function(malIndex) {
 
 module.exports = {
   fromJsObjects: fromJsObjects,
-  fromMalIndex: fromMalIndex
+  fromErlIndex: fromErlIndex
 };

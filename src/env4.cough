@@ -1,31 +1,31 @@
-{ createMalCorePureFunction } = require './type-utilities'
+{ createErlCorePureFunction } = require './type-utilities'
 { extractJsValue }            = require './type-utilities'
-{ fromMalIndex }              = require './index-utilities'
+{ fromErlIndex }              = require './index-utilities'
 _process                      = require './_process'
 { toPartialArray }            = require './linked-list'
 
 getEnvironment = \config ->
   { environment } = config
 
-  get_jsFileName_and_localEnv = \malArgs ->
-    [malFileName, localEnv] = toPartialArray (2, malArgs)
-    jsFileName = stripQuotes (extractJsValue malFileName)
+  get_jsFileName_and_localEnv = \erlArgs ->
+    [erlFileName, localEnv] = toPartialArray (2, erlArgs)
+    jsFileName = stripQuotes (extractJsValue erlFileName)
     [jsFileName, localEnv]
 
-  load = \malArgs ->
-    _process_ (_read malArgs)
+  load = \erlArgs ->
+    _process_ (_read erlArgs)
 
-  loadWithBareEnv = \malArgs ->
-    [jsFileName, localEnv] = get_jsFileName_and_localEnv malArgs
+  loadWithBareEnv = \erlArgs ->
+    [jsFileName, localEnv] = get_jsFileName_and_localEnv erlArgs
     _processFileAndEnv (
       readFile jsFileName
-      [(fromMalIndex localEnv)])
+      [(fromErlIndex localEnv)])
 
-  loadWithEnv = \malArgs ->
-    [jsFileName, localEnv] = get_jsFileName_and_localEnv malArgs
+  loadWithEnv = \erlArgs ->
+    [jsFileName, localEnv] = get_jsFileName_and_localEnv erlArgs
     _processFileAndEnv (
       readFile jsFileName
-      [(fromMalIndex localEnv), environment])
+      [(fromErlIndex localEnv), environment])
 
   _process_ = \jsString ->
     _process [environment] jsString
@@ -34,29 +34,29 @@ getEnvironment = \config ->
     _process envStack file
 
   # WET.
-  _read = \malArgs ->
-    [jsFileName] = get_jsFileName_and_localEnv malArgs
+  _read = \erlArgs ->
+    [jsFileName] = get_jsFileName_and_localEnv erlArgs
     readFile jsFileName
 
   readFile = \jsFileName ->
     require('fs').readFileSync(jsFileName).toString()
 
   # WET.
-  setCoreFnsOnMalValues! = (env, fns) ->
+  setCoreFnsOnErlValues! = (env, fns) ->
     for own fnName, fn of fns
-      env[fnName] = createMalCorePureFunction fn 
+      env[fnName] = createErlCorePureFunction fn 
 
   # WET.
   stripQuotes = \jsString ->
     jsString[1 .. -2]
 
-  functionsOnMalValues = {
+  functionsOnErlValues = {
     'load'               : load
     'load-with-env'      : loadWithEnv
     'load-with-bare-env' : loadWithBareEnv
   }
 
-  setCoreFnsOnMalValues! (environment, functionsOnMalValues)
+  setCoreFnsOnErlValues! (environment, functionsOnErlValues)
   return environment
 
 module.exports = getEnvironment

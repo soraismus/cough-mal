@@ -4,71 +4,71 @@ commentSignal                 = require './commentSignal'
 { indexStart }                = require './keyTokens'
 { listEnd }                   = require './keyTokens'
 { listStart }                 = require './keyTokens'
-{ malAtom? }                  = require './type-utilities'
-{ malCoreEffectfulFunction? } = require './type-utilities'
-{ malCorePureFunction? }      = require './type-utilities'
-{ malIdentifier? }            = require './type-utilities'
-{ malIgnore? }                = require './type-utilities'
-{ malIndex? }                 = require './type-utilities'
-{ malKeyword? }               = require './type-utilities'
-{ malList? }                  = require './type-utilities'
-{ malMacro? }                 = require './type-utilities'
-{ malNil? }                   = require './type-utilities'
-{ malString? }                = require './type-utilities'
-{ malUserPureFunction? }      = require './type-utilities'
+{ erlAtom? }                  = require './type-utilities'
+{ erlCoreEffectfulFunction? } = require './type-utilities'
+{ erlCorePureFunction? }      = require './type-utilities'
+{ erlIdentifier? }            = require './type-utilities'
+{ erlIgnore? }                = require './type-utilities'
+{ erlIndex? }                 = require './type-utilities'
+{ erlKeyword? }               = require './type-utilities'
+{ erlList? }                  = require './type-utilities'
+{ erlMacro? }                 = require './type-utilities'
+{ erlNil? }                   = require './type-utilities'
+{ erlString? }                = require './type-utilities'
+{ erlUserPureFunction? }      = require './type-utilities'
 { reduce }                    = require './linked-list'
 
-adjoinMalValue = (printReadably?) -> (memo, malValue) ->
-  serialized = serialize (malValue, printReadably?)
+adjoinErlValue = (printReadably?) -> (memo, erlValue) ->
+  serialized = serialize (erlValue, printReadably?)
   if memo.length == 0
     serialized
   else
     "#{memo} #{serialized}"
 
-serialize = (malExpr, printReadably?) ->
-  return commentSignal if malExpr == commentSignal
+serialize = (erlExpr, printReadably?) ->
+  return commentSignal if erlExpr == commentSignal
   _serialize = switch
-    when malList? malExpr                  then serializeList
-    when malIgnore? malExpr                then \x -> ignoreLabel
-    when malIndex? malExpr                 then serializeIndex
-    when malKeyword? malExpr               then \x -> keywordLabel
-    when malCoreEffectfulFunction? malExpr then \x -> coreEffectfulFunctionLabel
-    when malCorePureFunction? malExpr      then \x -> corePureFunctionLabel
-    when malUserPureFunction? malExpr      then \x -> userPureFunctionLabel
-    when malMacro? malExpr                 then \x -> macroLabel
-    when malNil? malExpr                   then \x -> nilLabel
-    when malIdentifier? malExpr            then serializeIdentifier
-    when malString? malExpr                then serializeString
-    when malAtom? malExpr                  then serializeAtom
-    when ? (malExpr.jsValue)               then extractJsValue
+    when erlList? erlExpr                  then serializeList
+    when erlIgnore? erlExpr                then \x -> ignoreLabel
+    when erlIndex? erlExpr                 then serializeIndex
+    when erlKeyword? erlExpr               then \x -> keywordLabel
+    when erlCoreEffectfulFunction? erlExpr then \x -> coreEffectfulFunctionLabel
+    when erlCorePureFunction? erlExpr      then \x -> corePureFunctionLabel
+    when erlUserPureFunction? erlExpr      then \x -> userPureFunctionLabel
+    when erlMacro? erlExpr                 then \x -> macroLabel
+    when erlNil? erlExpr                   then \x -> nilLabel
+    when erlIdentifier? erlExpr            then serializeIdentifier
+    when erlString? erlExpr                then serializeString
+    when erlAtom? erlExpr                  then serializeAtom
+    when ? (erlExpr.jsValue)               then extractJsValue
     else                                        \x -> x
-  _serialize (malExpr, printReadably?)
+  _serialize (erlExpr, printReadably?)
 
-serializeAtom = (malAtom, printReadably?) ->
-  "(atom #{serialize (malAtom.malValue, printReadably?)})"
+serializeAtom = (erlAtom, printReadably?) ->
+  "(atom #{serialize (erlAtom.erlValue, printReadably?)})"
 
-serializeIdentifier = (malString, printReadably?) ->
-  return extractJsValue malString
+serializeIdentifier = (erlString, printReadably?) ->
+  return extractJsValue erlString
 
-serializeIndex = (malIndex, printReadably?) ->
-  jsIndex = malIndex.jsValue
+serializeIndex = (erlIndex, printReadably?) ->
+  jsIndex = erlIndex.jsValue
 
   memo = ''
 
-  for own key, malValue of jsIndex
+  for own key, erlValue of jsIndex
     memo = if memo == ''
-      "#{key} #{serialize (malValue, printReadably?)}"
+      "#{key} #{serialize (erlValue, printReadably?)}"
     else
-      "#{memo}, #{key} #{serialize (malValue, printReadably?)}"
+      "#{memo}, #{key} #{serialize (erlValue, printReadably?)}"
 
   indexStart + memo + indexEnd
 
-serializeList = (malList, printReadably?) ->
-  serializedList = reduce ("", (adjoinMalValue printReadably?), malList)
+serializeList = (erlList, printReadably?) ->
+  serializedList = reduce ("", (adjoinErlValue printReadably?), erlList)
   listStart + serializedList + listEnd
 
-serializeString = (malString, printReadably?) ->
-  jsString = stripQuotes (extractJsValue malString)
+serializeString = (erlString, printReadably?) ->
+  jsString = stripQuotes (extractJsValue erlString)
   return jsString unless printReadably?
   jsString.replace(/\\/g, '\\\\')
           .replace(/"/g,  '\\"')

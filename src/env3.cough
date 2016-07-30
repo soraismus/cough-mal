@@ -1,11 +1,11 @@
 { car }                       = require './linked-list'
-{ createMalCorePureFunction } = require './type-utilities'
-{ createMalList }             = require './type-utilities'
-{ createMalSymbol }           = require './type-utilities'
+{ createErlCorePureFunction } = require './type-utilities'
+{ createErlList }             = require './type-utilities'
+{ createErlSymbol }           = require './type-utilities'
 { extractJsValue }            = require './type-utilities'
 { fromArray }                 = require './linked-list'
-{ fromMalIndex }              = require './index-utilities'
-{ malList? }                  = require './type-utilities'
+{ fromErlIndex }              = require './index-utilities'
+{ erlList? }                  = require './type-utilities'
 _process                      = require './_process'
 { toArray }                   = require './linked-list'
 tokenizeAndParse              = require './tokenizeAndParse'
@@ -14,51 +14,51 @@ tokenizeAndParse              = require './tokenizeAndParse'
 getEnvironment = \config ->
   { environment } = config
 
-  apply = \malArgs ->
-    [malFn, malArgList] = toArray malArgs
-    _eval (createMalList (malFn, malArgList))
+  apply = \erlArgs ->
+    [erlFn, erlArgList] = toArray erlArgs
+    _eval (createErlList (erlFn, erlArgList))
 
-  call = \malArgs ->
-    _eval malArgs
+  call = \erlArgs ->
+    _eval erlArgs
 
-  _eval = \malVal ->
-    _process_ [environment] malVal
+  _eval = \erlVal ->
+    _process_ [environment] erlVal
 
-  _evalListHead = \malArgs ->
-    _eval (car malArgs)
+  _evalListHead = \erlArgs ->
+    _eval (car erlArgs)
 
-  evalString = \malArgs ->
-    ; _eval tokenizeAndParse stripQuotes extractJsValue car ; malArgs
+  evalString = \erlArgs ->
+    ; _eval tokenizeAndParse stripQuotes extractJsValue car ; erlArgs
 
-  evalWithBareEnv = \malArgs ->
-    [expr, localEnv] = toPartialArray (2, malArgs)
-    _process_ [(fromMalIndex localEnv)] expr
+  evalWithBareEnv = \erlArgs ->
+    [expr, localEnv] = toPartialArray (2, erlArgs)
+    _process_ [(fromErlIndex localEnv)] expr
 
-  evalWithEnv = \malArgs ->
-    [expr, localEnv] = toPartialArray (2, malArgs)
-    _process_ [(fromMalIndex localEnv), environment] expr
+  evalWithEnv = \erlArgs ->
+    [expr, localEnv] = toPartialArray (2, erlArgs)
+    _process_ [(fromErlIndex localEnv), environment] expr
 
-  parse = \malArgs ->
-    tokenizeAndParse (stripQuotes (extractJsValue (car malArgs)))
+  parse = \erlArgs ->
+    tokenizeAndParse (stripQuotes (extractJsValue (car erlArgs)))
 
-  functionsOnMalValues = {
+  functionsOnErlValues = {
     #'eval-with-bare-env' : evalWithBareEnv
     #'eval-with-env'      : evalWithEnv
     parse : parse
   }
 
-  setCoreFnsOnMalValues! (environment, functionsOnMalValues)
+  setCoreFnsOnErlValues! (environment, functionsOnErlValues)
   return environment
 
 # WET.
-setCoreFnsOnMalValues! = (env, fns) ->
+setCoreFnsOnErlValues! = (env, fns) ->
   for own fnName, fn of fns
-    env[fnName] = createMalCorePureFunction fn 
+    env[fnName] = createErlCorePureFunction fn 
 
 # WET.
 stripQuotes = \jsString ->
   jsString[1 .. -2]
 
-_process_ = _process (\malVal -> malVal)
+_process_ = _process (\erlVal -> erlVal)
 
 module.exports = getEnvironment

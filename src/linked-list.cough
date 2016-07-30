@@ -1,25 +1,25 @@
-{ malTypes } = require './types'
+{ erlTypes } = require './types'
 
-malListType = malTypes[6]
+erlListType = erlTypes[6]
 
-car = \malList ->
-  if empty? malList
+car = \erlList ->
+  if empty? erlList
     EOL
   else
-    malList.value
+    erlList.value
 
-cdr = \malList ->
-  if empty? malList
+cdr = \erlList ->
+  if empty? erlList
     EOL
   else
-    malList.next
+    erlList.next
 
-concat = (malLists...) ->
-  return EOL if malLists.length == 0
-  result = copy malLists[0]
+concat = (erlLists...) ->
+  return EOL if erlLists.length == 0
+  result = copy erlLists[0]
   tail = lastTail result
-  for malList in malLists[1 .. ]
-    _copy = copy malList
+  for erlList in erlLists[1 .. ]
+    _copy = copy erlList
     if empty? tail
       result = _copy
       tail = lastTail result
@@ -29,26 +29,26 @@ concat = (malLists...) ->
       tail = lastTail _copy
   result
 
-cons = \malArgs ->
-  createMalList (
-    car malArgs
-    next malArgs)
+cons = \erlArgs ->
+  createErlList (
+    car erlArgs
+    next erlArgs)
 
-copy = \malList ->
-  map ((\x -> x), malList)
+copy = \erlList ->
+  map ((\x -> x), erlList)
 
-createMalList = (value, nextNode) ->
+createErlList = (value, nextNode) ->
   return EOL unless ? value
   createNode (value, nextNode ?? EOL)
 
 createNode = (value, nextNode) ->
-  { type: malListType, value, next : nextNode }
+  { type: erlListType, value, next : nextNode }
 
-drop = (nbr, malList) ->
+drop = (nbr, erlList) ->
   until nbr == 0
-    malList = cdr malList
+    erlList = cdr erlList
     nbr = nbr - 1
-  malList
+  erlList
 
 empty? = \value ->
   value == EOL
@@ -63,7 +63,7 @@ equal? = (list0, list1, equivalent?) ->
 filter = (predicate, list) ->
   _reduce = (list, value) ->
     if predicate value
-      createMalList (value, list)
+      createErlList (value, list)
     else
       list
   reverse (reduce (EOL, _reduce, list))
@@ -75,13 +75,13 @@ forEach = (fn, list) ->
     list = recurse list
   result
 
-last = \malList ->
-  car (lastTail malList)
+last = \erlList ->
+  car (lastTail erlList)
 
-lastTail = \malList ->
-  return malList if empty? malList
-  prior = malList
-  current = cdr malList
+lastTail = \erlList ->
+  return erlList if empty? erlList
+  prior = erlList
+  current = cdr erlList
   until empty? current
     prior = cdr prior
     current = cdr current
@@ -89,11 +89,11 @@ lastTail = \malList ->
 
 map = (fn, list) ->
   _reduce = (list, value) ->
-    createMalList ((fn value), list)
+    createErlList ((fn value), list)
   reverse (reduce (EOL, _reduce, list))
 
-next = \malList ->
-  car (cdr malList)
+next = \erlList ->
+  car (cdr erlList)
 
 recurse = \list ->
   if empty? list then list else list.next
@@ -116,16 +116,16 @@ reduceBy2 = (seed, fn, list) ->
 reverse = \list ->
   result = EOL
   until empty? list
-    result = createMalList (list.value, result)
+    result = createErlList (list.value, result)
     list = list.next
   result
 
-take = (nbr, malList) ->
-  result = createMalList ()
+take = (nbr, erlList) ->
+  result = createErlList ()
   until nbr == 0
-    node = car malList
-    malList = cdr malList
-    result = createMalList (node, result)
+    node = car erlList
+    erlList = cdr erlList
+    result = createErlList (node, result)
     nbr = nbr - 1
   return reverse result
 
@@ -137,8 +137,8 @@ toArray = \list ->
 
 fromArray = \array ->
   _reduce = (list, value) ->
-    createMalList (value, list)
-  array.reverse().reduce(_reduce, createMalList())
+    createErlList (value, list)
+  array.reverse().reduce(_reduce, createErlList())
 
 toPartialArray = (nbr, list) ->
   result = []
@@ -169,7 +169,7 @@ module.exports = {
   concat
   cons
   copy
-  createMalList
+  createErlList
   drop
   empty?
   equal?

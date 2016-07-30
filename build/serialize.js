@@ -1,4 +1,4 @@
-var adjoinMalValue, commentSignal, coreEffectfulFunctionLabel, corePureFunctionLabel, extractJsValue, ignoreLabel, indexEnd, indexStart, keywordLabel, listEnd, listStart, macroLabel, malAtom_question_, malCoreEffectfulFunction_question_, malCorePureFunction_question_, malIdentifier_question_, malIgnore_question_, malIndex_question_, malKeyword_question_, malList_question_, malMacro_question_, malNil_question_, malString_question_, malUserPureFunction_question_, nilLabel, reduce, serialize, serializeAtom, serializeIdentifier, serializeIndex, serializeList, serializeString, stripQuotes, userPureFunctionLabel,
+var adjoinErlValue, commentSignal, coreEffectfulFunctionLabel, corePureFunctionLabel, erlAtom_question_, erlCoreEffectfulFunction_question_, erlCorePureFunction_question_, erlIdentifier_question_, erlIgnore_question_, erlIndex_question_, erlKeyword_question_, erlList_question_, erlMacro_question_, erlNil_question_, erlString_question_, erlUserPureFunction_question_, extractJsValue, ignoreLabel, indexEnd, indexStart, keywordLabel, listEnd, listStart, macroLabel, nilLabel, reduce, serialize, serializeAtom, serializeIdentifier, serializeIndex, serializeList, serializeString, stripQuotes, userPureFunctionLabel,
   __hasProp = {}.hasOwnProperty;
 
 commentSignal = require('./commentSignal');
@@ -13,36 +13,36 @@ listEnd = require('./keyTokens').listEnd;
 
 listStart = require('./keyTokens').listStart;
 
-malAtom_question_ = require('./type-utilities').malAtom_question_;
+erlAtom_question_ = require('./type-utilities').erlAtom_question_;
 
-malCoreEffectfulFunction_question_ = require('./type-utilities').malCoreEffectfulFunction_question_;
+erlCoreEffectfulFunction_question_ = require('./type-utilities').erlCoreEffectfulFunction_question_;
 
-malCorePureFunction_question_ = require('./type-utilities').malCorePureFunction_question_;
+erlCorePureFunction_question_ = require('./type-utilities').erlCorePureFunction_question_;
 
-malIdentifier_question_ = require('./type-utilities').malIdentifier_question_;
+erlIdentifier_question_ = require('./type-utilities').erlIdentifier_question_;
 
-malIgnore_question_ = require('./type-utilities').malIgnore_question_;
+erlIgnore_question_ = require('./type-utilities').erlIgnore_question_;
 
-malIndex_question_ = require('./type-utilities').malIndex_question_;
+erlIndex_question_ = require('./type-utilities').erlIndex_question_;
 
-malKeyword_question_ = require('./type-utilities').malKeyword_question_;
+erlKeyword_question_ = require('./type-utilities').erlKeyword_question_;
 
-malList_question_ = require('./type-utilities').malList_question_;
+erlList_question_ = require('./type-utilities').erlList_question_;
 
-malMacro_question_ = require('./type-utilities').malMacro_question_;
+erlMacro_question_ = require('./type-utilities').erlMacro_question_;
 
-malNil_question_ = require('./type-utilities').malNil_question_;
+erlNil_question_ = require('./type-utilities').erlNil_question_;
 
-malString_question_ = require('./type-utilities').malString_question_;
+erlString_question_ = require('./type-utilities').erlString_question_;
 
-malUserPureFunction_question_ = require('./type-utilities').malUserPureFunction_question_;
+erlUserPureFunction_question_ = require('./type-utilities').erlUserPureFunction_question_;
 
 reduce = require('./linked-list').reduce;
 
-adjoinMalValue = function(printReadably_question_) {
-  return function(memo, malValue) {
+adjoinErlValue = function(printReadably_question_) {
+  return function(memo, erlValue) {
     var serialized;
-    serialized = serialize(malValue, printReadably_question_);
+    serialized = serialize(erlValue, printReadably_question_);
     if (memo.length === 0) {
       return serialized;
     } else {
@@ -51,52 +51,52 @@ adjoinMalValue = function(printReadably_question_) {
   };
 };
 
-serialize = function(malExpr, printReadably_question_) {
+serialize = function(erlExpr, printReadably_question_) {
   var _serialize;
-  if (malExpr === commentSignal) {
+  if (erlExpr === commentSignal) {
     return commentSignal;
   }
   _serialize = (function() {
     switch (false) {
-      case !malList_question_(malExpr):
+      case !erlList_question_(erlExpr):
         return serializeList;
-      case !malIgnore_question_(malExpr):
+      case !erlIgnore_question_(erlExpr):
         return function(x) {
           return ignoreLabel;
         };
-      case !malIndex_question_(malExpr):
+      case !erlIndex_question_(erlExpr):
         return serializeIndex;
-      case !malKeyword_question_(malExpr):
+      case !erlKeyword_question_(erlExpr):
         return function(x) {
           return keywordLabel;
         };
-      case !malCoreEffectfulFunction_question_(malExpr):
+      case !erlCoreEffectfulFunction_question_(erlExpr):
         return function(x) {
           return coreEffectfulFunctionLabel;
         };
-      case !malCorePureFunction_question_(malExpr):
+      case !erlCorePureFunction_question_(erlExpr):
         return function(x) {
           return corePureFunctionLabel;
         };
-      case !malUserPureFunction_question_(malExpr):
+      case !erlUserPureFunction_question_(erlExpr):
         return function(x) {
           return userPureFunctionLabel;
         };
-      case !malMacro_question_(malExpr):
+      case !erlMacro_question_(erlExpr):
         return function(x) {
           return macroLabel;
         };
-      case !malNil_question_(malExpr):
+      case !erlNil_question_(erlExpr):
         return function(x) {
           return nilLabel;
         };
-      case !malIdentifier_question_(malExpr):
+      case !erlIdentifier_question_(erlExpr):
         return serializeIdentifier;
-      case !malString_question_(malExpr):
+      case !erlString_question_(erlExpr):
         return serializeString;
-      case !malAtom_question_(malExpr):
+      case !erlAtom_question_(erlExpr):
         return serializeAtom;
-      case malExpr.jsValue == null:
+      case erlExpr.jsValue == null:
         return extractJsValue;
       default:
         return function(x) {
@@ -104,38 +104,38 @@ serialize = function(malExpr, printReadably_question_) {
         };
     }
   })();
-  return _serialize(malExpr, printReadably_question_);
+  return _serialize(erlExpr, printReadably_question_);
 };
 
-serializeAtom = function(malAtom, printReadably_question_) {
-  return "(atom " + (serialize(malAtom.malValue, printReadably_question_)) + ")";
+serializeAtom = function(erlAtom, printReadably_question_) {
+  return "(atom " + (serialize(erlAtom.erlValue, printReadably_question_)) + ")";
 };
 
-serializeIdentifier = function(malString, printReadably_question_) {
-  return extractJsValue(malString);
+serializeIdentifier = function(erlString, printReadably_question_) {
+  return extractJsValue(erlString);
 };
 
-serializeIndex = function(malIndex, printReadably_question_) {
-  var jsIndex, key, malValue, memo;
-  jsIndex = malIndex.jsValue;
+serializeIndex = function(erlIndex, printReadably_question_) {
+  var erlValue, jsIndex, key, memo;
+  jsIndex = erlIndex.jsValue;
   memo = '';
   for (key in jsIndex) {
     if (!__hasProp.call(jsIndex, key)) continue;
-    malValue = jsIndex[key];
-    memo = memo === '' ? "" + key + " " + (serialize(malValue, printReadably_question_)) : "" + memo + ", " + key + " " + (serialize(malValue, printReadably_question_));
+    erlValue = jsIndex[key];
+    memo = memo === '' ? "" + key + " " + (serialize(erlValue, printReadably_question_)) : "" + memo + ", " + key + " " + (serialize(erlValue, printReadably_question_));
   }
   return indexStart + memo + indexEnd;
 };
 
-serializeList = function(malList, printReadably_question_) {
+serializeList = function(erlList, printReadably_question_) {
   var serializedList;
-  serializedList = reduce("", adjoinMalValue(printReadably_question_), malList);
+  serializedList = reduce("", adjoinErlValue(printReadably_question_), erlList);
   return listStart + serializedList + listEnd;
 };
 
-serializeString = function(malString, printReadably_question_) {
+serializeString = function(erlString, printReadably_question_) {
   var jsString;
-  jsString = stripQuotes(extractJsValue(malString));
+  jsString = stripQuotes(extractJsValue(erlString));
   if (!printReadably_question_) {
     return jsString;
   }

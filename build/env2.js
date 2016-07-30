@@ -1,7 +1,7 @@
-var createMalCoreEffectfulFunction, displayEffectsOnMalValues, getEnvironment, serialize, setCoreEffectfulFnsOnMalValues_bang_, toArray, _prStr,
+var createErlCoreEffectfulFunction, displayEffectsOnErlValues, getEnvironment, serialize, setCoreEffectfulFnsOnErlValues_bang_, toArray, _prStr,
   __hasProp = {}.hasOwnProperty;
 
-createMalCoreEffectfulFunction = require('./type-utilities').createMalCoreEffectfulFunction;
+createErlCoreEffectfulFunction = require('./type-utilities').createErlCoreEffectfulFunction;
 
 serialize = require('./serialize');
 
@@ -10,37 +10,37 @@ toArray = require('./linked-list').toArray;
 getEnvironment = function(config) {
   var display, environment;
   display = config.display, environment = config.environment;
-  setCoreEffectfulFnsOnMalValues_bang_(display)(environment, displayEffectsOnMalValues);
+  setCoreEffectfulFnsOnErlValues_bang_(display)(environment, displayEffectsOnErlValues);
   return environment;
 };
 
-_prStr = function(malArgs, printReadably_question_) {
-  return ((toArray(malArgs)).map(function(malArg) {
-    return serialize(malArg, printReadably_question_);
+_prStr = function(erlArgs, printReadably_question_) {
+  return ((toArray(erlArgs)).map(function(erlArg) {
+    return serialize(erlArg, printReadably_question_);
   })).join('');
 };
 
-setCoreEffectfulFnsOnMalValues_bang_ = function(represent) {
+setCoreEffectfulFnsOnErlValues_bang_ = function(represent) {
   return function(env, fns) {
     var fn, fnName, _results;
     _results = [];
     for (fnName in fns) {
       if (!__hasProp.call(fns, fnName)) continue;
       fn = fns[fnName];
-      _results.push(env[fnName] = createMalCoreEffectfulFunction(function(malArgs) {
-        return represent(fn(malArgs));
+      _results.push(env[fnName] = createErlCoreEffectfulFunction(function(erlArgs) {
+        return represent(fn(erlArgs));
       }));
     }
     return _results;
   };
 };
 
-displayEffectsOnMalValues = {
-  'print': function(malArgs) {
-    return _prStr(malArgs, false);
+displayEffectsOnErlValues = {
+  'print': function(erlArgs) {
+    return _prStr(erlArgs, false);
   },
-  'pretty-print': function(malArgs) {
-    return _prStr(malArgs, true);
+  'pretty-print': function(erlArgs) {
+    return _prStr(erlArgs, true);
   }
 };
 

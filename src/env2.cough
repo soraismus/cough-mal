@@ -1,27 +1,27 @@
-{ createMalCoreEffectfulFunction } = require './type-utilities'
+{ createErlCoreEffectfulFunction } = require './type-utilities'
 serialize                          = require './serialize'
 { toArray }                        = require './linked-list'
 
 getEnvironment = \config ->
   { display, environment } = config
-  setCoreEffectfulFnsOnMalValues! display (
-    environment, displayEffectsOnMalValues)
+  setCoreEffectfulFnsOnErlValues! display (
+    environment, displayEffectsOnErlValues)
   return environment
 
 # WET; cf. 'env1.cough'.
-_prStr = (malArgs, printReadably?) ->
-  ((toArray malArgs)
-    .map \malArg -> serialize (malArg, printReadably?))
+_prStr = (erlArgs, printReadably?) ->
+  ((toArray erlArgs)
+    .map \erlArg -> serialize (erlArg, printReadably?))
     .join ''
 
-setCoreEffectfulFnsOnMalValues! = (represent) -> (env, fns) ->
+setCoreEffectfulFnsOnErlValues! = (represent) -> (env, fns) ->
   for own fnName, fn of fns
-    env[fnName] = createMalCoreEffectfulFunction \malArgs ->
-      represent (fn malArgs)
+    env[fnName] = createErlCoreEffectfulFunction \erlArgs ->
+      represent (fn erlArgs)
 
-displayEffectsOnMalValues = {
-  'print'        : \malArgs -> _prStr (malArgs, false)
-  'pretty-print' : \malArgs -> _prStr (malArgs, true)
+displayEffectsOnErlValues = {
+  'print'        : \erlArgs -> _prStr (erlArgs, false)
+  'pretty-print' : \erlArgs -> _prStr (erlArgs, true)
 }
 
 module.exports = getEnvironment

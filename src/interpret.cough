@@ -1,5 +1,5 @@
 { circumpendQuotes } = require './js-utilities'
-{ createMalString }  = require './type-utilities'
+{ createErlString }  = require './type-utilities'
 { fromArray }        = require './linked-list'
 getLispEnvironment   = require './getLispEnvironment'
 _process             = require './_process'
@@ -7,11 +7,11 @@ _serialize           = require './serialize'
 standardFnsAndMacros = require './standard-fns-and-macros'
 tokenizeAndParse     = require './tokenizeAndParse'
 
-_createMalString = \jsString ->
-  createMalString (circumpendQuotes jsString)
+_createErlString = \jsString ->
+  createErlString (circumpendQuotes jsString)
 
-encapsulate = \type \malValue ->
-  { effect: { type }, value: malValue }
+encapsulate = \type \erlValue ->
+  { effect: { type }, value: erlValue }
 
 error = \errorMessage ->
   [encapsulate 'error' "repl error: (#{errorMessage})"]
@@ -29,7 +29,7 @@ _interpret = (envs, jsString) ->
 
 interpret = (jsString, userJsArray) ->
   if ? userJsArray
-    userEnv = { '*ARGV*' : fromArray (userJsArray.map _createMalString) }
+    userEnv = { '*ARGV*' : fromArray (userJsArray.map _createErlString) }
     _interpret ([userEnv, environment], jsString)
   else
     _interpret ([environment], jsString)

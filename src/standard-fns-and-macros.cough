@@ -234,7 +234,7 @@ module.exports = """
 
   (def! apply (macro* (f xs) `(eval (cons ~f ~xs))))
 
-  (def! eval-string (fn* (malString) (eval (parse malString))))
+  (def! eval-string (fn* (erlString) (eval (parse erlString))))
 
 )
 """

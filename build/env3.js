@@ -1,21 +1,21 @@
-var car, createMalCorePureFunction, createMalList, createMalSymbol, extractJsValue, fromArray, fromMalIndex, getEnvironment, malList_question_, setCoreFnsOnMalValues_bang_, stripQuotes, toArray, toPartialArray, tokenizeAndParse, _process, _process_,
+var car, createErlCorePureFunction, createErlList, createErlSymbol, erlList_question_, extractJsValue, fromArray, fromErlIndex, getEnvironment, setCoreFnsOnErlValues_bang_, stripQuotes, toArray, toPartialArray, tokenizeAndParse, _process, _process_,
   __hasProp = {}.hasOwnProperty;
 
 car = require('./linked-list').car;
 
-createMalCorePureFunction = require('./type-utilities').createMalCorePureFunction;
+createErlCorePureFunction = require('./type-utilities').createErlCorePureFunction;
 
-createMalList = require('./type-utilities').createMalList;
+createErlList = require('./type-utilities').createErlList;
 
-createMalSymbol = require('./type-utilities').createMalSymbol;
+createErlSymbol = require('./type-utilities').createErlSymbol;
 
 extractJsValue = require('./type-utilities').extractJsValue;
 
 fromArray = require('./linked-list').fromArray;
 
-fromMalIndex = require('./index-utilities').fromMalIndex;
+fromErlIndex = require('./index-utilities').fromErlIndex;
 
-malList_question_ = require('./type-utilities').malList_question_;
+erlList_question_ = require('./type-utilities').erlList_question_;
 
 _process = require('./_process');
 
@@ -26,54 +26,54 @@ tokenizeAndParse = require('./tokenizeAndParse');
 toPartialArray = require('./linked-list').toPartialArray;
 
 getEnvironment = function(config) {
-  var apply, call, environment, evalString, evalWithBareEnv, evalWithEnv, functionsOnMalValues, parse, _eval, _evalListHead;
+  var apply, call, environment, evalString, evalWithBareEnv, evalWithEnv, functionsOnErlValues, parse, _eval, _evalListHead;
   environment = config.environment;
-  apply = function(malArgs) {
-    var malArgList, malFn, _ref;
-    _ref = toArray(malArgs), malFn = _ref[0], malArgList = _ref[1];
-    return _eval(createMalList(malFn, malArgList));
+  apply = function(erlArgs) {
+    var erlArgList, erlFn, _ref;
+    _ref = toArray(erlArgs), erlFn = _ref[0], erlArgList = _ref[1];
+    return _eval(createErlList(erlFn, erlArgList));
   };
-  call = function(malArgs) {
-    return _eval(malArgs);
+  call = function(erlArgs) {
+    return _eval(erlArgs);
   };
-  _eval = function(malVal) {
-    return _process_([environment])(malVal);
+  _eval = function(erlVal) {
+    return _process_([environment])(erlVal);
   };
-  _evalListHead = function(malArgs) {
-    return _eval(car(malArgs));
+  _evalListHead = function(erlArgs) {
+    return _eval(car(erlArgs));
   };
-  evalString = function(malArgs) {
+  evalString = function(erlArgs) {
     return (function(__i) {
       return _eval(tokenizeAndParse(stripQuotes(extractJsValue(car(__i)))));
-    })(malArgs);
+    })(erlArgs);
   };
-  evalWithBareEnv = function(malArgs) {
+  evalWithBareEnv = function(erlArgs) {
     var expr, localEnv, _ref;
-    _ref = toPartialArray(2, malArgs), expr = _ref[0], localEnv = _ref[1];
-    return _process_([fromMalIndex(localEnv)])(expr);
+    _ref = toPartialArray(2, erlArgs), expr = _ref[0], localEnv = _ref[1];
+    return _process_([fromErlIndex(localEnv)])(expr);
   };
-  evalWithEnv = function(malArgs) {
+  evalWithEnv = function(erlArgs) {
     var expr, localEnv, _ref;
-    _ref = toPartialArray(2, malArgs), expr = _ref[0], localEnv = _ref[1];
-    return _process_([fromMalIndex(localEnv), environment])(expr);
+    _ref = toPartialArray(2, erlArgs), expr = _ref[0], localEnv = _ref[1];
+    return _process_([fromErlIndex(localEnv), environment])(expr);
   };
-  parse = function(malArgs) {
-    return tokenizeAndParse(stripQuotes(extractJsValue(car(malArgs))));
+  parse = function(erlArgs) {
+    return tokenizeAndParse(stripQuotes(extractJsValue(car(erlArgs))));
   };
-  functionsOnMalValues = {
+  functionsOnErlValues = {
     parse: parse
   };
-  setCoreFnsOnMalValues_bang_(environment, functionsOnMalValues);
+  setCoreFnsOnErlValues_bang_(environment, functionsOnErlValues);
   return environment;
 };
 
-setCoreFnsOnMalValues_bang_ = function(env, fns) {
+setCoreFnsOnErlValues_bang_ = function(env, fns) {
   var fn, fnName, _results;
   _results = [];
   for (fnName in fns) {
     if (!__hasProp.call(fns, fnName)) continue;
     fn = fns[fnName];
-    _results.push(env[fnName] = createMalCorePureFunction(fn));
+    _results.push(env[fnName] = createErlCorePureFunction(fn));
   }
   return _results;
 };
@@ -82,8 +82,8 @@ stripQuotes = function(jsString) {
   return jsString.slice(1, -1);
 };
 
-_process_ = _process(function(malVal) {
-  return malVal;
+_process_ = _process(function(erlVal) {
+  return erlVal;
 });
 
 module.exports = getEnvironment;

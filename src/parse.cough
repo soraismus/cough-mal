@@ -1,14 +1,14 @@
 { binaryGlyphTokens }     = require './keyTokens'
 comment                   = require './commentSignal'
-{ createMalBoolean }      = require './type-utilities'
-{ createMalIdentifier }   = require './type-utilities'
-{ createMalIgnore }       = require './type-utilities'
-{ createMalIndex }        = require './type-utilities'
-{ createMalList }         = require './type-utilities'
-{ createMalNil }          = require './type-utilities'
-{ createMalNumber }       = require './type-utilities'
-{ createMalString }       = require './type-utilities'
-{ createMalSymbol }       = require './type-utilities'
+{ createErlBoolean }      = require './type-utilities'
+{ createErlIdentifier }   = require './type-utilities'
+{ createErlIgnore }       = require './type-utilities'
+{ createErlIndex }        = require './type-utilities'
+{ createErlList }         = require './type-utilities'
+{ createErlNil }          = require './type-utilities'
+{ createErlNumber }       = require './type-utilities'
+{ createErlString }       = require './type-utilities'
+{ createErlSymbol }       = require './type-utilities'
 { deref }                 = require './keyTokens'
 { derefGlyph }            = require './keyTokens'
 { extractJsValue }        = require './type-utilities'
@@ -39,16 +39,16 @@ comment                   = require './commentSignal'
 { _true }                 = require './keyTokens'
 
 atomize = \token ->
-  createMalValue = switch
-    when nil? token       then createMalNil
-    when ignore? token    then createMalIgnore
-    when boolean? token   then ; createMalBoolean parseBoolean ;
-    when string? token    then createMalString
-    when identifer? token then createMalIdentifier
-    when integer? token   then ; createMalNumber parseInt10 ;
-    when float? token     then ; createMalNumber parseFloat10 ;
-    else                       createMalSymbol
-  createMalValue token
+  createErlValue = switch
+    when nil? token       then createErlNil
+    when ignore? token    then createErlIgnore
+    when boolean? token   then ; createErlBoolean parseBoolean ;
+    when string? token    then createErlString
+    when identifer? token then createErlIdentifier
+    when integer? token   then ; createErlNumber parseInt10 ;
+    when float? token     then ; createErlNumber parseFloat10 ;
+    else                       createErlSymbol
+  createErlValue token
 
 boolean? = \token ->
   token in [_false, _true]
@@ -95,11 +95,11 @@ parse = \tokens ->
   _parse (tokens.shift(), tokens)
 
 parseBinaryGlyph = (keyword, tokens) ->
-  createMalList (
-    createMalSymbol keyword
-    createMalList (
+  createErlList (
+    createErlSymbol keyword
+    createErlList (
       parse tokens
-      createMalList (parse tokens)))
+      createErlList (parse tokens)))
 
 parseBoolean = \token ->
   token == _true
@@ -108,9 +108,9 @@ parseFloat10 = \token ->
   parseFloat ((stripUnderscores token), 10)
 
 parseGlyph = (keyword, tokens) ->
-  createMalList (
-    (createMalSymbol keyword),
-    (createMalList (parse tokens)))
+  createErlList (
+    (createErlSymbol keyword),
+    (createErlList (parse tokens)))
 
 parseIndex = \tokens ->
   jsIndex = {}
@@ -125,18 +125,18 @@ parseIndex = \tokens ->
       jsIndex[extractJsValue key] = _parse (token, tokens)
       keyStep? = true
 
-  createMalIndex jsIndex
+  createErlIndex jsIndex
 
 parseInt10 = \token ->
   parseInt ((stripUnderscores token), 10)
 
 parseList = \tokens ->
-  malList = createMalList ()
+  erlList = createErlList ()
   until (token = tokens.shift()) == listEnd
-    malList = createMalList (
+    erlList = createErlList (
       (_parse (token, tokens)),
-      malList)
-  reverse malList
+      erlList)
+  reverse erlList
 
 startsWith? = \char \token ->
   token[0] == char

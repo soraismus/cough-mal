@@ -1,36 +1,36 @@
-malTypes = [
-  malBooleanType               = 'malBooleanType'
-  malCoreEffectfulFunctionType = 'malCoreEffectfulFunctionType'
-  malCorePureFunctionType      = 'malCorePureFunctionType'
-  malIdentifierType            = 'malIdentifierType'
-  malIndexType                 = 'malIndexType'
-  malKeywordType               = 'malKeywordType'
-  malListType                  = 'malListType'
-  malMacroType                 = 'malMacroType'
-  malNumberType                = 'malNumberType'
-  malSpecialFormType           = 'malSpecialFormType'
-  malStringType                = 'malStringType'
-  malSymbolType                = 'malSymbolType'
-  malUnitType                  = 'malUnitType'
-  malUserPureFunctionType      = 'malUserPureFunctionType'
-  malAtomType                  = 'malAtomType'
+erlTypes = [
+  erlBooleanType               = 'erlBooleanType'
+  erlCoreEffectfulFunctionType = 'erlCoreEffectfulFunctionType'
+  erlCorePureFunctionType      = 'erlCorePureFunctionType'
+  erlIdentifierType            = 'erlIdentifierType'
+  erlIndexType                 = 'erlIndexType'
+  erlKeywordType               = 'erlKeywordType'
+  erlListType                  = 'erlListType'
+  erlMacroType                 = 'erlMacroType'
+  erlNumberType                = 'erlNumberType'
+  erlSpecialFormType           = 'erlSpecialFormType'
+  erlStringType                = 'erlStringType'
+  erlSymbolType                = 'erlSymbolType'
+  erlUnitType                  = 'erlUnitType'
+  erlUserPureFunctionType      = 'erlUserPureFunctionType'
+  erlAtomType                  = 'erlAtomType'
 ]
 
 module.exports = {
-  malAtomType
-  malBooleanType
-  malCoreEffectfulFunctionType
-  malCorePureFunctionType
-  malIdentifierType
-  malIndexType
-  malKeywordType
-  malListType
-  malMacroType
-  malNumberType
-  malSpecialFormType
-  malStringType
-  malSymbolType
-  malTypes
-  malUnitType
-  malUserPureFunctionType
+  erlAtomType
+  erlBooleanType
+  erlCoreEffectfulFunctionType
+  erlCorePureFunctionType
+  erlIdentifierType
+  erlIndexType
+  erlKeywordType
+  erlListType
+  erlMacroType
+  erlNumberType
+  erlSpecialFormType
+  erlStringType
+  erlSymbolType
+  erlTypes
+  erlUnitType
+  erlUserPureFunctionType
 }

@@ -1,99 +1,99 @@
-{ createMalList } = require './linked-list'
-{ malAtomType }   = require './types'
-{ malTypes }      = require './types'
+{ createErlList } = require './linked-list'
+{ erlAtomType }   = require './types'
+{ erlTypes }      = require './types'
 
-create-factory-&-predicate = \malType ->
+create-factory-&-predicate = \erlType ->
   factory = \jsValue ->
-    createMalValue (jsValue, malType)
-  predicate = \malValue ->
-    malValue.type == malType
+    createErlValue (jsValue, erlType)
+  predicate = \erlValue ->
+    erlValue.type == erlType
   [factory, predicate]
 
-createMalAtom = \malValue ->
-  { malValue, type: malAtomType }
+createErlAtom = \erlValue ->
+  { erlValue, type: erlAtomType }
 
-createMalBoolean = \jsBoolean ->
-  if jsBoolean then malTrue else malFalse
+createErlBoolean = \jsBoolean ->
+  if jsBoolean then erlTrue else erlFalse
 
-createMalIgnore = ->
-  malIgnore
+createErlIgnore = ->
+  erlIgnore
 
-createMalNil = ->
-  malNil
+createErlNil = ->
+  erlNil
 
-createMalValue = (jsValue, malType) ->
-  { jsValue, type: malType }
+createErlValue = (jsValue, erlType) ->
+  { jsValue, type: erlType }
 
 createPredicate = \constant \value ->
   value == constant
 
-extractJsValue = \malValue ->
-  malValue.jsValue
+extractJsValue = \erlValue ->
+  erlValue.jsValue
 
 [
-  [_createMalBoolean,               malBoolean?              ]
-  [createMalCoreEffectfulFunction,  malCoreEffectfulFunction?]
-  [createMalCorePureFunction,       malCorePureFunction?     ]
-  [createMalIdentifier,             malIdentifier?           ]
-  [createMalIndex,                  malIndex?                ]
-  [createMalKeyword,                malKeyword?              ]
-  [_createMalList,                  malList?                 ]
-  [createMalMacro,                  malMacro?                ]
-  [createMalNumber,                 malNumber?               ]
-  [createMalSpecialForm,            malSpecialForm?          ]
-  [createMalString,                 malString?               ]
-  [createMalSymbol,                 malSymbol?               ]
-  [_createMalUnit,                  _malUnit?                ]
-  [createMalUserPureFunction,       malUserPureFunction?     ]
-  [_createMalAtom,                  malAtom?                 ]
-] = malTypes.map create-factory-&-predicate
+  [_createErlBoolean,               erlBoolean?              ]
+  [createErlCoreEffectfulFunction,  erlCoreEffectfulFunction?]
+  [createErlCorePureFunction,       erlCorePureFunction?     ]
+  [createErlIdentifier,             erlIdentifier?           ]
+  [createErlIndex,                  erlIndex?                ]
+  [createErlKeyword,                erlKeyword?              ]
+  [_createErlList,                  erlList?                 ]
+  [createErlMacro,                  erlMacro?                ]
+  [createErlNumber,                 erlNumber?               ]
+  [createErlSpecialForm,            erlSpecialForm?          ]
+  [createErlString,                 erlString?               ]
+  [createErlSymbol,                 erlSymbol?               ]
+  [_createErlUnit,                  _erlUnit?                ]
+  [createErlUserPureFunction,       erlUserPureFunction?     ]
+  [_createErlAtom,                  erlAtom?                 ]
+] = erlTypes.map create-factory-&-predicate
 
-malIgnore = _createMalUnit null
-malNil = _createMalUnit null
+erlIgnore = _createErlUnit null
+erlNil = _createErlUnit null
 
-[malFalse, malTrue] = [false, true].map _createMalBoolean
+[erlFalse, erlTrue] = [false, true].map _createErlBoolean
 
-[malFalse?, malIgnore?, malNil?, malTrue?] =
-  [malFalse, malIgnore, malNil, malTrue].map createPredicate
+[erlFalse?, erlIgnore?, erlNil?, erlTrue?] =
+  [erlFalse, erlIgnore, erlNil, erlTrue].map createPredicate
 
 module.exports = {
-  createMalAtom
-  createMalBoolean
-  createMalCoreEffectfulFunction
-  createMalCorePureFunction
-  createMalIdentifier
-  createMalIgnore
-  createMalIndex
-  createMalKeyword
-  createMalList
-  createMalMacro
-  createMalNil
-  createMalNumber
-  createMalSpecialForm
-  createMalString
-  createMalSymbol
-  createMalUserPureFunction
+  createErlAtom
+  createErlBoolean
+  createErlCoreEffectfulFunction
+  createErlCorePureFunction
+  createErlIdentifier
+  createErlIgnore
+  createErlIndex
+  createErlKeyword
+  createErlList
+  createErlMacro
+  createErlNil
+  createErlNumber
+  createErlSpecialForm
+  createErlString
+  createErlSymbol
+  createErlUserPureFunction
   extractJsValue
-  malAtom?
-  malBoolean?
-  malCoreEffectfulFunction?
-  malCorePureFunction?
-  malFalse
-  malFalse?
-  malIdentifier?   
-  malIgnore
-  malIgnore?
-  malIndex?
-  malKeyword?
-  malList?
-  malMacro?
-  malNil
-  malNil?
-  malNumber?
-  malSpecialForm?
-  malString?
-  malSymbol?
-  malTrue
-  malTrue?
-  malUserPureFunction?
+  erlAtom?
+  erlBoolean?
+  erlCoreEffectfulFunction?
+  erlCorePureFunction?
+  erlFalse
+  erlFalse?
+  erlIdentifier?   
+  erlIgnore
+  erlIgnore?
+  erlIndex?
+  erlKeyword?
+  erlList?
+  erlMacro?
+  erlNil
+  erlNil?
+  erlNumber?
+  erlSpecialForm?
+  erlString?
+  erlSymbol?
+  erlTrue
+  erlTrue?
+  erlUserPureFunction?
 }

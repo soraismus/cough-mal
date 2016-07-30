@@ -1,38 +1,38 @@
-var EOL, car, cdr, concat, cons, copy, createMalList, createNode, drop, empty_question_, equal_question_, filter, forEach, fromArray, last, lastTail, malListType, malTypes, map, next, recurse, reduce, reduceBy2, reverse, take, toArray, toPartialArray, zip, _EOL,
+var EOL, car, cdr, concat, cons, copy, createErlList, createNode, drop, empty_question_, equal_question_, erlListType, erlTypes, filter, forEach, fromArray, last, lastTail, map, next, recurse, reduce, reduceBy2, reverse, take, toArray, toPartialArray, zip, _EOL,
   __slice = [].slice;
 
-malTypes = require('./types').malTypes;
+erlTypes = require('./types').erlTypes;
 
-malListType = malTypes[6];
+erlListType = erlTypes[6];
 
-car = function(malList) {
-  if (empty_question_(malList)) {
+car = function(erlList) {
+  if (empty_question_(erlList)) {
     return EOL;
   } else {
-    return malList.value;
+    return erlList.value;
   }
 };
 
-cdr = function(malList) {
-  if (empty_question_(malList)) {
+cdr = function(erlList) {
+  if (empty_question_(erlList)) {
     return EOL;
   } else {
-    return malList.next;
+    return erlList.next;
   }
 };
 
 concat = function() {
-  var malList, malLists, result, tail, _copy, _i, _len, _ref;
-  malLists = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-  if (malLists.length === 0) {
+  var erlList, erlLists, result, tail, _copy, _i, _len, _ref;
+  erlLists = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+  if (erlLists.length === 0) {
     return EOL;
   }
-  result = copy(malLists[0]);
+  result = copy(erlLists[0]);
   tail = lastTail(result);
-  _ref = malLists.slice(1);
+  _ref = erlLists.slice(1);
   for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-    malList = _ref[_i];
-    _copy = copy(malList);
+    erlList = _ref[_i];
+    _copy = copy(erlList);
     if (empty_question_(tail)) {
       result = _copy;
       tail = lastTail(result);
@@ -46,17 +46,17 @@ concat = function() {
   return result;
 };
 
-cons = function(malArgs) {
-  return createMalList(car(malArgs), next(malArgs));
+cons = function(erlArgs) {
+  return createErlList(car(erlArgs), next(erlArgs));
 };
 
-copy = function(malList) {
+copy = function(erlList) {
   return map((function(x) {
     return x;
-  }), malList);
+  }), erlList);
 };
 
-createMalList = function(value, nextNode) {
+createErlList = function(value, nextNode) {
   if (value == null) {
     return EOL;
   }
@@ -65,18 +65,18 @@ createMalList = function(value, nextNode) {
 
 createNode = function(value, nextNode) {
   return {
-    type: malListType,
+    type: erlListType,
     value: value,
     next: nextNode
   };
 };
 
-drop = function(nbr, malList) {
+drop = function(nbr, erlList) {
   while (nbr !== 0) {
-    malList = cdr(malList);
+    erlList = cdr(erlList);
     nbr = nbr - 1;
   }
-  return malList;
+  return erlList;
 };
 
 empty_question_ = function(value) {
@@ -98,7 +98,7 @@ filter = function(predicate, list) {
   var _reduce;
   _reduce = function(list, value) {
     if (predicate(value)) {
-      return createMalList(value, list);
+      return createErlList(value, list);
     } else {
       return list;
     }
@@ -116,17 +116,17 @@ forEach = function(fn, list) {
   return result;
 };
 
-last = function(malList) {
-  return car(lastTail(malList));
+last = function(erlList) {
+  return car(lastTail(erlList));
 };
 
-lastTail = function(malList) {
+lastTail = function(erlList) {
   var current, prior;
-  if (empty_question_(malList)) {
-    return malList;
+  if (empty_question_(erlList)) {
+    return erlList;
   }
-  prior = malList;
-  current = cdr(malList);
+  prior = erlList;
+  current = cdr(erlList);
   while (!empty_question_(current)) {
     prior = cdr(prior);
     current = cdr(current);
@@ -137,13 +137,13 @@ lastTail = function(malList) {
 map = function(fn, list) {
   var _reduce;
   _reduce = function(list, value) {
-    return createMalList(fn(value), list);
+    return createErlList(fn(value), list);
   };
   return reverse(reduce(EOL, _reduce, list));
 };
 
-next = function(malList) {
-  return car(cdr(malList));
+next = function(erlList) {
+  return car(cdr(erlList));
 };
 
 recurse = function(list) {
@@ -178,19 +178,19 @@ reverse = function(list) {
   var result;
   result = EOL;
   while (!empty_question_(list)) {
-    result = createMalList(list.value, result);
+    result = createErlList(list.value, result);
     list = list.next;
   }
   return result;
 };
 
-take = function(nbr, malList) {
+take = function(nbr, erlList) {
   var node, result;
-  result = createMalList();
+  result = createErlList();
   while (nbr !== 0) {
-    node = car(malList);
-    malList = cdr(malList);
-    result = createMalList(node, result);
+    node = car(erlList);
+    erlList = cdr(erlList);
+    result = createErlList(node, result);
     nbr = nbr - 1;
   }
   return reverse(result);
@@ -208,9 +208,9 @@ toArray = function(list) {
 fromArray = function(array) {
   var _reduce;
   _reduce = function(list, value) {
-    return createMalList(value, list);
+    return createErlList(value, list);
   };
-  return array.reverse().reduce(_reduce, createMalList());
+  return array.reverse().reduce(_reduce, createErlList());
 };
 
 toPartialArray = function(nbr, list) {
@@ -248,7 +248,7 @@ module.exports = {
   concat: concat,
   cons: cons,
   copy: copy,
-  createMalList: createMalList,
+  createErlList: createErlList,
   drop: drop,
   empty_question_: empty_question_,
   equal_question_: equal_question_,

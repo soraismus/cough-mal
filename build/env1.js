@@ -1,4 +1,4 @@
-var append, areEqual, assoc, atom, atom_question_, boolean_question_, car, cdr, circumpendQuotes, concat, cons, coreFn_question_, count, createMalAtom, createMalBoolean, createMalCorePureFunction, createMalIndex, createMalList, createMalNumber, createMalString, createMalSymbol, createPredicate, deref, drop, empty_question_, equal_question_, extractJsValue, false_question_, first, fromArray, function_question_, functionsOnMalValues, getEnvironment, ignoreIfTrue, ignoreUnlessTrue, ignore_bang_, interpret, last, list, list_question_, macro_question_, malAtom_question_, malBoolean_question_, malCorePureFunction_question_, malFalse, malFalse_question_, malIgnore, malIndex_question_, malList_question_, malMacro_question_, malNil, malNil_question_, malNumber_question_, malString_question_, malSymbol_question_, malTrue, malTrue_question_, malUserPureFunction_question_, meta, next, nil_question_, nth, number_question_, prepend, prettyString, read, recurse, reduce, reset, rest, reverse, serialize, set, setCoreFnsOnMalValues_bang_, slurp, string, string_question_, stripQuotes, symbol, symbol_question_, take, time_hyphen_ms, toArray, toPartialArray, true_question_, typeOf, userFn_question_, withMeta, write, _car, _cdr, _concat, _drop, _empty_question_, _interpret, _last, _not, _prStr, _quit_, _ref, _reverse, _take, _throw,
+var append, areEqual, assoc, atom, atom_question_, boolean_question_, car, cdr, circumpendQuotes, concat, cons, coreFn_question_, count, createErlAtom, createErlBoolean, createErlCorePureFunction, createErlIndex, createErlList, createErlNumber, createErlString, createErlSymbol, createPredicate, deref, drop, empty_question_, equal_question_, erlAtom_question_, erlBoolean_question_, erlCorePureFunction_question_, erlFalse, erlFalse_question_, erlIgnore, erlIndex_question_, erlList_question_, erlMacro_question_, erlNil, erlNil_question_, erlNumber_question_, erlString_question_, erlSymbol_question_, erlTrue, erlTrue_question_, erlUserPureFunction_question_, extractJsValue, false_question_, first, fromArray, function_question_, functionsOnErlValues, getEnvironment, ignoreIfTrue, ignoreUnlessTrue, ignore_bang_, interpret, last, list, list_question_, macro_question_, meta, next, nil_question_, nth, number_question_, prepend, prettyString, read, recurse, reduce, reset, rest, reverse, serialize, set, setCoreFnsOnErlValues_bang_, slurp, string, string_question_, stripQuotes, symbol, symbol_question_, take, time_hyphen_ms, toArray, toPartialArray, true_question_, typeOf, userFn_question_, withMeta, write, _car, _cdr, _concat, _drop, _empty_question_, _interpret, _last, _not, _prStr, _quit_, _ref, _reverse, _take, _throw,
   __slice = [].slice,
   __hasProp = {}.hasOwnProperty;
 
@@ -10,21 +10,21 @@ circumpendQuotes = require('./js-utilities').circumpendQuotes;
 
 concat = require('./linked-list').concat;
 
-createMalAtom = require('./type-utilities').createMalAtom;
+createErlAtom = require('./type-utilities').createErlAtom;
 
-createMalBoolean = require('./type-utilities').createMalBoolean;
+createErlBoolean = require('./type-utilities').createErlBoolean;
 
-createMalCorePureFunction = require('./type-utilities').createMalCorePureFunction;
+createErlCorePureFunction = require('./type-utilities').createErlCorePureFunction;
 
-createMalIndex = require('./type-utilities').createMalIndex;
+createErlIndex = require('./type-utilities').createErlIndex;
 
-createMalList = require('./type-utilities').createMalList;
+createErlList = require('./type-utilities').createErlList;
 
-createMalNumber = require('./type-utilities').createMalNumber;
+createErlNumber = require('./type-utilities').createErlNumber;
 
-createMalString = require('./type-utilities').createMalString;
+createErlString = require('./type-utilities').createErlString;
 
-createMalSymbol = require('./type-utilities').createMalSymbol;
+createErlSymbol = require('./type-utilities').createErlSymbol;
 
 drop = require('./linked-list').drop;
 
@@ -40,39 +40,39 @@ interpret = require('./interpret');
 
 last = require('./linked-list').last;
 
-malAtom_question_ = require('./type-utilities').malAtom_question_;
+erlAtom_question_ = require('./type-utilities').erlAtom_question_;
 
-malCorePureFunction_question_ = require('./type-utilities').malCorePureFunction_question_;
+erlCorePureFunction_question_ = require('./type-utilities').erlCorePureFunction_question_;
 
-malBoolean_question_ = require('./type-utilities').malBoolean_question_;
+erlBoolean_question_ = require('./type-utilities').erlBoolean_question_;
 
-malFalse = require('./type-utilities').malFalse;
+erlFalse = require('./type-utilities').erlFalse;
 
-malFalse_question_ = require('./type-utilities').malFalse_question_;
+erlFalse_question_ = require('./type-utilities').erlFalse_question_;
 
-malIgnore = require('./type-utilities').malIgnore;
+erlIgnore = require('./type-utilities').erlIgnore;
 
-malIndex_question_ = require('./type-utilities').malIndex_question_;
+erlIndex_question_ = require('./type-utilities').erlIndex_question_;
 
-malList_question_ = require('./type-utilities').malList_question_;
+erlList_question_ = require('./type-utilities').erlList_question_;
 
-malMacro_question_ = require('./type-utilities').malMacro_question_;
+erlMacro_question_ = require('./type-utilities').erlMacro_question_;
 
-malNil = require('./type-utilities').malNil;
+erlNil = require('./type-utilities').erlNil;
 
-malNil_question_ = require('./type-utilities').malNil_question_;
+erlNil_question_ = require('./type-utilities').erlNil_question_;
 
-malNumber_question_ = require('./type-utilities').malNumber_question_;
+erlNumber_question_ = require('./type-utilities').erlNumber_question_;
 
-malString_question_ = require('./type-utilities').malString_question_;
+erlString_question_ = require('./type-utilities').erlString_question_;
 
-malSymbol_question_ = require('./type-utilities').malSymbol_question_;
+erlSymbol_question_ = require('./type-utilities').erlSymbol_question_;
 
-malTrue = require('./type-utilities').malTrue;
+erlTrue = require('./type-utilities').erlTrue;
 
-malTrue_question_ = require('./type-utilities').malTrue_question_;
+erlTrue_question_ = require('./type-utilities').erlTrue_question_;
 
-malUserPureFunction_question_ = require('./type-utilities').malUserPureFunction_question_;
+erlUserPureFunction_question_ = require('./type-utilities').erlUserPureFunction_question_;
 
 next = require('./linked-list').next;
 
@@ -90,34 +90,34 @@ toArray = require('./linked-list').toArray;
 
 toPartialArray = require('./linked-list').toPartialArray;
 
-append = function(malArgs) {
-  var malList, malValues, _ref;
-  _ref = toArray(malArgs), malList = _ref[0], malValues = 2 <= _ref.length ? __slice.call(_ref, 1) : [];
-  return concat(malList, fromArray(malValues));
+append = function(erlArgs) {
+  var erlList, erlValues, _ref;
+  _ref = toArray(erlArgs), erlList = _ref[0], erlValues = 2 <= _ref.length ? __slice.call(_ref, 1) : [];
+  return concat(erlList, fromArray(erlValues));
 };
 
-areEqual = function(malArgs) {
-  var malValue0, malValue1, _areEqual, _ref;
-  _ref = toPartialArray(2, malArgs), malValue0 = _ref[0], malValue1 = _ref[1];
-  _areEqual = function(malValue0, malValue1) {
+areEqual = function(erlArgs) {
+  var erlValue0, erlValue1, _areEqual, _ref;
+  _ref = toPartialArray(2, erlArgs), erlValue0 = _ref[0], erlValue1 = _ref[1];
+  _areEqual = function(erlValue0, erlValue1) {
     var jsIndex0, jsIndex1;
-    if (malList_question_(malValue0) && malList_question_(malValue1)) {
-      return equal_question_(malValue0, malValue1, _areEqual);
-    } else if (malIndex_question_(malValue0) && malIndex_question_(malValue1)) {
-      jsIndex0 = malValue0.jsValue;
-      jsIndex1 = malValue1.jsValue;
+    if (erlList_question_(erlValue0) && erlList_question_(erlValue1)) {
+      return equal_question_(erlValue0, erlValue1, _areEqual);
+    } else if (erlIndex_question_(erlValue0) && erlIndex_question_(erlValue1)) {
+      jsIndex0 = erlValue0.jsValue;
+      jsIndex1 = erlValue1.jsValue;
       return (_areEqual(keys(jsIndex0), keys(jsIndex1))) && (_areEqual(vals(jsIndex0), vals(jsIndex1)));
     } else {
-      return malValue0.jsValue === malValue1.jsValue;
+      return erlValue0.jsValue === erlValue1.jsValue;
     }
   };
-  return createMalBoolean(_areEqual(malValue0, malValue1));
+  return createErlBoolean(_areEqual(erlValue0, erlValue1));
 };
 
-assoc = function(malArgs) {
+assoc = function(erlArgs) {
   var args, copy, jsIndex, k, key, v, value;
-  jsIndex = extractJsValue(car(malArgs));
-  args = cdr(malArgs);
+  jsIndex = extractJsValue(car(erlArgs));
+  args = cdr(erlArgs);
   copy = {};
   for (key in jsIndex) {
     if (!__hasProp.call(jsIndex, key)) continue;
@@ -130,190 +130,190 @@ assoc = function(malArgs) {
     args = recurse(recurse(args));
     copy[extractJsValue(k)] = v;
   }
-  return createMalIndex(copy);
+  return createErlIndex(copy);
 };
 
-atom = function(malArgs) {
-  return createMalAtom(car(malArgs));
+atom = function(erlArgs) {
+  return createErlAtom(car(erlArgs));
 };
 
-_car = function(malArgs) {
+_car = function(erlArgs) {
   var arg;
-  arg = car(malArgs);
-  if (malList_question_(arg)) {
+  arg = car(erlArgs);
+  if (erlList_question_(arg)) {
     return car(arg);
   } else {
-    return malNil;
+    return erlNil;
   }
 };
 
-_cdr = function(malArgs) {
+_cdr = function(erlArgs) {
   var arg;
-  arg = car(malArgs);
-  if (malList_question_(arg)) {
+  arg = car(erlArgs);
+  if (erlList_question_(arg)) {
     return cdr(arg);
   } else {
-    return malNil;
+    return erlNil;
   }
 };
 
-_concat = function(malArgs) {
-  var malLists;
-  malLists = toArray(malArgs);
-  return concat.apply(null, malLists);
+_concat = function(erlArgs) {
+  var erlLists;
+  erlLists = toArray(erlArgs);
+  return concat.apply(null, erlLists);
 };
 
-cons = function(malArgs) {
-  return createMalList(car(malArgs), next(malArgs));
+cons = function(erlArgs) {
+  return createErlList(car(erlArgs), next(erlArgs));
 };
 
-count = function(malArgs) {
-  var malList, _reduce;
-  malList = car(malArgs);
-  if (!malList_question_(malList)) {
-    return malNil;
+count = function(erlArgs) {
+  var erlList, _reduce;
+  erlList = car(erlArgs);
+  if (!erlList_question_(erlList)) {
+    return erlNil;
   }
   _reduce = function(sum, value) {
     return sum + 1;
   };
-  return createMalNumber(reduce(0, _reduce, car(malArgs)));
+  return createErlNumber(reduce(0, _reduce, car(erlArgs)));
 };
 
 createPredicate = function(pred) {
   return function(jsList) {
-    var malValue;
-    malValue = jsList.value;
-    return createMalBoolean(pred(malValue));
+    var erlValue;
+    erlValue = jsList.value;
+    return createErlBoolean(pred(erlValue));
   };
 };
 
-deref = function(malArgs) {
-  return (car(malArgs)).malValue;
+deref = function(erlArgs) {
+  return (car(erlArgs)).erlValue;
 };
 
-_drop = function(malArgs) {
-  var malList, malNumber, _ref;
-  _ref = toPartialArray(2, malArgs), malNumber = _ref[0], malList = _ref[1];
-  return drop(extractJsValue(malNumber), malList);
+_drop = function(erlArgs) {
+  var erlList, erlNumber, _ref;
+  _ref = toPartialArray(2, erlArgs), erlNumber = _ref[0], erlList = _ref[1];
+  return drop(extractJsValue(erlNumber), erlList);
 };
 
-_empty_question_ = function(malArgs) {
-  if (empty_question_(malArgs)) {
-    return malFalse;
+_empty_question_ = function(erlArgs) {
+  if (empty_question_(erlArgs)) {
+    return erlFalse;
   } else {
-    if (empty_question_(car(malArgs))) {
-      return malTrue;
+    if (empty_question_(car(erlArgs))) {
+      return erlTrue;
     } else {
-      return malFalse;
+      return erlFalse;
     }
   }
 };
 
-first = function(malArgs) {
-  return car(car(malArgs));
+first = function(erlArgs) {
+  return car(car(erlArgs));
 };
 
 function_question_ = function(jsList) {
-  var malValue;
-  malValue = jsList.value;
-  return createMalBoolean(malCorePureFunction_question_(malValue) || malUserPureFunction_question_(malValue));
+  var erlValue;
+  erlValue = jsList.value;
+  return createErlBoolean(erlCorePureFunction_question_(erlValue) || erlUserPureFunction_question_(erlValue));
 };
 
 getEnvironment = function(config) {
   var environment;
   environment = config.environment;
-  setCoreFnsOnMalValues_bang_(environment, functionsOnMalValues);
+  setCoreFnsOnErlValues_bang_(environment, functionsOnErlValues);
   return environment;
 };
 
-ignore_bang_ = function(malArgs) {
-  return malIgnore;
+ignore_bang_ = function(erlArgs) {
+  return erlIgnore;
 };
 
-ignoreIfTrue = function(malArgs) {
-  var malBool, malValue, _ref;
-  _ref = toPartialArray(2, malArgs), malBool = _ref[0], malValue = _ref[1];
-  if (extractJsValue(malBool)) {
-    return malIgnore;
+ignoreIfTrue = function(erlArgs) {
+  var erlBool, erlValue, _ref;
+  _ref = toPartialArray(2, erlArgs), erlBool = _ref[0], erlValue = _ref[1];
+  if (extractJsValue(erlBool)) {
+    return erlIgnore;
   } else {
-    return malValue;
+    return erlValue;
   }
 };
 
-ignoreUnlessTrue = function(malArgs) {
-  var malBool, malValue, _ref;
-  _ref = toPartialArray(2, malArgs), malBool = _ref[0], malValue = _ref[1];
-  if (extractJsValue(malBool)) {
-    return malValue;
+ignoreUnlessTrue = function(erlArgs) {
+  var erlBool, erlValue, _ref;
+  _ref = toPartialArray(2, erlArgs), erlBool = _ref[0], erlValue = _ref[1];
+  if (extractJsValue(erlBool)) {
+    return erlValue;
   } else {
-    return malIgnore;
+    return erlIgnore;
   }
 };
 
-_interpret = function(malArgs) {
-  return interpret(stripQuotes(extractJsValue(car(malArgs))));
+_interpret = function(erlArgs) {
+  return interpret(stripQuotes(extractJsValue(car(erlArgs))));
 };
 
-_last = function(malArgs) {
+_last = function(erlArgs) {
   var arg;
-  arg = car(malArgs);
-  if (malList_question_(arg)) {
+  arg = car(erlArgs);
+  if (erlList_question_(arg)) {
     return last(arg);
   } else {
-    return malNil;
+    return erlNil;
   }
 };
 
-list = function(malArgs) {
-  return malArgs;
+list = function(erlArgs) {
+  return erlArgs;
 };
 
-meta = function(malArgs) {
-  var malMeta;
-  malMeta = (car(malArgs)).meta;
-  if (malMeta != null) {
-    return malMeta;
+meta = function(erlArgs) {
+  var erlMeta;
+  erlMeta = (car(erlArgs)).meta;
+  if (erlMeta != null) {
+    return erlMeta;
   } else {
-    return malNil;
+    return erlNil;
   }
 };
 
-_not = function(malArgs) {
-  var malVal;
-  malVal = car(malArgs);
-  if (malNil_question_(malVal) || malFalse_question_(malVal)) {
-    return malTrue;
+_not = function(erlArgs) {
+  var erlVal;
+  erlVal = car(erlArgs);
+  if (erlNil_question_(erlVal) || erlFalse_question_(erlVal)) {
+    return erlTrue;
   } else {
-    return malFalse;
+    return erlFalse;
   }
 };
 
-nth = function(malArgs) {
-  var i, malList, malNumber, _i, _ref, _ref1;
-  _ref = toPartialArray(2, malArgs), malNumber = _ref[0], malList = _ref[1];
-  for (i = _i = 0, _ref1 = extractJsValue(malNumber); 0 <= _ref1 ? _i < _ref1 : _i > _ref1; i = 0 <= _ref1 ? ++_i : --_i) {
-    malList = cdr(malList);
+nth = function(erlArgs) {
+  var erlList, erlNumber, i, _i, _ref, _ref1;
+  _ref = toPartialArray(2, erlArgs), erlNumber = _ref[0], erlList = _ref[1];
+  for (i = _i = 0, _ref1 = extractJsValue(erlNumber); 0 <= _ref1 ? _i < _ref1 : _i > _ref1; i = 0 <= _ref1 ? ++_i : --_i) {
+    erlList = cdr(erlList);
   }
-  return car(malList);
+  return car(erlList);
 };
 
-prepend = function(malArgs) {
-  var malList, malValues, _reduce, _ref;
-  _ref = toArray(malArgs), malList = _ref[0], malValues = 2 <= _ref.length ? __slice.call(_ref, 1) : [];
+prepend = function(erlArgs) {
+  var erlList, erlValues, _reduce, _ref;
+  _ref = toArray(erlArgs), erlList = _ref[0], erlValues = 2 <= _ref.length ? __slice.call(_ref, 1) : [];
   _reduce = function(list, val) {
-    return createMalList(val, list);
+    return createErlList(val, list);
   };
-  return malValues.reduce(_reduce, malList);
+  return erlValues.reduce(_reduce, erlList);
 };
 
-_prStr = function(malArgs, printReadably_question_) {
-  return ((toArray(malArgs)).map(function(malArg) {
-    return serialize(malArg, printReadably_question_);
+_prStr = function(erlArgs, printReadably_question_) {
+  return ((toArray(erlArgs)).map(function(erlArg) {
+    return serialize(erlArg, printReadably_question_);
   })).join('');
 };
 
-prettyString = function(malArgs) {
-  return createMalString(circumpendQuotes(_prStr(malArgs, true)));
+prettyString = function(erlArgs) {
+  return createErlString(circumpendQuotes(_prStr(erlArgs, true)));
 };
 
 _quit_ = function() {
@@ -322,131 +322,131 @@ _quit_ = function() {
 
 read = function(jsList) {
   var _read;
-  _read = function(malArgs) {
+  _read = function(erlArgs) {
     var jsFileName;
-    jsFileName = stripQuotes(extractJsValue(car(malArgs)));
+    jsFileName = stripQuotes(extractJsValue(car(erlArgs)));
     return require('fs').readFileSync(jsFileName).toString();
   };
-  return createMalString(_read(jsList));
+  return createErlString(_read(jsList));
 };
 
-reset = function(malArgs) {
+reset = function(erlArgs) {
   var value, _ref;
-  _ref = toPartialArray(2, malArgs), atom = _ref[0], value = _ref[1];
-  atom.malValue = value;
+  _ref = toPartialArray(2, erlArgs), atom = _ref[0], value = _ref[1];
+  atom.erlValue = value;
   return atom;
 };
 
-rest = function(malArgs) {
+rest = function(erlArgs) {
   var arg;
-  arg = car(malArgs);
-  if (malList_question_(arg)) {
+  arg = car(erlArgs);
+  if (erlList_question_(arg)) {
     return cdr(arg);
   } else {
-    return malNil;
+    return erlNil;
   }
 };
 
-_reverse = function(malArgs) {
+_reverse = function(erlArgs) {
   var arg;
-  arg = car(malArgs);
-  if (malList_question_(arg)) {
+  arg = car(erlArgs);
+  if (erlList_question_(arg)) {
     return reverse(arg);
   } else {
-    return malNil;
+    return erlNil;
   }
 };
 
-set = function(malArgs) {
+set = function(erlArgs) {
   var index, key, val, _ref;
-  _ref = toPartialArray(3, malArgs), index = _ref[0], key = _ref[1], val = _ref[2];
+  _ref = toPartialArray(3, erlArgs), index = _ref[0], key = _ref[1], val = _ref[2];
   (extractJsValue(index))[extractJsValue(key)] = val;
   return index;
 };
 
-setCoreFnsOnMalValues_bang_ = function(env, fns) {
+setCoreFnsOnErlValues_bang_ = function(env, fns) {
   var fn, fnName, _results;
   _results = [];
   for (fnName in fns) {
     if (!__hasProp.call(fns, fnName)) continue;
     fn = fns[fnName];
-    _results.push(env[fnName] = createMalCorePureFunction(fn));
+    _results.push(env[fnName] = createErlCorePureFunction(fn));
   }
   return _results;
 };
 
-slurp = function(malArgs) {
+slurp = function(erlArgs) {
   var jsFileName;
-  jsFileName = stripQuotes(extractJsValue(car(malArgs)));
-  return createMalString(circumpendQuotes(require('fs').readFileSync(jsFileName).toString()));
+  jsFileName = stripQuotes(extractJsValue(car(erlArgs)));
+  return createErlString(circumpendQuotes(require('fs').readFileSync(jsFileName).toString()));
 };
 
-string = function(malArgs) {
-  return createMalString(circumpendQuotes(_prStr(malArgs, false)));
+string = function(erlArgs) {
+  return createErlString(circumpendQuotes(_prStr(erlArgs, false)));
 };
 
 stripQuotes = function(jsString) {
   return jsString.slice(1, -1);
 };
 
-symbol = function(malArgs) {
-  var jsStr, malValue;
-  malValue = car(malArgs);
-  if (malString_question_(malValue)) {
-    jsStr = extractJsValue(malValue);
-    return createMalSymbol(jsStr.slice(1, -1));
+symbol = function(erlArgs) {
+  var erlValue, jsStr;
+  erlValue = car(erlArgs);
+  if (erlString_question_(erlValue)) {
+    jsStr = extractJsValue(erlValue);
+    return createErlSymbol(jsStr.slice(1, -1));
   } else {
-    return malNil;
+    return erlNil;
   }
 };
 
-_take = function(malArgs) {
-  var malList, malNumber, _ref;
-  _ref = toPartialArray(2, malArgs), malNumber = _ref[0], malList = _ref[1];
-  return take(extractJsValue(malNumber), malList);
+_take = function(erlArgs) {
+  var erlList, erlNumber, _ref;
+  _ref = toPartialArray(2, erlArgs), erlNumber = _ref[0], erlList = _ref[1];
+  return take(extractJsValue(erlNumber), erlList);
 };
 
-typeOf = function(malArgs) {
-  var malValue;
-  malValue = car(malArgs);
-  return createMalString(circumpendQuotes(malValue.type));
+typeOf = function(erlArgs) {
+  var erlValue;
+  erlValue = car(erlArgs);
+  return createErlString(circumpendQuotes(erlValue.type));
 };
 
-_throw = function(malArgs) {
-  throw car(malArgs);
+_throw = function(erlArgs) {
+  throw car(erlArgs);
 };
 
 time_hyphen_ms = function() {
-  return createMalNumber(new Date().getTime());
+  return createErlNumber(new Date().getTime());
 };
 
-withMeta = function(malArgs) {
-  var jsValue, malMeta, malVal, malValue, type, _ref;
-  _ref = toPartialArray(2, malArgs), malVal = _ref[0], malMeta = _ref[1];
-  if (malAtom_question_(malVal)) {
-    malValue = malVal.malValue, type = malVal.type;
+withMeta = function(erlArgs) {
+  var erlMeta, erlVal, erlValue, jsValue, type, _ref;
+  _ref = toPartialArray(2, erlArgs), erlVal = _ref[0], erlMeta = _ref[1];
+  if (erlAtom_question_(erlVal)) {
+    erlValue = erlVal.erlValue, type = erlVal.type;
     return {
-      malValue: malValue,
+      erlValue: erlValue,
       type: type,
-      meta: malMeta
+      meta: erlMeta
     };
   } else {
-    jsValue = malVal.jsValue, type = malVal.type;
+    jsValue = erlVal.jsValue, type = erlVal.type;
     return {
       jsValue: jsValue,
       type: type,
-      meta: malMeta
+      meta: erlMeta
     };
   }
 };
 
-write = function(malArgs) {
-  return createMalString(serialize(car(malArgs)));
+write = function(erlArgs) {
+  return createErlString(serialize(car(erlArgs)));
 };
 
-_ref = [malAtom_question_, malBoolean_question_, malCorePureFunction_question_, malFalse_question_, malList_question_, malMacro_question_, malNil_question_, malNumber_question_, malSymbol_question_, malString_question_, malUserPureFunction_question_, malTrue_question_].map(createPredicate), atom_question_ = _ref[0], boolean_question_ = _ref[1], coreFn_question_ = _ref[2], false_question_ = _ref[3], list_question_ = _ref[4], macro_question_ = _ref[5], nil_question_ = _ref[6], number_question_ = _ref[7], symbol_question_ = _ref[8], string_question_ = _ref[9], userFn_question_ = _ref[10], true_question_ = _ref[11];
+_ref = [erlAtom_question_, erlBoolean_question_, erlCorePureFunction_question_, erlFalse_question_, erlList_question_, erlMacro_question_, erlNil_question_, erlNumber_question_, erlSymbol_question_, erlString_question_, erlUserPureFunction_question_, erlTrue_question_].map(createPredicate), atom_question_ = _ref[0], boolean_question_ = _ref[1], coreFn_question_ = _ref[2], false_question_ = _ref[3], list_question_ = _ref[4], macro_question_ = _ref[5], nil_question_ = _ref[6], number_question_ = _ref[7], symbol_question_ = _ref[8], string_question_ = _ref[9], userFn_question_ = _ref[10], true_question_ = _ref[11];
 
-functionsOnMalValues = {
+functionsOnErlValues = {
   '=': areEqual,
   'append': append,
   'assoc': assoc,

@@ -1,18 +1,18 @@
-var add, contains_question_, createMalBoolean, createMalCorePureFunction, createMalIdentifier, createMalIndex, createMalNumber, createMalString, dissoc, divide, exponentiate, extractJsValue, fromArray, functionsOnJsValues, get, getEnvironment, greaterThan, greaterThanOrEqual, index, jsNaN_question_, jsNumber_question_, jsString_question_, keys, length, lessThan, lessThanOrEqual, lift, malNil, max, min, mod, multiply, negate, parseNumber, reduce, setCoreFnsOnJsValues_bang_, subtract, toArray, vals,
+var add, contains_question_, createErlBoolean, createErlCorePureFunction, createErlIdentifier, createErlIndex, createErlNumber, createErlString, dissoc, divide, erlNil, exponentiate, extractJsValue, fromArray, functionsOnJsValues, get, getEnvironment, greaterThan, greaterThanOrEqual, index, jsNaN_question_, jsNumber_question_, jsString_question_, keys, length, lessThan, lessThanOrEqual, lift, max, min, mod, multiply, negate, parseNumber, reduce, setCoreFnsOnJsValues_bang_, subtract, toArray, vals,
   __slice = [].slice,
   __hasProp = {}.hasOwnProperty;
 
-createMalBoolean = require('./type-utilities').createMalBoolean;
+createErlBoolean = require('./type-utilities').createErlBoolean;
 
-createMalCorePureFunction = require('./type-utilities').createMalCorePureFunction;
+createErlCorePureFunction = require('./type-utilities').createErlCorePureFunction;
 
-createMalIdentifier = require('./type-utilities').createMalIdentifier;
+createErlIdentifier = require('./type-utilities').createErlIdentifier;
 
-createMalIndex = require('./type-utilities').createMalIndex;
+createErlIndex = require('./type-utilities').createErlIndex;
 
-createMalNumber = require('./type-utilities').createMalNumber;
+createErlNumber = require('./type-utilities').createErlNumber;
 
-createMalString = require('./type-utilities').createMalString;
+createErlString = require('./type-utilities').createErlString;
 
 extractJsValue = require('./type-utilities').extractJsValue;
 
@@ -24,7 +24,7 @@ jsNumber_question_ = require('./js-utilities').jsNumber_question_;
 
 jsString_question_ = require('./js-utilities').jsString_question_;
 
-malNil = require('./type-utilities').malNil;
+erlNil = require('./type-utilities').erlNil;
 
 reduce = require('./linked-list').reduce;
 
@@ -33,13 +33,13 @@ toArray = require('./linked-list').toArray;
 add = function() {
   var nbrs;
   nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-  return createMalNumber(nbrs.reduce(function(x, nbr) {
+  return createErlNumber(nbrs.reduce(function(x, nbr) {
     return x += nbr;
   }));
 };
 
 contains_question_ = function(index, key) {
-  return createMalBoolean(key in index);
+  return createErlBoolean(key in index);
 };
 
 dissoc = function() {
@@ -55,13 +55,13 @@ dissoc = function() {
     key = keys[_i];
     delete copy[key];
   }
-  return createMalIndex(copy);
+  return createErlIndex(copy);
 };
 
 divide = function() {
   var nbrs;
   nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-  return createMalNumber(nbrs.reduce(function(x, nbr) {
+  return createErlNumber(nbrs.reduce(function(x, nbr) {
     return x /= nbr;
   }));
 };
@@ -69,7 +69,7 @@ divide = function() {
 exponentiate = function() {
   var nbrs;
   nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-  return createMalNumber(nbrs.reduce(function(x, nbr) {
+  return createErlNumber(nbrs.reduce(function(x, nbr) {
     return Math.pow(x, nbr);
   }));
 };
@@ -88,13 +88,13 @@ getEnvironment = function(config) {
 greaterThanOrEqual = function() {
   var nbrs;
   nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-  return createMalBoolean(nbrs[0] >= nbrs[1]);
+  return createErlBoolean(nbrs[0] >= nbrs[1]);
 };
 
 greaterThan = function() {
   var nbrs;
   nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-  return createMalBoolean(nbrs[0] > nbrs[1]);
+  return createErlBoolean(nbrs[0] > nbrs[1]);
 };
 
 index = function() {
@@ -107,7 +107,7 @@ index = function() {
       index[k] = args[i + 1];
     }
   }
-  return createMalIndex(index);
+  return createErlIndex(index);
 };
 
 keys = function(index) {
@@ -116,62 +116,62 @@ keys = function(index) {
   for (key in index) {
     if (!__hasProp.call(index, key)) continue;
     value = index[key];
-    _keys.push(jsNaN_question_(jsNbr = parseFloat(key, 10)) ? (key[0] === ':' ? createMalIdentifier : createMalString)(key) : createMalNumber(jsNbr));
+    _keys.push(jsNaN_question_(jsNbr = parseFloat(key, 10)) ? (key[0] === ':' ? createErlIdentifier : createErlString)(key) : createErlNumber(jsNbr));
   }
   return fromArray(_keys);
 };
 
 length = function(jsVal) {
   if (!jsString_question_(jsVal)) {
-    return malNil;
+    return erlNil;
   }
-  return createMalNumber(jsVal.length - 2);
+  return createErlNumber(jsVal.length - 2);
 };
 
 lessThan = function() {
   var nbrs;
   nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-  return createMalBoolean(nbrs[0] < nbrs[1]);
+  return createErlBoolean(nbrs[0] < nbrs[1]);
 };
 
 lessThanOrEqual = function() {
   var nbrs;
   nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-  return createMalBoolean(nbrs[0] <= nbrs[1]);
+  return createErlBoolean(nbrs[0] <= nbrs[1]);
 };
 
 lift = function(fnOnJsValues) {
-  return function(malValueList) {
-    return fnOnJsValues.apply(null, (toArray(malValueList)).map(extractJsValue));
+  return function(erlValueList) {
+    return fnOnJsValues.apply(null, (toArray(erlValueList)).map(extractJsValue));
   };
 };
 
 max = function() {
   var nbrs;
   nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-  return createMalNumber(Math.max.apply(Math, nbrs));
+  return createErlNumber(Math.max.apply(Math, nbrs));
 };
 
 min = function() {
   var nbrs;
   nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-  return createMalNumber(Math.min.apply(Math, nbrs));
+  return createErlNumber(Math.min.apply(Math, nbrs));
 };
 
 mod = function(nbr0, nbr1) {
-  return createMalNumber(nbr0 % nbr1);
+  return createErlNumber(nbr0 % nbr1);
 };
 
 multiply = function() {
   var nbrs;
   nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-  return createMalNumber(nbrs.reduce(function(x, nbr) {
+  return createErlNumber(nbrs.reduce(function(x, nbr) {
     return x *= nbr;
   }));
 };
 
 negate = function(nbr) {
-  return createMalNumber(-1 * nbr);
+  return createErlNumber(-1 * nbr);
 };
 
 parseNumber = function(jsVal) {
@@ -180,13 +180,13 @@ parseNumber = function(jsVal) {
     return jsVal;
   }
   if (!jsString_question_(jsVal)) {
-    return malNil;
+    return erlNil;
   }
   jsNbr = parseFloat(stripQuotes(jsVal), 10);
   if (jsNaN_question_(jsNbr)) {
-    return malNil;
+    return erlNil;
   } else {
-    return createMalNumber(jsNbr);
+    return createErlNumber(jsNbr);
   }
 };
 
@@ -196,7 +196,7 @@ setCoreFnsOnJsValues_bang_ = function(env, fns) {
   for (fnName in fns) {
     if (!__hasProp.call(fns, fnName)) continue;
     fn = fns[fnName];
-    _results.push(env[fnName] = createMalCorePureFunction(lift(fn)));
+    _results.push(env[fnName] = createErlCorePureFunction(lift(fn)));
   }
   return _results;
 };
@@ -204,7 +204,7 @@ setCoreFnsOnJsValues_bang_ = function(env, fns) {
 subtract = function() {
   var nbrs;
   nbrs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
-  return createMalNumber(nbrs.reduce(function(x, nbr) {
+  return createErlNumber(nbrs.reduce(function(x, nbr) {
     return x -= nbr;
   }));
 };

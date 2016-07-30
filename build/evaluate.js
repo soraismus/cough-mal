@@ -1,4 +1,4 @@
-var addEnv, car, catch_asterisk_, cdr, circumpendQuotes, commentSignal, createFn, createLocalEnv, createMacro, createMalIndex, createMalKeyword, createMalList, createMalMacro, createMalNumber, createMalString, createMalSymbol, createMalUserPureFunction, def_bang_, defineNewValue, empty_question_, evalQuasiquotedExpr, evaluate, expandMacro, expand_hyphen_macro, extractJsValue, filter, fn_asterisk_, forEach, fromArray, fromJsObjects, fromMalIndex, ignorable_question_, jsString_question_, keyword_question_, let_asterisk_, letrec_asterisk_, lookup, macro_asterisk_, malCoreEffectfulFunction_question_, malCorePureFunction_question_, malIgnore_question_, malIndex_question_, malKeyword_question_, malList_question_, malMacro_question_, malNil, malSymbol_question_, malUserPureFunction_question_, map, next, quasiquote, quote, recurse, reduce, reduceBy2, reduceLet_asterisk_, reduceLetrec_asterisk_, reverse, setMainEnv, splat, spliceUnquote, spliceUnquote_question_, spliceUnquotedExpr_question_, toPartialArray, try_asterisk_, undef_bang_, undefineValue, unquote, unquote_question_, unquotedExpr_question_, unsetMainEnv, _do, _eval, _evalWithEnv, _evaluate, _getCurrentEnv, _getDefaultEnv, _if,
+var addEnv, car, catch_asterisk_, cdr, circumpendQuotes, commentSignal, createErlIndex, createErlKeyword, createErlList, createErlMacro, createErlNumber, createErlString, createErlSymbol, createErlUserPureFunction, createFn, createLocalEnv, createMacro, def_bang_, defineNewValue, empty_question_, erlCoreEffectfulFunction_question_, erlCorePureFunction_question_, erlIgnore_question_, erlIndex_question_, erlKeyword_question_, erlList_question_, erlMacro_question_, erlNil, erlSymbol_question_, erlUserPureFunction_question_, evalQuasiquotedExpr, evaluate, expandMacro, expand_hyphen_macro, extractJsValue, filter, fn_asterisk_, forEach, fromArray, fromErlIndex, fromJsObjects, ignorable_question_, jsString_question_, keyword_question_, let_asterisk_, letrec_asterisk_, lookup, macro_asterisk_, map, next, quasiquote, quote, recurse, reduce, reduceBy2, reduceLet_asterisk_, reduceLetrec_asterisk_, reverse, setMainEnv, splat, spliceUnquote, spliceUnquote_question_, spliceUnquotedExpr_question_, toPartialArray, try_asterisk_, undef_bang_, undefineValue, unquote, unquote_question_, unquotedExpr_question_, unsetMainEnv, _do, _eval, _evalWithEnv, _evaluate, _getCurrentEnv, _getDefaultEnv, _if,
   __hasProp = {}.hasOwnProperty;
 
 addEnv = require('./env-utilities').addEnv;
@@ -13,21 +13,21 @@ circumpendQuotes = require('./js-utilities').circumpendQuotes;
 
 commentSignal = require('./commentSignal');
 
-createMalIndex = require('./type-utilities').createMalIndex;
+createErlIndex = require('./type-utilities').createErlIndex;
 
-createMalKeyword = require('./type-utilities').createMalKeyword;
+createErlKeyword = require('./type-utilities').createErlKeyword;
 
-createMalList = require('./type-utilities').createMalList;
+createErlList = require('./type-utilities').createErlList;
 
-createMalMacro = require('./type-utilities').createMalMacro;
+createErlMacro = require('./type-utilities').createErlMacro;
 
-createMalNumber = require('./type-utilities').createMalNumber;
+createErlNumber = require('./type-utilities').createErlNumber;
 
-createMalString = require('./type-utilities').createMalString;
+createErlString = require('./type-utilities').createErlString;
 
-createMalSymbol = require('./type-utilities').createMalSymbol;
+createErlSymbol = require('./type-utilities').createErlSymbol;
 
-createMalUserPureFunction = require('./type-utilities').createMalUserPureFunction;
+createErlUserPureFunction = require('./type-utilities').createErlUserPureFunction;
 
 def_bang_ = require('./keyTokens').def_bang_;
 
@@ -53,7 +53,7 @@ fromArray = require('./linked-list').fromArray;
 
 fromJsObjects = require('./index-utilities').fromJsObjects;
 
-fromMalIndex = require('./index-utilities').fromMalIndex;
+fromErlIndex = require('./index-utilities').fromErlIndex;
 
 _getCurrentEnv = require('./keyTokens')._getCurrentEnv;
 
@@ -73,25 +73,25 @@ lookup = require('./env-utilities').lookup;
 
 macro_asterisk_ = require('./keyTokens').macro_asterisk_;
 
-malCoreEffectfulFunction_question_ = require('./type-utilities').malCoreEffectfulFunction_question_;
+erlCoreEffectfulFunction_question_ = require('./type-utilities').erlCoreEffectfulFunction_question_;
 
-malCorePureFunction_question_ = require('./type-utilities').malCorePureFunction_question_;
+erlCorePureFunction_question_ = require('./type-utilities').erlCorePureFunction_question_;
 
-malIgnore_question_ = require('./type-utilities').malIgnore_question_;
+erlIgnore_question_ = require('./type-utilities').erlIgnore_question_;
 
-malIndex_question_ = require('./type-utilities').malIndex_question_;
+erlIndex_question_ = require('./type-utilities').erlIndex_question_;
 
-malKeyword_question_ = require('./type-utilities').malKeyword_question_;
+erlKeyword_question_ = require('./type-utilities').erlKeyword_question_;
 
-malList_question_ = require('./type-utilities').malList_question_;
+erlList_question_ = require('./type-utilities').erlList_question_;
 
-malMacro_question_ = require('./type-utilities').malMacro_question_;
+erlMacro_question_ = require('./type-utilities').erlMacro_question_;
 
-malNil = require('./type-utilities').malNil;
+erlNil = require('./type-utilities').erlNil;
 
-malSymbol_question_ = require('./type-utilities').malSymbol_question_;
+erlSymbol_question_ = require('./type-utilities').erlSymbol_question_;
 
-malUserPureFunction_question_ = require('./type-utilities').malUserPureFunction_question_;
+erlUserPureFunction_question_ = require('./type-utilities').erlUserPureFunction_question_;
 
 map = require('./linked-list').map;
 
@@ -125,117 +125,117 @@ undef_bang_ = require('./keyTokens').undef_bang_;
 
 unsetMainEnv = require('./env-utilities').unsetMainEnv;
 
-createFn = function(malList, envs) {
-  return createMalUserPureFunction({
+createFn = function(erlList, envs) {
+  return createErlUserPureFunction({
     localEnvs: envs.slice(0),
-    malExpression: next(malList),
-    malParameters: car(malList)
+    erlExpression: next(erlList),
+    erlParameters: car(erlList)
   });
 };
 
-createLocalEnv = function(malParams, malArgs) {
+createLocalEnv = function(erlParams, erlArgs) {
   var env, jsParam;
   env = {};
-  while (!empty_question_(malParams)) {
-    jsParam = extractJsValue(car(malParams));
+  while (!empty_question_(erlParams)) {
+    jsParam = extractJsValue(car(erlParams));
     if (jsParam === splat) {
-      env[extractJsValue(next(malParams))] = malArgs;
+      env[extractJsValue(next(erlParams))] = erlArgs;
       return env;
     } else {
-      env[jsParam] = car(malArgs);
-      malParams = cdr(malParams);
-      malArgs = cdr(malArgs);
+      env[jsParam] = car(erlArgs);
+      erlParams = cdr(erlParams);
+      erlArgs = cdr(erlArgs);
     }
   }
   return env;
 };
 
-createMacro = function(malList, envs) {
-  return createMalMacro({
+createMacro = function(erlList, envs) {
+  return createErlMacro({
     localEnvs: envs.slice(0),
-    malExpression: next(malList),
-    malParameters: car(malList)
+    erlExpression: next(erlList),
+    erlParameters: car(erlList)
   });
 };
 
-defineNewValue = function(malList, envs, addResult) {
-  var jsKey, malValue;
-  jsKey = extractJsValue(car(malList));
-  malValue = _evaluate(next(malList), envs, addResult);
-  return setMainEnv(envs, jsKey, malValue);
+defineNewValue = function(erlList, envs, addResult) {
+  var erlValue, jsKey;
+  jsKey = extractJsValue(car(erlList));
+  erlValue = _evaluate(next(erlList), envs, addResult);
+  return setMainEnv(envs, jsKey, erlValue);
 };
 
 evalQuasiquotedExpr = function(expr, envs, addResult) {
   var manageItem;
-  if (!malList_question_(expr)) {
+  if (!erlList_question_(expr)) {
     return expr;
   }
   manageItem = function(memo, item) {
     var _manageItem;
     switch (false) {
       case !unquotedExpr_question_(item):
-        return createMalList(_evaluate(next(item), envs, addResult), memo);
+        return createErlList(_evaluate(next(item), envs, addResult), memo);
       case !spliceUnquotedExpr_question_(item):
         _manageItem = function(_memo, _item) {
-          return createMalList(_item, _memo);
+          return createErlList(_item, _memo);
         };
         return reduce(memo, _manageItem, _evaluate(next(item), envs, addResult));
-      case !malList_question_(item):
-        return createMalList(evalQuasiquotedExpr(item, envs, addResult), memo);
+      case !erlList_question_(item):
+        return createErlList(evalQuasiquotedExpr(item, envs, addResult), memo);
       default:
-        return createMalList(item, memo);
+        return createErlList(item, memo);
     }
   };
-  return reverse(reduce(createMalList(), manageItem, expr));
+  return reverse(reduce(createErlList(), manageItem, expr));
 };
 
-_evaluate = function(malExpr, envs, addResult) {
-  var arg1, catchExpr, ex, fn, head, index, jsString, key, localEnvs, malArgs, malExpression, malInvokable, malParameters, malSymbol, newEnv, newIndex, otherwise, remainingArgs, tailList, value, _catch, _ex, _ref, _ref1, _ref2;
+_evaluate = function(erlExpr, envs, addResult) {
+  var arg1, catchExpr, erlArgs, erlExpression, erlInvokable, erlParameters, erlSymbol, ex, fn, head, index, jsString, key, localEnvs, newEnv, newIndex, otherwise, remainingArgs, tailList, value, _catch, _ex, _ref, _ref1, _ref2;
   while (true) {
     switch (false) {
-      case !malSymbol_question_(malExpr):
-        jsString = extractJsValue(malExpr);
+      case !erlSymbol_question_(erlExpr):
+        jsString = extractJsValue(erlExpr);
         if (keyword_question_(jsString)) {
-          return createMalKeyword(jsString);
+          return createErlKeyword(jsString);
         } else {
           return lookup(envs, jsString);
         }
         break;
-      case !malIndex_question_(malExpr):
-        index = extractJsValue(malExpr);
+      case !erlIndex_question_(erlExpr):
+        index = extractJsValue(erlExpr);
         newIndex = {};
         for (key in index) {
           if (!__hasProp.call(index, key)) continue;
           value = index[key];
           newIndex[key] = _evaluate(index[key], envs, addResult);
         }
-        return createMalIndex(newIndex);
-      case !!(malList_question_(malExpr)):
-        return malExpr;
+        return createErlIndex(newIndex);
+      case !!(erlList_question_(erlExpr)):
+        return erlExpr;
       default:
-        malExpr = filter((function(x) {
+        erlExpr = filter((function(x) {
           return !(ignorable_question_(x, envs, addResult));
-        }), malExpr);
-        _ref = toPartialArray(2, malExpr), head = _ref[0], arg1 = _ref[1], remainingArgs = _ref[2];
-        tailList = cdr(malExpr);
+        }), erlExpr);
+        _ref = toPartialArray(2, erlExpr), head = _ref[0], arg1 = _ref[1], remainingArgs = _ref[2];
+        tailList = cdr(erlExpr);
         switch (extractJsValue(head)) {
           case def_bang_:
             return defineNewValue(tailList, envs, addResult);
           case undef_bang_:
             return undefineValue(tailList, envs);
           case _eval:
-            malExpr = _evaluate(arg1, envs, addResult);
+            erlExpr = _evaluate(arg1, envs, addResult);
             break;
           case _evalWithEnv:
-            envs = [fromMalIndex(_evaluate(arg1, envs, addResult))];
-            malExpr = _evaluate(car(remainingArgs), envs, addResult);
+            envs = [fromErlIndex(_evaluate(arg1, envs, addResult))];
+            erlExpr = _evaluate(car(remainingArgs), envs, addResult);
             break;
           case let_asterisk_:
-            malExpr = car(remainingArgs);
+            erlExpr = car(remainingArgs);
             envs = addEnv(envs, reduceLet_asterisk_(envs, arg1, addResult));
             break;
           case letrec_asterisk_:
-            malExpr = car(remainingArgs);
+            erlExpr = car(remainingArgs);
             envs = addEnv(envs, reduceLetrec_asterisk_(envs, arg1, addResult));
             break;
           case _do:
@@ -245,7 +245,7 @@ _evaluate = function(malExpr, envs, addResult) {
           case _getDefaultEnv:
             return fromJsObjects(envs[envs.length - 1]);
           case _if:
-            malExpr = extractJsValue(_evaluate(arg1, envs, addResult)) ? car(remainingArgs) : empty_question_(otherwise = next(remainingArgs)) ? malNil : otherwise;
+            erlExpr = extractJsValue(_evaluate(arg1, envs, addResult)) ? car(remainingArgs) : empty_question_(otherwise = next(remainingArgs)) ? erlNil : otherwise;
             break;
           case fn_asterisk_:
             return createFn(tailList, envs);
@@ -270,7 +270,7 @@ _evaluate = function(malExpr, envs, addResult) {
                   throw ex;
                 }
                 if (ex instanceof Error) {
-                  ex = createMalString(circumpendQuotes(ex.message));
+                  ex = createErlString(circumpendQuotes(ex.message));
                 }
                 newEnv = {};
                 newEnv[extractJsValue(_ex)] = ex;
@@ -279,34 +279,34 @@ _evaluate = function(malExpr, envs, addResult) {
             }
             break;
           default:
-            malSymbol = head;
-            malExpr = tailList;
-            malInvokable = _evaluate(malSymbol, envs, addResult);
+            erlSymbol = head;
+            erlExpr = tailList;
+            erlInvokable = _evaluate(erlSymbol, envs, addResult);
             switch (false) {
-              case !malKeyword_question_(malInvokable):
-                malExpr = createMalList(malInvokable, tailList);
+              case !erlKeyword_question_(erlInvokable):
+                erlExpr = createErlList(erlInvokable, tailList);
                 break;
-              case !malMacro_question_(malInvokable):
-                malExpr = expandMacro(head, tailList, envs, addResult);
+              case !erlMacro_question_(erlInvokable):
+                erlExpr = expandMacro(head, tailList, envs, addResult);
                 break;
-              case !malCorePureFunction_question_(malInvokable):
-                fn = extractJsValue(malInvokable);
-                malArgs = map(evaluate(envs, addResult), malExpr);
-                return fn(malArgs);
-              case !malCoreEffectfulFunction_question_(malInvokable):
-                fn = extractJsValue(malInvokable);
-                malArgs = map(evaluate(envs, addResult), malExpr);
-                addResult(fn(malArgs));
-                return malNil;
-              case !malUserPureFunction_question_(malInvokable):
-                _ref2 = extractJsValue(malInvokable), localEnvs = _ref2.localEnvs, malExpression = _ref2.malExpression, malParameters = _ref2.malParameters;
-                malArgs = map(evaluate(envs, addResult), malExpr);
-                malExpr = malExpression;
-                newEnv = createLocalEnv(malParameters, malArgs);
+              case !erlCorePureFunction_question_(erlInvokable):
+                fn = extractJsValue(erlInvokable);
+                erlArgs = map(evaluate(envs, addResult), erlExpr);
+                return fn(erlArgs);
+              case !erlCoreEffectfulFunction_question_(erlInvokable):
+                fn = extractJsValue(erlInvokable);
+                erlArgs = map(evaluate(envs, addResult), erlExpr);
+                addResult(fn(erlArgs));
+                return erlNil;
+              case !erlUserPureFunction_question_(erlInvokable):
+                _ref2 = extractJsValue(erlInvokable), localEnvs = _ref2.localEnvs, erlExpression = _ref2.erlExpression, erlParameters = _ref2.erlParameters;
+                erlArgs = map(evaluate(envs, addResult), erlExpr);
+                erlExpr = erlExpression;
+                newEnv = createLocalEnv(erlParameters, erlArgs);
                 envs = addEnv(localEnvs, newEnv);
                 break;
               default:
-                throw "" + (extractJsValue(malSymbol)) + " does not evaluate to a function, macro, or keyword.";
+                throw "" + (extractJsValue(erlSymbol)) + " does not evaluate to a function, macro, or keyword.";
             }
         }
     }
@@ -314,26 +314,26 @@ _evaluate = function(malExpr, envs, addResult) {
 };
 
 evaluate = function(envs, addResult) {
-  return function(malExpr) {
-    if (malExpr === commentSignal) {
+  return function(erlExpr) {
+    if (erlExpr === commentSignal) {
       return commentSignal;
     }
-    return _evaluate(malExpr, envs, addResult);
+    return _evaluate(erlExpr, envs, addResult);
   };
 };
 
-expandMacro = function(malMacroSymbol, malArgs, envs, addResult) {
-  var localEnvs, malExpression, malMacro, malParameters, newEnv, newEnvStack, _ref;
-  malMacro = _evaluate(malMacroSymbol, envs, addResult);
-  _ref = extractJsValue(malMacro), localEnvs = _ref.localEnvs, malExpression = _ref.malExpression, malParameters = _ref.malParameters;
-  newEnv = createLocalEnv(malParameters, malArgs);
+expandMacro = function(erlMacroSymbol, erlArgs, envs, addResult) {
+  var erlExpression, erlMacro, erlParameters, localEnvs, newEnv, newEnvStack, _ref;
+  erlMacro = _evaluate(erlMacroSymbol, envs, addResult);
+  _ref = extractJsValue(erlMacro), localEnvs = _ref.localEnvs, erlExpression = _ref.erlExpression, erlParameters = _ref.erlParameters;
+  newEnv = createLocalEnv(erlParameters, erlArgs);
   newEnvStack = addEnv(localEnvs, newEnv);
-  return _evaluate(malExpression, newEnvStack, addResult);
+  return _evaluate(erlExpression, newEnvStack, addResult);
 };
 
-ignorable_question_ = function(malVal, envs, addResult) {
+ignorable_question_ = function(erlVal, envs, addResult) {
   var jsString, symbol;
-  return malIgnore_question_(malVal) || (malList_question_(malVal) && malSymbol_question_(symbol = car(malVal)) && (((jsString = extractJsValue(symbol)) === 'ignore!') || ((jsString === 'ignoreIfTrue') && (extractJsValue(_evaluate(next(malVal), envs, addResult)))) || ((jsString === 'ignoreUnlessTrue') && !(extractJsValue(_evaluate(next(malVal), envs, addResult))))));
+  return erlIgnore_question_(erlVal) || (erlList_question_(erlVal) && erlSymbol_question_(symbol = car(erlVal)) && (((jsString = extractJsValue(symbol)) === 'ignore!') || ((jsString === 'ignoreIfTrue') && (extractJsValue(_evaluate(next(erlVal), envs, addResult)))) || ((jsString === 'ignoreUnlessTrue') && !(extractJsValue(_evaluate(next(erlVal), envs, addResult))))));
 };
 
 reduceLet_asterisk_ = function(envs, list, addResult) {
@@ -351,40 +351,40 @@ reduceLet_asterisk_ = function(envs, list, addResult) {
 };
 
 reduceLetrec_asterisk_ = function(envs, list, addResult) {
-  var envValue, jsKey, newEnv, _envs, _malExpr;
+  var envValue, jsKey, newEnv, _envs, _erlExpr;
   newEnv = {};
   _envs = addEnv(envs, newEnv);
   while (!empty_question_(list)) {
     jsKey = extractJsValue(list.value);
     list = recurse(list);
-    _malExpr = fromArray([createMalSymbol("fix*"), fromArray([createMalSymbol("fn*"), fromArray([jsKey]), list.value])]);
-    envValue = _evaluate(_malExpr, _envs, addResult);
+    _erlExpr = fromArray([createErlSymbol("fix*"), fromArray([createErlSymbol("fn*"), fromArray([jsKey]), list.value])]);
+    envValue = _evaluate(_erlExpr, _envs, addResult);
     newEnv[jsKey] = envValue;
     list = recurse(list);
   }
   return newEnv;
 };
 
-spliceUnquote_question_ = function(malValue) {
-  return spliceUnquote === (extractJsValue(malValue));
+spliceUnquote_question_ = function(erlValue) {
+  return spliceUnquote === (extractJsValue(erlValue));
 };
 
-spliceUnquotedExpr_question_ = function(malValue) {
-  return malList_question_(malValue) && (spliceUnquote_question_(car(malValue)));
+spliceUnquotedExpr_question_ = function(erlValue) {
+  return erlList_question_(erlValue) && (spliceUnquote_question_(car(erlValue)));
 };
 
-undefineValue = function(malList, envs) {
+undefineValue = function(erlList, envs) {
   var jsKey;
-  jsKey = extractJsValue(car(malList));
+  jsKey = extractJsValue(car(erlList));
   return unsetMainEnv(envs, jsKey);
 };
 
-unquote_question_ = function(malValue) {
-  return unquote === (extractJsValue(malValue));
+unquote_question_ = function(erlValue) {
+  return unquote === (extractJsValue(erlValue));
 };
 
-unquotedExpr_question_ = function(malValue) {
-  return malList_question_(malValue) && (unquote_question_(car(malValue)));
+unquotedExpr_question_ = function(erlValue) {
+  return erlList_question_(erlValue) && (unquote_question_(car(erlValue)));
 };
 
 module.exports = evaluate;

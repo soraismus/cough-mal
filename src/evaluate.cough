@@ -4,14 +4,14 @@
 { cdr }                       = require './linked-list'
 { circumpendQuotes }          = require './js-utilities'
 commentSignal                 = require './commentSignal'
-{ createMalIndex }            = require './type-utilities'
-{ createMalKeyword }          = require './type-utilities'
-{ createMalList }             = require './type-utilities'
-{ createMalMacro }            = require './type-utilities'
-{ createMalNumber }           = require './type-utilities'
-{ createMalString }           = require './type-utilities'
-{ createMalSymbol }           = require './type-utilities'
-{ createMalUserPureFunction } = require './type-utilities'
+{ createErlIndex }            = require './type-utilities'
+{ createErlKeyword }          = require './type-utilities'
+{ createErlList }             = require './type-utilities'
+{ createErlMacro }            = require './type-utilities'
+{ createErlNumber }           = require './type-utilities'
+{ createErlString }           = require './type-utilities'
+{ createErlSymbol }           = require './type-utilities'
+{ createErlUserPureFunction } = require './type-utilities'
 { def! }                      = require './keyTokens'
 { _do }                       = require './keyTokens'
 { empty? }                    = require './linked-list' 
@@ -24,7 +24,7 @@ commentSignal                 = require './commentSignal'
 { forEach }                   = require './linked-list'
 { fromArray }                 = require './linked-list'
 { fromJsObjects }             = require './index-utilities'
-{ fromMalIndex }              = require './index-utilities'
+{ fromErlIndex }              = require './index-utilities'
 { _getCurrentEnv }            = require './keyTokens'
 { _getDefaultEnv }            = require './keyTokens'
 { _if }                       = require './keyTokens'
@@ -34,16 +34,16 @@ commentSignal                 = require './commentSignal'
 { letrec* }                   = require './keyTokens'
 { lookup }                    = require './env-utilities'
 { macro* }                    = require './keyTokens'
-{ malCoreEffectfulFunction? } = require './type-utilities'
-{ malCorePureFunction? }      = require './type-utilities'
-{ malIgnore? }                = require './type-utilities'
-{ malIndex? }                 = require './type-utilities'
-{ malKeyword? }               = require './type-utilities'
-{ malList? }                  = require './type-utilities'
-{ malMacro? }                 = require './type-utilities'
-{ malNil }                    = require './type-utilities'
-{ malSymbol? }                = require './type-utilities'
-{ malUserPureFunction? }      = require './type-utilities'
+{ erlCoreEffectfulFunction? } = require './type-utilities'
+{ erlCorePureFunction? }      = require './type-utilities'
+{ erlIgnore? }                = require './type-utilities'
+{ erlIndex? }                 = require './type-utilities'
+{ erlKeyword? }               = require './type-utilities'
+{ erlList? }                  = require './type-utilities'
+{ erlMacro? }                 = require './type-utilities'
+{ erlNil }                    = require './type-utilities'
+{ erlSymbol? }                = require './type-utilities'
+{ erlUserPureFunction? }      = require './type-utilities'
 { map }                       = require './linked-list'
 { next }                      = require './linked-list'
 { quasiquote }                = require './keyTokens'
@@ -61,80 +61,80 @@ commentSignal                 = require './commentSignal'
 { undef! }                    = require './keyTokens'
 { unsetMainEnv }              = require './env-utilities'
 
-createFn = (malList, envs) ->
-  createMalUserPureFunction
+createFn = (erlList, envs) ->
+  createErlUserPureFunction
     localEnvs     : (envs.slice 0)
-    malExpression : (next malList)
-    malParameters : (car malList)
+    erlExpression : (next erlList)
+    erlParameters : (car erlList)
 
-createLocalEnv = (malParams, malArgs) ->
+createLocalEnv = (erlParams, erlArgs) ->
   env = {}
-  until empty? malParams
-    jsParam = extractJsValue (car malParams)
+  until empty? erlParams
+    jsParam = extractJsValue (car erlParams)
     if jsParam == splat
-      env[extractJsValue (next malParams)] = malArgs
+      env[extractJsValue (next erlParams)] = erlArgs
       return env
     else
-      env[jsParam] = car malArgs
-      malParams = cdr malParams
-      malArgs = cdr malArgs
+      env[jsParam] = car erlArgs
+      erlParams = cdr erlParams
+      erlArgs = cdr erlArgs
   env
 
-createMacro = (malList, envs) ->
-  createMalMacro
+createMacro = (erlList, envs) ->
+  createErlMacro
     localEnvs     : (envs.slice 0)
-    malExpression : (next malList)
-    malParameters : (car malList)
+    erlExpression : (next erlList)
+    erlParameters : (car erlList)
 
-defineNewValue = (malList, envs, addResult) ->
-  jsKey = extractJsValue (car malList)
-  malValue = _evaluate ((next malList), envs, addResult)
-  setMainEnv (envs, jsKey, malValue)
+defineNewValue = (erlList, envs, addResult) ->
+  jsKey = extractJsValue (car erlList)
+  erlValue = _evaluate ((next erlList), envs, addResult)
+  setMainEnv (envs, jsKey, erlValue)
 
 evalQuasiquotedExpr = (expr, envs, addResult) ->
-  return expr unless malList? expr
+  return expr unless erlList? expr
   manageItem = (memo, item) ->
     switch
       when unquotedExpr? item
-        createMalList (_evaluate ((next item), envs, addResult), memo)
+        createErlList (_evaluate ((next item), envs, addResult), memo)
       when spliceUnquotedExpr? item
         _manageItem = (_memo, _item) ->
-          createMalList (_item, _memo)
+          createErlList (_item, _memo)
         reduce (memo, _manageItem, (_evaluate ((next item), envs, addResult)))
-      when malList? item
-        createMalList (evalQuasiquotedExpr (item, envs, addResult), memo)
+      when erlList? item
+        createErlList (evalQuasiquotedExpr (item, envs, addResult), memo)
       else
-        createMalList (item, memo)
+        createErlList (item, memo)
   reverse(
     reduce (
-      createMalList ()
+      createErlList ()
       manageItem
       expr))
 
-_evaluate = (malExpr, envs, addResult) ->
+_evaluate = (erlExpr, envs, addResult) ->
   loop
     switch
-      when malSymbol? malExpr
-        jsString = extractJsValue malExpr
+      when erlSymbol? erlExpr
+        jsString = extractJsValue erlExpr
         if keyword? jsString
-          return createMalKeyword jsString
+          return createErlKeyword jsString
         else
           return lookup (envs, jsString)
 
-      when malIndex? malExpr
-        index = extractJsValue malExpr
+      when erlIndex? erlExpr
+        index = extractJsValue erlExpr
         newIndex = {}
         for own key, value of index
           newIndex[key] = _evaluate (index[key], envs, addResult)
-        return createMalIndex newIndex
+        return createErlIndex newIndex
 
-      when ! (malList? malExpr)
-        return malExpr
+      when ! (erlList? erlExpr)
+        return erlExpr
 
       else
-        malExpr = filter ((\x -> ! (ignorable? (x, envs, addResult))), malExpr)
-        [head, arg1, remainingArgs] = toPartialArray (2, malExpr)
-        tailList = cdr malExpr
+        erlExpr = filter ((\x -> ! (ignorable? (x, envs, addResult))), erlExpr)
+        [head, arg1, remainingArgs] = toPartialArray (2, erlExpr)
+        tailList = cdr erlExpr
 
         switch (extractJsValue head)
           when def!
@@ -144,18 +144,18 @@ _evaluate = (malExpr, envs, addResult) ->
             return undefineValue (tailList, envs) 
 
           when _eval
-            malExpr = _evaluate (arg1, envs, addResult)
+            erlExpr = _evaluate (arg1, envs, addResult)
 
           when _evalWithEnv
-            envs = [(fromMalIndex (_evaluate (arg1, envs, addResult)))]
-            malExpr = _evaluate ((car remainingArgs), envs, addResult)
+            envs = [(fromErlIndex (_evaluate (arg1, envs, addResult)))]
+            erlExpr = _evaluate ((car remainingArgs), envs, addResult)
 
           when let*
-            malExpr = (car remainingArgs)
+            erlExpr = (car remainingArgs)
             envs = addEnv (envs, reduceLet* (envs, arg1, addResult))
 
           when letrec*
-            malExpr = (car remainingArgs)
+            erlExpr = (car remainingArgs)
             envs = addEnv (envs, reduceLetrec* (envs, arg1, addResult))
 
           when _do
@@ -168,11 +168,11 @@ _evaluate = (malExpr, envs, addResult) ->
             return fromJsObjects envs[envs.length - 1]
 
           when _if
-            malExpr =
+            erlExpr =
               if extractJsValue (_evaluate (arg1, envs, addResult))
                 (car remainingArgs)
               else
-                if (empty? (otherwise = (next remainingArgs))) then malNil else otherwise
+                if (empty? (otherwise = (next remainingArgs))) then erlNil else otherwise
 
           when fn*
             return createFn (tailList, envs)
@@ -199,65 +199,65 @@ _evaluate = (malExpr, envs, addResult) ->
                 [_catch, _ex, catchExpr] = toPartialArray (3, (car remainingArgs))
                 throw ex if (extractJsValue _catch) != "catch*"
                 if ex instanceof Error
-                  ex = createMalString (circumpendQuotes ex.message)
+                  ex = createErlString (circumpendQuotes ex.message)
                 newEnv = {}
                 newEnv[extractJsValue _ex] = ex
                 return _evaluate (catchExpr, addEnv (envs, newEnv), addResult)
 
           else
-            malSymbol = head
-            malExpr = tailList
+            erlSymbol = head
+            erlExpr = tailList
 
-            malInvokable = _evaluate (malSymbol, envs, addResult)
+            erlInvokable = _evaluate (erlSymbol, envs, addResult)
 
             switch
-              when malKeyword? malInvokable
-                malExpr = createMalList (malInvokable, tailList)
+              when erlKeyword? erlInvokable
+                erlExpr = createErlList (erlInvokable, tailList)
 
-              when malMacro? malInvokable
-                malExpr = expandMacro (head, tailList, envs, addResult)
+              when erlMacro? erlInvokable
+                erlExpr = expandMacro (head, tailList, envs, addResult)
 
-              when malCorePureFunction? malInvokable
-                fn = extractJsValue malInvokable
-                malArgs = map ((evaluate (envs, addResult)), malExpr)
-                return fn malArgs
+              when erlCorePureFunction? erlInvokable
+                fn = extractJsValue erlInvokable
+                erlArgs = map ((evaluate (envs, addResult)), erlExpr)
+                return fn erlArgs
 
-              when malCoreEffectfulFunction? malInvokable
-                fn = extractJsValue malInvokable
-                malArgs = map ((evaluate (envs, addResult)), malExpr)
-                addResult (fn malArgs)
-                return malNil
+              when erlCoreEffectfulFunction? erlInvokable
+                fn = extractJsValue erlInvokable
+                erlArgs = map ((evaluate (envs, addResult)), erlExpr)
+                addResult (fn erlArgs)
+                return erlNil
 
-              when malUserPureFunction? malInvokable
-                { localEnvs, malExpression, malParameters } =
-                  extractJsValue malInvokable
+              when erlUserPureFunction? erlInvokable
+                { localEnvs, erlExpression, erlParameters } =
+                  extractJsValue erlInvokable
 
-                malArgs = map ((evaluate (envs, addResult)), malExpr)
-                malExpr = malExpression
-                newEnv = createLocalEnv (malParameters, malArgs)
+                erlArgs = map ((evaluate (envs, addResult)), erlExpr)
+                erlExpr = erlExpression
+                newEnv = createLocalEnv (erlParameters, erlArgs)
                 envs = addEnv (localEnvs, newEnv)
 
               else
                 #throw 'Value is not a function'
-                throw "#{extractJsValue malSymbol} does not evaluate to a function, macro, or keyword."
+                throw "#{extractJsValue erlSymbol} does not evaluate to a function, macro, or keyword."
 
-evaluate = (envs, addResult) -> (malExpr) ->
-  return commentSignal if malExpr == commentSignal
-  _evaluate (malExpr, envs, addResult)
+evaluate = (envs, addResult) -> (erlExpr) ->
+  return commentSignal if erlExpr == commentSignal
+  _evaluate (erlExpr, envs, addResult)
 
-expandMacro = (malMacroSymbol, malArgs, envs, addResult) ->
-  malMacro = _evaluate (malMacroSymbol, envs, addResult)
-  { localEnvs, malExpression, malParameters } = extractJsValue malMacro
-  newEnv = createLocalEnv (malParameters, malArgs)
+expandMacro = (erlMacroSymbol, erlArgs, envs, addResult) ->
+  erlMacro = _evaluate (erlMacroSymbol, envs, addResult)
+  { localEnvs, erlExpression, erlParameters } = extractJsValue erlMacro
+  newEnv = createLocalEnv (erlParameters, erlArgs)
   newEnvStack = addEnv (localEnvs, newEnv)
-  _evaluate (malExpression, newEnvStack, addResult)
+  _evaluate (erlExpression, newEnvStack, addResult)
 
-ignorable? = (malVal, envs, addResult) ->
-  malIgnore? malVal ||
-    (malList? malVal && malSymbol? (symbol = car malVal) && (
+ignorable? = (erlVal, envs, addResult) ->
+  erlIgnore? erlVal ||
+    (erlList? erlVal && erlSymbol? (symbol = car erlVal) && (
       ((jsString = extractJsValue symbol) == 'ignore!') ||
-      ((jsString == 'ignoreIfTrue') && (extractJsValue (_evaluate ((next malVal), envs, addResult)))) ||
-      ((jsString == 'ignoreUnlessTrue') && ! (extractJsValue (_evaluate ((next malVal), envs, addResult))))))
+      ((jsString == 'ignoreIfTrue') && (extractJsValue (_evaluate ((next erlVal), envs, addResult)))) ||
+      ((jsString == 'ignoreUnlessTrue') && ! (extractJsValue (_evaluate ((next erlVal), envs, addResult))))))
 
 reduceLet* = (envs, list, addResult) ->
   newEnv = {}
@@ -277,34 +277,34 @@ reduceLetrec* = (envs, list, addResult) ->
     jsKey = extractJsValue list.value
     list = recurse list
 
-    _malExpr = fromArray ([
-      createMalSymbol "fix*"
+    _erlExpr = fromArray ([
+      createErlSymbol "fix*"
       fromArray ([
-        createMalSymbol "fn*"
+        createErlSymbol "fn*"
         fromArray ([jsKey])
         list.value
       ])
     ])
 
-    envValue = _evaluate (_malExpr, _envs, addResult)
+    envValue = _evaluate (_erlExpr, _envs, addResult)
     newEnv[jsKey] = envValue
     list = recurse list
   newEnv
 
-spliceUnquote? = \malValue ->
-  spliceUnquote == (extractJsValue malValue)
+spliceUnquote? = \erlValue ->
+  spliceUnquote == (extractJsValue erlValue)
 
-spliceUnquotedExpr? = \malValue ->
-  malList? malValue && (spliceUnquote? (car malValue))
+spliceUnquotedExpr? = \erlValue ->
+  erlList? erlValue && (spliceUnquote? (car erlValue))
 
-undefineValue = (malList, envs) ->
-  jsKey = extractJsValue (car malList)
+undefineValue = (erlList, envs) ->
+  jsKey = extractJsValue (car erlList)
   unsetMainEnv (envs, jsKey)
 
-unquote? = \malValue ->
-  unquote == (extractJsValue malValue)
+unquote? = \erlValue ->
+  unquote == (extractJsValue erlValue)
 
-unquotedExpr? = \malValue ->
-  malList? malValue && (unquote? (car malValue))
+unquotedExpr? = \erlValue ->
+  erlList? erlValue && (unquote? (car erlValue))
 
 module.exports = evaluate

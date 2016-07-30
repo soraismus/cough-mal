@@ -1,9 +1,9 @@
-var circumpendQuotes, createMalString, encapsulate, environment, error, flattenIfNecessary, fromArray, getLispEnvironment, interpret, serialize, standardFnsAndMacros, tokenizeAndParse, _createMalString, _interpret, _process, _serialize,
+var circumpendQuotes, createErlString, encapsulate, environment, error, flattenIfNecessary, fromArray, getLispEnvironment, interpret, serialize, standardFnsAndMacros, tokenizeAndParse, _createErlString, _interpret, _process, _serialize,
   __hasProp = {}.hasOwnProperty;
 
 circumpendQuotes = require('./js-utilities').circumpendQuotes;
 
-createMalString = require('./type-utilities').createMalString;
+createErlString = require('./type-utilities').createErlString;
 
 fromArray = require('./linked-list').fromArray;
 
@@ -17,17 +17,17 @@ standardFnsAndMacros = require('./standard-fns-and-macros');
 
 tokenizeAndParse = require('./tokenizeAndParse');
 
-_createMalString = function(jsString) {
-  return createMalString(circumpendQuotes(jsString));
+_createErlString = function(jsString) {
+  return createErlString(circumpendQuotes(jsString));
 };
 
 encapsulate = function(type) {
-  return function(malValue) {
+  return function(erlValue) {
     return {
       effect: {
         type: type
       },
-      value: malValue
+      value: erlValue
     };
   };
 };
@@ -59,7 +59,7 @@ interpret = function(jsString, userJsArray) {
   var userEnv;
   if (userJsArray != null) {
     userEnv = {
-      '*ARGV*': fromArray(userJsArray.map(_createMalString))
+      '*ARGV*': fromArray(userJsArray.map(_createErlString))
     };
     return _interpret([userEnv, environment], jsString);
   } else {

@@ -1,35 +1,35 @@
-{ createMalBoolean }          = require './type-utilities'
-{ createMalCorePureFunction } = require './type-utilities'
-{ createMalIdentifier }       = require './type-utilities'
-{ createMalIndex }            = require './type-utilities'
-{ createMalNumber }           = require './type-utilities'
-{ createMalString }           = require './type-utilities'
+{ createErlBoolean }          = require './type-utilities'
+{ createErlCorePureFunction } = require './type-utilities'
+{ createErlIdentifier }       = require './type-utilities'
+{ createErlIndex }            = require './type-utilities'
+{ createErlNumber }           = require './type-utilities'
+{ createErlString }           = require './type-utilities'
 { extractJsValue }            = require './type-utilities'
 { fromArray }                 = require './linked-list'
 { jsNaN? }                    = require './js-utilities'
 { jsNumber? }                 = require './js-utilities'
 { jsString? }                 = require './js-utilities'
-{ malNil }                    = require './type-utilities'
+{ erlNil }                    = require './type-utilities'
 { reduce }                    = require './linked-list'
 { toArray }                   = require './linked-list'
 
 add = (nbrs...) ->
-  createMalNumber (nbrs.reduce ((x, nbr) ->  x += nbr))
+  createErlNumber (nbrs.reduce ((x, nbr) ->  x += nbr))
 
-contains? = (index, key) -> createMalBoolean (key of index)
+contains? = (index, key) -> createErlBoolean (key of index)
 
 dissoc = (index, keys...) ->
   copy = {}
   for own key, value of index
     copy[key] = value
   delete copy[key] for key in keys
-  createMalIndex copy
+  createErlIndex copy
 
 divide = (nbrs...) ->
-  createMalNumber (nbrs.reduce ((x, nbr) -> x /= nbr))
+  createErlNumber (nbrs.reduce ((x, nbr) -> x /= nbr))
 
 exponentiate = (nbrs...) ->
-  createMalNumber (nbrs.reduce ((x, nbr) -> Math.pow (x, nbr)))
+  createErlNumber (nbrs.reduce ((x, nbr) -> Math.pow (x, nbr)))
 
 get = (jsIndex, jsKey) -> jsIndex[jsKey]
 
@@ -39,66 +39,66 @@ getEnvironment = \config ->
   return environment
 
 greaterThanOrEqual = (nbrs...) ->
-  createMalBoolean (nbrs[0] >= nbrs[1])
+  createErlBoolean (nbrs[0] >= nbrs[1])
 
 greaterThan = (nbrs...) ->
-  createMalBoolean (nbrs[0] > nbrs[1])
+  createErlBoolean (nbrs[0] > nbrs[1])
 
 index = (args...) ->
   index = {}
   index[k] = args[i + 1] for k, i in args when i % 2 == 0
-  createMalIndex index
+  createErlIndex index
 
 keys = \index ->
   _keys = []
   for own key, value of index
     _keys.push (
       if jsNaN? (jsNbr = parseFloat (key, 10))
-        (if key[0] == ':'           then createMalIdentifier else createMalString) key
+        (if key[0] == ':'           then createErlIdentifier else createErlString) key
       else
-        createMalNumber jsNbr)
+        createErlNumber jsNbr)
   fromArray _keys
 
 length = \jsVal ->
-  return malNil unless jsString? jsVal
-  createMalNumber (jsVal.length - 2)
+  return erlNil unless jsString? jsVal
+  createErlNumber (jsVal.length - 2)
 
 lessThan = (nbrs...) ->
-  createMalBoolean (nbrs[0] < nbrs[1])
+  createErlBoolean (nbrs[0] < nbrs[1])
   
 lessThanOrEqual = (nbrs...) ->
-  createMalBoolean (nbrs[0] <= nbrs[1])
+  createErlBoolean (nbrs[0] <= nbrs[1])
 
-lift = (fnOnJsValues) -> (malValueList) ->
-  fnOnJsValues (((toArray malValueList).map extractJsValue)...)
+lift = (fnOnJsValues) -> (erlValueList) ->
+  fnOnJsValues (((toArray erlValueList).map extractJsValue)...)
 
 max = (nbrs...) ->
-  createMalNumber (Math.max (nbrs...))
+  createErlNumber (Math.max (nbrs...))
 
 min = (nbrs...) ->
-  createMalNumber (Math.min (nbrs...))
+  createErlNumber (Math.min (nbrs...))
 
 mod = (nbr0, nbr1) ->
-  createMalNumber (nbr0 % nbr1)
+  createErlNumber (nbr0 % nbr1)
 
 multiply = (nbrs...) ->
-  createMalNumber (nbrs.reduce ((x, nbr) -> x *= nbr))
+  createErlNumber (nbrs.reduce ((x, nbr) -> x *= nbr))
 
 negate = \nbr ->
-  createMalNumber (-1 * nbr)
+  createErlNumber (-1 * nbr)
 
 parseNumber = \jsVal ->
   return jsVal if jsNumber? jsVal
-  return malNil unless jsString? jsVal
+  return erlNil unless jsString? jsVal
   jsNbr = parseFloat ((stripQuotes jsVal), 10)
-  if jsNaN? jsNbr           then malNil else createMalNumber jsNbr
+  if jsNaN? jsNbr           then erlNil else createErlNumber jsNbr
 
 setCoreFnsOnJsValues! = (env, fns) ->
   for own fnName, fn of fns
-    env[fnName] = createMalCorePureFunction (lift fn)
+    env[fnName] = createErlCorePureFunction (lift fn)
 
 subtract = (nbrs...) ->
-  createMalNumber (nbrs.reduce ((x, nbr) -> x -= nbr))
+  createErlNumber (nbrs.reduce ((x, nbr) -> x -= nbr))
 
 vals = \index ->
   values = []
